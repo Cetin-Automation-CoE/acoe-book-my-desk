@@ -39,14 +39,14 @@ export type Database = {
                   ]
                 },"bookings": {
                   Row: {
-                    "checked_in_at": string | null,"created_at": string,"date": string,"id": string,"seat_id": string,"slot": Database["public"]['Enums']["slot"],"status": Database["public"]['Enums']["booking_status"],"updated_at": string,"user_id": string
+                    "checked_in_at": string | null,"counted_at": string | null,"created_at": string,"date": string,"id": string,"seat_id": string,"slot": Database["public"]['Enums']["slot"],"status": Database["public"]['Enums']["booking_status"],"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "checked_in_at"?: string | null,"created_at"?: string,"date": string,"id"?: string,"seat_id": string,"slot": Database["public"]['Enums']["slot"],"status"?: Database["public"]['Enums']["booking_status"],"updated_at"?: string,"user_id": string
+                    "checked_in_at"?: string | null,"counted_at"?: string | null,"created_at"?: string,"date": string,"id"?: string,"seat_id": string,"slot": Database["public"]['Enums']["slot"],"status"?: Database["public"]['Enums']["booking_status"],"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "checked_in_at"?: string | null,"created_at"?: string,"date"?: string,"id"?: string,"seat_id"?: string,"slot"?: Database["public"]['Enums']["slot"],"status"?: Database["public"]['Enums']["booking_status"],"updated_at"?: string,"user_id"?: string
+                    "checked_in_at"?: string | null,"counted_at"?: string | null,"created_at"?: string,"date"?: string,"id"?: string,"seat_id"?: string,"slot"?: Database["public"]['Enums']["slot"],"status"?: Database["public"]['Enums']["booking_status"],"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -175,14 +175,14 @@ isOneToOne: false
                   ]
                 },"user_stats": {
                   Row: {
-                    "best_streak": number,"current_streak": number,"last_office_day": string | null,"office_days": number,"seats_used": (string)[],"updated_at": string,"user_id": string
+                    "best_streak": number,"current_streak": number,"last_office_day": string | null,"office_days": number,"seats_used": (string)[],"updated_at": string,"user_id": string,"week_days": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "best_streak"?: number,"current_streak"?: number,"last_office_day"?: string | null,"office_days"?: number,"seats_used"?: (string)[],"updated_at"?: string,"user_id": string
+                    "best_streak"?: number,"current_streak"?: number,"last_office_day"?: string | null,"office_days"?: number,"seats_used"?: (string)[],"updated_at"?: string,"user_id": string,"week_days"?: number
                   }
                   Update: {
-                    "best_streak"?: number,"current_streak"?: number,"last_office_day"?: string | null,"office_days"?: number,"seats_used"?: (string)[],"updated_at"?: string,"user_id"?: string
+                    "best_streak"?: number,"current_streak"?: number,"last_office_day"?: string | null,"office_days"?: number,"seats_used"?: (string)[],"updated_at"?: string,"user_id"?: string,"week_days"?: number
                   }
                   Relationships: [
                     
@@ -205,6 +205,9 @@ isOneToOne: false
 "bmd_award":
 { Args: { "p_badge": string,"p_user": string }; Returns: (string)[]
                            },
+"bmd_count_office_day":
+{ Args: { "p_booking_id": string }; Returns: (string)[]
+                           },
 "bmd_local_now":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
@@ -214,15 +217,13 @@ isOneToOne: false
 "bmd_parse_slots":
 { Args: { "p_slot": string }; Returns: (Database["public"]['Enums']["slot"])[]
                            },
-"bmd_record_checkin":
-{ Args: { "p_booking_id": string }; Returns: (string)[]
-                           },
 "bmd_today":
 { Args: Record<PropertyKey, never>; Returns: string
                            },
 "book_seat":
 { Args: { "p_date": string,"p_seat_id": string,"p_slot": string }; Returns: {
               "checked_in_at": string | null,
+"counted_at": string | null,
 "created_at": string,
 "date": string,
 "id": string,
@@ -241,6 +242,7 @@ isOneToOne: false
 "cancel_booking":
 { Args: { "p_booking_id": string }; Returns: {
               "checked_in_at": string | null,
+"counted_at": string | null,
 "created_at": string,
 "date": string,
 "id": string,
@@ -259,6 +261,7 @@ isOneToOne: false
 "check_in":
 { Args: { "p_booking_id": string }; Returns: {
               "checked_in_at": string | null,
+"counted_at": string | null,
 "created_at": string,
 "date": string,
 "id": string,
@@ -274,6 +277,9 @@ isOneToOne: false
         isOneToOne: true
         isSetofReturn: false
       } },
+"count_office_days":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
 "display_name_from_email":
 { Args: { "p_email": string }; Returns: string
                            },

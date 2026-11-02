@@ -1,30 +1,17 @@
-// Progress and team-day helpers. The database awards badges and keeps the counters; these only
+// Progress and team-day helpers. The database counts office days and awards badges; these only
 // shape what is on screen.
 
 export const BADGES = [
   'first_day',
-  'early_bird',
   'regular',
   'resident',
   'explorer',
   'full_house',
   'team_day',
   'on_a_roll',
-  'reliable',
+  'full_week',
 ] as const
 export type BadgeKey = (typeof BADGES)[number]
-
-// Share of bookings with a final outcome (checked in or auto-released) that were checked in.
-export function reliability(outcomes: readonly { status: string }[]): number | null {
-  let checkedIn = 0
-  let released = 0
-  for (const o of outcomes) {
-    if (o.status === 'checked_in') checkedIn += 1
-    else if (o.status === 'released') released += 1
-  }
-  const total = checkedIn + released
-  return total === 0 ? null : checkedIn / total
-}
 
 export interface Presence {
   people: number

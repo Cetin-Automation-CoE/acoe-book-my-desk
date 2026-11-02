@@ -39,6 +39,7 @@ function booking(over: Partial<Booking> = {}): Booking {
     slot: 'AM',
     status: 'booked',
     checked_in_at: null,
+    counted_at: null,
     created_at: '',
     updated_at: '',
     ...over,
@@ -66,15 +67,8 @@ describe('checkInState', () => {
     expect(checkInState(booking({ date: '2026-11-05' }), settings, false, at('09:00'))).toBe('not_today')
   })
 
-  it('lets an exempt owner check in all half day long', () => {
-    expect(checkInState(booking(), settings, true, at('09:00'))).toBe('open')
-    expect(checkInState(booking(), settings, true, at('10:30'))).toBe('open')
-    expect(checkInState(booking({ slot: 'PM' }), settings, true, at('15:00'))).toBe('open')
-  })
-
-  it('is exempt for an owner once the half day is over or on another day', () => {
-    expect(checkInState(booking(), settings, true, at('13:00'))).toBe('exempt')
-    expect(checkInState(booking({ date: '2026-11-05' }), settings, true, at('09:00'))).toBe('exempt')
+  it('is exempt for the owner of a semi-fixed seat', () => {
+    expect(checkInState(booking(), settings, true, at('09:00'))).toBe('exempt')
   })
 
   it('treats an owner like everyone else when the exemption is off', () => {

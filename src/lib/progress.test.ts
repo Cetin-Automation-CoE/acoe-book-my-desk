@@ -1,21 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { presenceByDay, reliability, teamDayNudge } from './progress'
-
-describe('reliability', () => {
-  it('is the share of final bookings that were checked in', () => {
-    const outcomes = [{ status: 'checked_in' }, { status: 'checked_in' }, { status: 'checked_in' }, { status: 'released' }]
-    expect(reliability(outcomes)).toBe(0.75)
-  })
-
-  it('ignores bookings that are still open or were cancelled', () => {
-    expect(reliability([{ status: 'booked' }, { status: 'cancelled' }, { status: 'checked_in' }])).toBe(1)
-  })
-
-  it('is null without any final booking', () => {
-    expect(reliability([])).toBeNull()
-    expect(reliability([{ status: 'booked' }])).toBeNull()
-  })
-})
+import { presenceByDay, teamDayNudge } from './progress'
 
 describe('presenceByDay', () => {
   it('counts distinct people per day and the colleagues other than me', () => {

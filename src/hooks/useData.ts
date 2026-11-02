@@ -14,7 +14,6 @@ export const keys = {
   presence: (from: string, to: string) => ['bookings', 'range', from, to] as const,
   stats: (userId: string) => ['progress', 'stats', userId] as const,
   badges: (userId: string) => ['progress', 'badges', userId] as const,
-  outcomes: (userId: string, from: string) => ['progress', 'outcomes', userId, from] as const,
 }
 
 export function useSettings() {
@@ -56,10 +55,6 @@ export function useStats(userId: string) {
 
 export function useBadges(userId: string) {
   return useQuery({ queryKey: keys.badges(userId), queryFn: () => api.myBadges(userId) })
-}
-
-export function useOutcomes(userId: string, fromDate: string) {
-  return useQuery({ queryKey: keys.outcomes(userId, fromDate), queryFn: () => api.myOutcomes(userId, fromDate) })
 }
 
 export function useSeatSchedule(seatId: string | null, fromDate: string) {

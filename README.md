@@ -164,7 +164,7 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | Window | Today + `booking_window_days` (7), working days only (`working_days`, default Mon–Fri). Other dates are rejected (`outside_window`, `not_working_day`). |
 | Same day | A half day can be booked until it ends. Booking after its check-in deadline counts as checked in (walk-in). |
 | Limits | One active booking per seat per half day; one per person per half day (partial unique indexes). Optional `max_days_per_week`. |
-| Check-in | "I'm here" on the day, until `am_checkin_deadline` (10:00) / `pm_checkin_deadline` (14:00). Exempt seat owners may check in until the half day ends. |
+| Check-in | "I'm here" on the day, until `am_checkin_deadline` (10:00) / `pm_checkin_deadline` (14:00). |
 | Auto-release | Every 15 minutes, `booked` bookings past their deadline become `released`. Seat owners are exempt while `owner_checkin_exempt` is true. |
 | Cancel | Any time before the half day starts. Checked-in bookings cannot be cancelled. |
 | Semi-fixed seats | `seats.owner_id` holds the seat; others can book a half day only after the owner releases it (My seat tab). Releasing cancels the owner's own booking for that half day; a released half day cannot be taken back once a colleague booked it. |
@@ -173,32 +173,34 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 
 ### Progress and badges (private to each person)
 
-Every check-in (a tap on "I'm here", or a walk-in booking made after the deadline) updates
-`user_stats` and may award badges in `achievements`. Both tables survive the 90-day purge and are
-readable only by the person themselves — there is no leaderboard and colleagues never see each
-other's numbers. Seat owners are exempt from auto-release but can still tap "I'm here" (until the
-half day ends) so their days count too.
+An **office day** is a day with a reservation. A booking is counted once its half day has started
+(06:00 / 13:00 — from then on it cannot be cancelled): the `bookmydesk-count-office-days` job runs
+every 15 minutes, and a booking made after the start is counted immediately. Check-in plays no part:
+a reservation that was auto-released still counts; a cancelled one never does. Counters live in
+`user_stats` and badges in `achievements` (`bookings.counted_at` marks what has been counted); both
+survive the 90-day purge and are readable only by the person themselves — no leaderboard, colleagues
+never see each other's numbers.
 
 | Shown on My bookings | Meaning |
 |------|---------|
-| Week streak | Consecutive ISO weeks with at least one checked-in office day (best streak kept alongside) |
-| Office days | Distinct days checked in, ever |
-| Check-in rate | Checked in ÷ (checked in + auto-released) over the last 90 days |
+| Week streak | Consecutive ISO weeks with at least one office day |
+| Best streak | Longest week streak so far |
+| Office days | Days with a reservation, ever |
 
 | Badge | Rule |
 |-------|------|
-| First day in | First check-in |
-| Early bird | Checked in before 08:00 |
+| First day in | First office day |
 | Regular / Resident | 10 / 50 office days |
 | Explorer | Sat in 6 different seats |
-| Full house | Checked in on a half day when every active seat was booked |
-| Team day | Checked in on a day with `team_day_threshold` people booked |
+| Full house | A half day when every active seat was booked |
+| Team day | A day with `team_day_threshold` people booked |
 | On a roll | 4-week streak |
-| Reliable | Last 30 days: at least 4 check-ins and no auto-released booking |
+| Full week | An office day on every working day of one week |
 
-Badges are awarded in `bmd_record_checkin()`; adding one means a new key in its `check` constraint,
-a rule in that function and a name in `src/strings.ts`. To reset someone's progress:
+Badges are awarded in `bmd_count_office_day()`; adding one means a new key in the `achievements`
+check constraint, a rule in that function and a name in `src/strings.ts`. To reset someone's progress:
 `delete from public.user_stats where user_id = '…'; delete from public.achievements where user_id = '…';`
+(and `update public.bookings set counted_at = null where user_id = '…'` to count their recent days again).
 
 ### Settings reference (`public.settings`, one row)
 
@@ -217,11 +219,12 @@ a rule in that function and a name in `src/strings.ts`. To reset someone's progr
 
 ### Scheduled jobs
 
-The migration enables `pg_cron` and schedules two jobs (visible in the dashboard under
+The migrations enable `pg_cron` and schedule three jobs (visible in the dashboard under
 Integrations → Cron, or `select * from cron.job;`):
 
 - `bookmydesk-auto-release` — every 15 minutes, `public.auto_release_bookings()`
 - `bookmydesk-purge-old-bookings` — daily 03:30 UTC, `public.purge_old_bookings()`
+- `bookmydesk-count-office-days` — every 15 minutes, `public.count_office_days()` (progress and badges)
 
 pg_cron schedules are in UTC; the functions convert to the office time zone themselves, so DST
 changes need no attention. Run `select public.auto_release_bookings();` in the SQL editor to

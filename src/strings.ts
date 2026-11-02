@@ -114,25 +114,22 @@ export const strings = {
   progress: {
     title: 'Your office days',
     streak: 'week streak',
-    best: (n: number) => `best ${n}`,
+    best: 'best streak',
     days: (n: number) => (n === 1 ? 'office day' : 'office days'),
-    rate: 'check-in rate',
-    noRate: '–',
-    start: 'Tap “I’m here” on the day of a booking to start your streak.',
+    start: 'Every day with a booking counts, once it starts. Book a seat to begin your streak.',
     badges: (earned: number, total: number) => `Badges · ${earned} of ${total}`,
     newBadge: (name: string) => `New badge: ${name}`,
   },
 
   badges: {
-    first_day: { name: 'First day in', rule: 'Check in for the first time' },
-    early_bird: { name: 'Early bird', rule: 'Check in before 08:00' },
+    first_day: { name: 'First day in', rule: 'Your first office day' },
     regular: { name: 'Regular', rule: '10 office days' },
     resident: { name: 'Resident', rule: '50 office days' },
     explorer: { name: 'Explorer', rule: 'Sit in 6 different seats' },
     full_house: { name: 'Full house', rule: 'Be in when every seat is taken' },
     team_day: { name: 'Team day', rule: 'Be in on a team day' },
     on_a_roll: { name: 'On a roll', rule: 'Office days 4 weeks in a row' },
-    reliable: { name: 'Reliable', rule: 'A month of check-ins without a no-show' },
+    full_week: { name: 'Full week', rule: 'In the office every working day of a week' },
   } satisfies Record<BadgeKey, { name: string; rule: string }>,
 
   teamDay: {

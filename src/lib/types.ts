@@ -8,7 +8,6 @@ export type Profile = Pick<Tables<'profiles'>, 'user_id' | 'display_name'>
 export type UserStats = Tables<'user_stats'>
 export type Achievement = Tables<'achievements'>
 export type PresenceRow = Pick<Booking, 'date' | 'user_id'>
-export type OutcomeRow = Pick<Booking, 'date' | 'status'>
 export type Slot = Enums<'slot'>
 export type BookingStatus = Enums<'booking_status'>
 export type SlotChoice = Slot | 'FULL'

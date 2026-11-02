@@ -29,6 +29,7 @@ function booking(over: Partial<Booking> = {}): Booking {
     slot: 'AM',
     status: 'booked',
     checked_in_at: null,
+    counted_at: null,
     created_at: '',
     updated_at: '',
     ...over,

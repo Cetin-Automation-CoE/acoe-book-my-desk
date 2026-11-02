@@ -3,7 +3,6 @@ import {
   ACTIVE_STATUSES,
   type Achievement,
   type Booking,
-  type OutcomeRow,
   type PresenceRow,
   type Profile,
   type Release,
@@ -75,18 +74,6 @@ export const api = {
 
   async myBadges(userId: string): Promise<Achievement[]> {
     return unwrap(await supabase.from('achievements').select('*').eq('user_id', userId).order('earned_at'))
-  },
-
-  // Final outcomes of my past bookings (checked in or auto-released) for the check-in rate.
-  async myOutcomes(userId: string, fromDate: string): Promise<OutcomeRow[]> {
-    return unwrap(
-      await supabase
-        .from('bookings')
-        .select('date, status')
-        .eq('user_id', userId)
-        .gte('date', fromDate)
-        .in('status', ['checked_in', 'released']),
-    )
   },
 
   async bookSeat(seatId: string, date: string, slot: SlotChoice): Promise<Booking[]> {

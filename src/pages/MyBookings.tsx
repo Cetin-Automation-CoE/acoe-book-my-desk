@@ -82,7 +82,7 @@ export function MyBookings({ settings }: { settings: Settings }) {
     <>
       <h1 className="mb-4 text-2xl font-bold text-brand">{strings.myBookings.title}</h1>
 
-      <ProgressCard userId={userId} today={today} />
+      <ProgressCard userId={userId} />
 
       {bookings.error ? (
         <p className="text-sm font-semibold text-accent">{errorMessage(bookings.error)}</p>
