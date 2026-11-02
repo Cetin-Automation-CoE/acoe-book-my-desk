@@ -58,6 +58,20 @@ export const api = {
     return unwrap(await supabase.rpc('cancel_booking', { p_booking_id: bookingId }))
   },
 
+  async checkIn(bookingId: string): Promise<Booking> {
+    return unwrap(await supabase.rpc('check_in', { p_booking_id: bookingId }))
+  },
+
+  async releaseSeat(seatId: string, date: string, slot: SlotChoice): Promise<void> {
+    const { error } = await supabase.rpc('release_my_seat', { p_seat_id: seatId, p_date: date, p_slot: slot })
+    if (error) throw error
+  },
+
+  async unreleaseSeat(seatId: string, date: string, slot: SlotChoice): Promise<void> {
+    const { error } = await supabase.rpc('unrelease_my_seat', { p_seat_id: seatId, p_date: date, p_slot: slot })
+    if (error) throw error
+  },
+
   async allowedEmailDomains(): Promise<string[]> {
     return unwrap(await supabase.rpc('get_allowed_email_domains'))
   },

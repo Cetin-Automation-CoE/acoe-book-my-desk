@@ -75,7 +75,8 @@ Useful scripts:
    ```bash
    npx supabase db push --include-seed
    ```
-   Later schema changes: add a migration and run `npx supabase db push`.
+   Later schema changes: add a migration and run `npx supabase db push`. The migrations enable
+   `pg_cron` and schedule the auto-release and purge jobs; check Integrations → Cron afterwards.
 3. **Auth settings** (Authentication in the dashboard):
    - Providers → Email: enabled. Leave "Confirm email" on.
    - Email Templates → *Confirm signup* **and** *Magic Link*: replace the body with the contents of
@@ -118,11 +119,54 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
   times, owner check-in exemption, weekly limit, data retention).
 - **Fix a display name:** `update public.profiles set display_name = 'Jane Doe' where email = '...';`
 
+## Booking rules (as implemented)
+
+All times are in `settings.timezone` (Europe/Prague), never the server's UTC date.
+
+| Rule | Behaviour |
+|------|-----------|
+| Slots | `AM` 06:00–13:00, `PM` 13:00–24:00 (`am_start`, `pm_start`). "Full day" books both halves atomically. |
+| Window | Today + `booking_window_days` (7). Earlier or later dates are rejected (`outside_window`). |
+| Same day | A half day can be booked until it ends. Booking after its check-in deadline counts as checked in (walk-in). |
+| Limits | One active booking per seat per half day; one per person per half day (partial unique indexes). Optional `max_days_per_week`. |
+| Check-in | "I'm here" on the day, until `am_checkin_deadline` (10:00) / `pm_checkin_deadline` (14:00). |
+| Auto-release | Every 15 minutes, `booked` bookings past their deadline become `released`. Seat owners are exempt while `owner_checkin_exempt` is true. |
+| Cancel | Any time before the half day starts. Checked-in bookings cannot be cancelled. |
+| Semi-fixed seats | `seats.owner_id` holds the seat; others can book a half day only after the owner releases it (My seat tab). Releasing cancels the owner's own booking for that half day; a released half day cannot be taken back once a colleague booked it. |
+| Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
+
+### Settings reference (`public.settings`, one row)
+
+| Column | Default | Meaning |
+|--------|---------|---------|
+| `allowed_email_domains` | `{cetin.cz}` | Who may sign up; empty array allows everyone |
+| `timezone` | `Europe/Prague` | Office time zone for every rule |
+| `booking_window_days` | `7` | Days ahead that can be booked |
+| `am_start`, `pm_start` | `06:00`, `13:00` | When each half day starts (PM start is also the AM/PM split) |
+| `am_checkin_deadline`, `pm_checkin_deadline` | `10:00`, `14:00` | Check-in deadlines |
+| `owner_checkin_exempt` | `true` | Seat owners are never auto-released |
+| `max_days_per_week` | `null` | Optional limit of distinct booked days per ISO week |
+| `booking_retention_days` | `90` | Nightly purge threshold |
+
+### Scheduled jobs
+
+The migration enables `pg_cron` and schedules two jobs (visible in the dashboard under
+Integrations → Cron, or `select * from cron.job;`):
+
+- `bookmydesk-auto-release` — every 15 minutes, `public.auto_release_bookings()`
+- `bookmydesk-purge-old-bookings` — daily 03:30 UTC, `public.purge_old_bookings()`
+
+pg_cron schedules are in UTC; the functions convert to the office time zone themselves, so DST
+changes need no attention. Run `select public.auto_release_bookings();` in the SQL editor to
+trigger a release manually.
+
 ## Security notes
 
 - Row-level security is on for every table; signed-in users can read seats, bookings, releases
   and colleagues' display names, and can write nothing directly.
 - Every change goes through `security definer` functions (`book_seat`, `cancel_booking`,
   `check_in`, `release_my_seat`, `unrelease_my_seat`) that use `auth.uid()` and validate all rules.
+  They raise short error codes (`seat_taken`, `outside_window`, …) that `src/strings.ts` translates.
+- The rules are covered by pgTAP tests in `supabase/tests` (run on every PR by CI).
 - Sign-ups are restricted to the allowed email domains by a database trigger, not only in the UI.
 - The frontend ships only the Supabase URL and anon key.

@@ -1,7 +1,87 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, bookableDays, dayLabel, minutesSinceMidnightIn, todayIn } from './dates'
+import { addDays, bookableDays, canCancel, checkInState, dayLabel, minutesSinceMidnightIn, todayIn } from './dates'
+import type { Booking, Settings } from './types'
 
 const TZ = 'Europe/Prague'
+
+const settings: Settings = {
+  id: true,
+  allowed_email_domains: ['cetin.cz'],
+  timezone: TZ,
+  booking_window_days: 7,
+  am_start: '06:00:00',
+  pm_start: '13:00:00',
+  am_checkin_deadline: '10:00:00',
+  pm_checkin_deadline: '14:00:00',
+  owner_checkin_exempt: true,
+  max_days_per_week: null,
+  booking_retention_days: 90,
+  updated_at: '',
+}
+
+function booking(over: Partial<Booking> = {}): Booking {
+  return {
+    id: 'b1',
+    seat_id: 's1',
+    user_id: 'me',
+    date: '2026-11-04',
+    slot: 'AM',
+    status: 'booked',
+    checked_in_at: null,
+    created_at: '',
+    updated_at: '',
+    ...over,
+  }
+}
+
+// Wednesday 2026-11-04 in Prague (UTC+1)
+const at = (hhmm: string) => new Date(`2026-11-04T${hhmm}:00+01:00`)
+
+describe('checkInState', () => {
+  it('is open on the day before the deadline', () => {
+    expect(checkInState(booking(), settings, false, at('09:00'))).toBe('open')
+  })
+
+  it('is closed on the day after the deadline', () => {
+    expect(checkInState(booking(), settings, false, at('10:01'))).toBe('closed')
+  })
+
+  it('uses the PM deadline for afternoon bookings', () => {
+    expect(checkInState(booking({ slot: 'PM' }), settings, false, at('13:30'))).toBe('open')
+    expect(checkInState(booking({ slot: 'PM' }), settings, false, at('14:01'))).toBe('closed')
+  })
+
+  it('is not_today for a future booking', () => {
+    expect(checkInState(booking({ date: '2026-11-05' }), settings, false, at('09:00'))).toBe('not_today')
+  })
+
+  it('is exempt for the owner of a semi-fixed seat', () => {
+    expect(checkInState(booking(), settings, true, at('09:00'))).toBe('exempt')
+  })
+
+  it('is done once checked in', () => {
+    expect(checkInState(booking({ status: 'checked_in' }), settings, false, at('09:00'))).toBe('done')
+  })
+})
+
+describe('canCancel', () => {
+  it('allows cancelling a future booking', () => {
+    expect(canCancel(booking({ date: '2026-11-05' }), settings, at('23:00'))).toBe(true)
+  })
+
+  it('refuses once the half day has started', () => {
+    expect(canCancel(booking(), settings, at('09:00'))).toBe(false)
+    expect(canCancel(booking({ slot: 'PM' }), settings, at('13:00'))).toBe(false)
+  })
+
+  it('allows cancelling a later half day on the same day', () => {
+    expect(canCancel(booking({ slot: 'PM' }), settings, at('09:00'))).toBe(true)
+  })
+
+  it('refuses for anything that is not booked', () => {
+    expect(canCancel(booking({ date: '2026-11-05', status: 'checked_in' }), settings, at('09:00'))).toBe(false)
+  })
+})
 
 describe('todayIn', () => {
   it('uses the Prague calendar date, not UTC, in winter (UTC+1)', () => {

@@ -56,12 +56,17 @@ export function useSeatSchedule(seatId: string | null, fromDate: string) {
   })
 }
 
-// Office-time-zone "today"; re-evaluated every 30 s so the day strip rolls over at midnight.
-export function useToday(tz: string) {
-  const [today, setToday] = useState(() => todayIn(tz))
+// A clock that ticks every 30 s so deadline-dependent UI (check-in, cancel) updates while the app is open.
+export function useNow() {
+  const [now, setNow] = useState(() => new Date())
   useEffect(() => {
-    const id = window.setInterval(() => setToday(todayIn(tz)), 30_000)
+    const id = window.setInterval(() => setNow(new Date()), 30_000)
     return () => window.clearInterval(id)
-  }, [tz])
-  return today
+  }, [])
+  return now
+}
+
+// Office-time-zone "today"; rolls over at midnight in that zone.
+export function useToday(tz: string) {
+  return todayIn(tz, useNow())
 }

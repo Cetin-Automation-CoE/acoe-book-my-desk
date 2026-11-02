@@ -8,7 +8,9 @@ import { env } from './lib/env'
 import { errorMessage } from './lib/errors'
 import { DayView } from './pages/DayView'
 import { MyBookings } from './pages/MyBookings'
+import { MySeat } from './pages/MySeat'
 import { SignIn } from './pages/SignIn'
+import { WhoIsIn } from './pages/WhoIsIn'
 import { strings } from './strings'
 
 const queryClient = new QueryClient({
@@ -34,6 +36,8 @@ function SignedInApp() {
       <Route element={<AppShell showMySeat={ownsSeat} />}>
         <Route index element={<DayView settings={settings.data} />} />
         <Route path="bookings" element={<MyBookings settings={settings.data} />} />
+        <Route path="who" element={<WhoIsIn settings={settings.data} />} />
+        <Route path="seat" element={<MySeat settings={settings.data} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

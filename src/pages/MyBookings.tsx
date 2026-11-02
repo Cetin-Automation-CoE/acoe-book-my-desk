@@ -1,33 +1,22 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Button } from '../components/Button'
+import { CheckIcon } from '../components/icons'
 import { Sheet } from '../components/Sheet'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../hooks/useAuth'
-import { keys, useMyBookings, useProfiles, useSeats, useToday } from '../hooks/useData'
+import { keys, useMyBookings, useNow, useProfiles, useSeats } from '../hooks/useData'
 import { api } from '../lib/api'
-import { formatDayLong } from '../lib/dates'
+import { canCancel, checkInState, formatDayLong, formatTime, todayIn } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
-import type { Booking, Settings } from '../lib/types'
+import type { Booking, Seat, Settings } from '../lib/types'
 import { strings } from '../strings'
-
-function statusText(b: Booking): string {
-  switch (b.status) {
-    case 'checked_in':
-      return strings.myBookings.checkedIn
-    case 'released':
-      return strings.myBookings.released
-    case 'cancelled':
-      return strings.myBookings.cancelled
-    default:
-      return ''
-  }
-}
 
 export function MyBookings({ settings }: { settings: Settings }) {
   const { user, signOut } = useAuth()
   const userId = user!.id
-  const today = useToday(settings.timezone)
+  const now = useNow()
+  const today = todayIn(settings.timezone, now)
   const bookings = useMyBookings(userId, today)
   const seats = useSeats()
   const profiles = useProfiles()
@@ -35,7 +24,12 @@ export function MyBookings({ settings }: { settings: Settings }) {
   const queryClient = useQueryClient()
   const [toCancel, setToCancel] = useState<Booking | null>(null)
 
-  const seatCode = (id: string) => seats.data?.find((s) => s.id === id)?.code ?? '…'
+  const seatOf = (id: string): Seat | undefined => seats.data?.find((s) => s.id === id)
+  const seatCode = (id: string) => seatOf(id)?.code ?? '…'
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['my-bookings'] })
+    queryClient.invalidateQueries({ queryKey: ['bookings'] })
+  }
 
   const cancel = useMutation({
     mutationFn: (id: string) => api.cancelBooking(id),
@@ -44,14 +38,45 @@ export function MyBookings({ settings }: { settings: Settings }) {
       setToCancel(null)
     },
     onError: (err) => toast(errorMessage(err), 'error'),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-bookings'] })
-      queryClient.invalidateQueries({ queryKey: ['bookings'] })
-    },
+    onSettled: refresh,
+  })
+
+  const checkIn = useMutation({
+    mutationFn: (id: string) => api.checkIn(id),
+    onSuccess: () => toast(strings.myBookings.checkedIn),
+    onError: (err) => toast(errorMessage(err), 'error'),
+    onSettled: refresh,
   })
 
   const byDate = new Map<string, Booking[]>()
   for (const b of bookings.data ?? []) byDate.set(b.date, [...(byDate.get(b.date) ?? []), b])
+
+  const renderStatus = (b: Booking) => {
+    if (b.status === 'released') return <span className="text-sm text-accent">{strings.myBookings.released}</span>
+    if (b.status === 'cancelled') return <span className="text-sm text-muted">{strings.myBookings.cancelled}</span>
+    const ownerOfSeat = seatOf(b.seat_id)?.owner_id === userId
+    const deadline = formatTime(b.slot === 'AM' ? settings.am_checkin_deadline : settings.pm_checkin_deadline)
+    switch (checkInState(b, settings, ownerOfSeat, now)) {
+      case 'done':
+        return (
+          <span className="flex items-center gap-1 text-sm text-brand">
+            <CheckIcon width={16} height={16} /> {strings.myBookings.checkedIn}
+          </span>
+        )
+      case 'exempt':
+        return <span className="text-sm text-muted">{strings.myBookings.ownerNoCheckIn}</span>
+      case 'not_today':
+        return <span className="text-sm text-muted">{strings.myBookings.checkInBy(deadline)}</span>
+      case 'closed':
+        return <span className="text-sm text-accent">{strings.myBookings.checkInMissed}</span>
+      case 'open':
+        return (
+          <Button className="min-h-10 px-3 text-sm" onClick={() => checkIn.mutate(b.id)} disabled={checkIn.isPending}>
+            {checkIn.isPending ? strings.myBookings.checkingIn : strings.myBookings.checkIn}
+          </Button>
+        )
+    }
+  }
 
   return (
     <>
@@ -71,13 +96,13 @@ export function MyBookings({ settings }: { settings: Settings }) {
               <ul className="flex flex-col gap-2">
                 {list.map((b) => (
                   <li key={b.id} className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3">
-                    <div>
+                    <div className="flex flex-col gap-1">
                       <div className="font-semibold tabular-nums">
                         {seatCode(b.seat_id)} <span className="font-normal text-muted">· {strings.slots[b.slot]}</span>
                       </div>
-                      {statusText(b) && <div className="text-sm text-muted">{statusText(b)}</div>}
+                      {renderStatus(b)}
                     </div>
-                    {b.status === 'booked' && (
+                    {canCancel(b, settings, now) && (
                       <Button variant="secondary" className="min-h-10 px-3 text-sm" onClick={() => setToCancel(b)}>
                         {strings.myBookings.cancel}
                       </Button>

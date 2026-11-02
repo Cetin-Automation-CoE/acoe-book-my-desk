@@ -2,6 +2,7 @@
 // The database is the authority on "today" and deadlines; these helpers only mirror it for the UI.
 
 import { strings } from '../strings'
+import type { Booking, Settings } from './types'
 
 function partsIn(tz: string, at: Date): { year: number; month: number; day: number; hour: number; minute: number } {
   const parts = new Intl.DateTimeFormat('en-GB', {
@@ -74,4 +75,23 @@ export function parseTime(hhmm: string): number {
 
 export function formatTime(hhmm: string): string {
   return hhmm.slice(0, 5)
+}
+
+export type CheckInState = 'open' | 'closed' | 'not_today' | 'exempt' | 'done'
+
+export function checkInState(b: Booking, s: Settings, ownerOfSeat: boolean, now: Date = new Date()): CheckInState {
+  if (b.status === 'checked_in') return 'done'
+  if (ownerOfSeat && s.owner_checkin_exempt) return 'exempt'
+  if (b.date !== todayIn(s.timezone, now)) return 'not_today'
+  const deadline = parseTime(b.slot === 'AM' ? s.am_checkin_deadline : s.pm_checkin_deadline)
+  return minutesSinceMidnightIn(s.timezone, now) > deadline ? 'closed' : 'open'
+}
+
+export function canCancel(b: Booking, s: Settings, now: Date = new Date()): boolean {
+  if (b.status !== 'booked') return false
+  const today = todayIn(s.timezone, now)
+  if (b.date > today) return true
+  if (b.date < today) return false
+  const start = parseTime(b.slot === 'AM' ? s.am_start : s.pm_start)
+  return minutesSinceMidnightIn(s.timezone, now) < start
 }

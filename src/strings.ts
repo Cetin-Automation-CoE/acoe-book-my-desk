@@ -103,6 +103,7 @@ export const strings = {
     release: 'Release',
     takeBack: 'Take back',
     working: 'Saving…',
+    hint: 'Tap a held half day to release it, or a released one to take it back. Releasing cancels your own booking for that half day.',
   },
 
   profile: {

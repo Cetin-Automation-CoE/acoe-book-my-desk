@@ -7,9 +7,9 @@ import { Sheet } from '../components/Sheet'
 import { SlotToggle } from '../components/SlotToggle'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../hooks/useAuth'
-import { useDayBookings, useDayReleases, useProfiles, useSeats, useToday } from '../hooks/useData'
+import { useDayBookings, useDayReleases, useNow, useProfiles, useSeats } from '../hooks/useData'
 import { api } from '../lib/api'
-import { bookableDays, formatDayLong, minutesSinceMidnightIn, parseTime } from '../lib/dates'
+import { bookableDays, canCancel, checkInState, formatDayLong, minutesSinceMidnightIn, parseTime, todayIn } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
 import { seatView, type SeatView } from '../lib/seatState'
 import type { Settings, Slot, SlotChoice } from '../lib/types'
@@ -20,7 +20,8 @@ type Pending = { kind: 'book'; view: SeatView; slot: SlotChoice } | { kind: 'min
 export function DayView({ settings }: { settings: Settings }) {
   const { user } = useAuth()
   const userId = user!.id
-  const today = useToday(settings.timezone)
+  const now = useNow()
+  const today = todayIn(settings.timezone, now)
   const days = useMemo(() => bookableDays(today, settings.booking_window_days), [today, settings.booking_window_days])
   const [selectedDay, setSelected] = useState(today)
   // If the day rolled over since the last tap, fall back to today rather than a past date.
@@ -67,6 +68,19 @@ export function DayView({ settings }: { settings: Settings }) {
     mutationFn: (bookingId: string) => api.cancelBooking(bookingId),
     onSuccess: () => {
       toast(strings.myBookings.cancelled)
+      setPending(null)
+      refresh()
+    },
+    onError: (err) => {
+      toast(errorMessage(err), 'error')
+      refresh()
+    },
+  })
+
+  const checkIn = useMutation({
+    mutationFn: (bookingId: string) => api.checkIn(bookingId),
+    onSuccess: () => {
+      toast(strings.myBookings.checkedIn)
       setPending(null)
       refresh()
     },
@@ -144,18 +158,33 @@ export function DayView({ settings }: { settings: Settings }) {
       >
         {pending?.kind === 'mine' && (
           <div className="flex flex-col gap-2">
-            {pending.view.mineBookings.map((b) => (
-              <div key={b.id} className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2">
-                <span className="font-semibold">{strings.slots[b.slot as Slot]}</span>
-                {b.status === 'booked' ? (
-                  <Button variant="danger" className="min-h-10" onClick={() => cancel.mutate(b.id)} disabled={cancel.isPending}>
-                    {cancel.isPending ? strings.myBookings.cancelling : strings.myBookings.cancel}
-                  </Button>
-                ) : (
-                  <span className="text-sm text-muted">{strings.myBookings.checkedIn}</span>
-                )}
-              </div>
-            ))}
+            {pending.view.mineBookings.map((b) => {
+              const state = checkInState(b, settings, pending.view.seat.owner_id === userId, now)
+              return (
+                <div key={b.id} className="flex items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2">
+                  <span className="font-semibold">{strings.slots[b.slot as Slot]}</span>
+                  <span className="flex items-center gap-2">
+                    {state === 'open' && (
+                      <Button className="min-h-10" onClick={() => checkIn.mutate(b.id)} disabled={checkIn.isPending}>
+                        {checkIn.isPending ? strings.myBookings.checkingIn : strings.myBookings.checkIn}
+                      </Button>
+                    )}
+                    {state === 'done' && <span className="text-sm text-brand">{strings.myBookings.checkedIn}</span>}
+                    {state === 'closed' && <span className="text-sm text-accent">{strings.myBookings.checkInMissed}</span>}
+                    {canCancel(b, settings, now) && (
+                      <Button
+                        variant="danger"
+                        className="min-h-10"
+                        onClick={() => cancel.mutate(b.id)}
+                        disabled={cancel.isPending}
+                      >
+                        {cancel.isPending ? strings.myBookings.cancelling : strings.myBookings.cancel}
+                      </Button>
+                    )}
+                  </span>
+                </div>
+              )
+            })}
             <Button variant="ghost" onClick={() => setPending(null)}>
               {strings.close}
             </Button>
