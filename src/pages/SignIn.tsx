@@ -1,7 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Button } from '../components/Button'
-import { api } from '../lib/api'
 import { supabase } from '../lib/supabase'
 import { strings } from '../strings'
 
@@ -9,8 +7,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function authErrorMessage(err: { message?: string; status?: number; code?: string }): string {
   if (err.status === 429 || err.code?.includes('rate_limit')) return strings.auth.rateLimited
+  // The sign-up trigger rejects unknown addresses; Supabase reports that as a generic database error.
+  if (/database error/i.test(err.message ?? '')) return strings.auth.addressNotAllowed
   if (err.code === 'otp_expired' || /invalid|expired/i.test(err.message ?? '')) return strings.auth.invalidCode
-  if (/database error/i.test(err.message ?? '')) return strings.auth.domainNotAllowed([])
   return strings.errors.unknown
 }
 
@@ -20,17 +19,12 @@ export function SignIn() {
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const domains = useQuery({ queryKey: ['allowed-domains'], queryFn: api.allowedEmailDomains, staleTime: Infinity })
 
   const sendCode = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
     const trimmed = email.trim().toLowerCase()
     if (!EMAIL_RE.test(trimmed)) return setError(strings.auth.invalidEmail)
-    const allowed = domains.data ?? []
-    if (allowed.length > 0 && !allowed.includes(trimmed.split('@')[1])) {
-      return setError(strings.auth.domainNotAllowed(allowed))
-    }
     setBusy(true)
     const { error } = await supabase.auth.signInWithOtp({ email: trimmed, options: { shouldCreateUser: true } })
     setBusy(false)

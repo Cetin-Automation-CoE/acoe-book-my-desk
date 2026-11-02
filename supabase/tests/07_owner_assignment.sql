@@ -1,5 +1,5 @@
 begin;
-select plan(16);
+select plan(18);
 
 create schema tests_tmp;
 create function tests_tmp.create_user(p_email text, p_id uuid default gen_random_uuid()) returns uuid
@@ -91,6 +91,13 @@ select is((select count(*) from public.directory where email = 'upper.case@cetin
   'directory emails are lower-cased');
 select is((select count(*) from public.seats where code = 'T03' and owner_id is null), 1::bigint,
   'an assignment to an unknown address stays unlinked until that person signs in');
+
+-- Personal mailboxes: allowed only when an admin listed the address in the directory
+insert into public.directory (email, display_name) values ('petra.private@gmail.com', 'Petra Private');
+select lives_ok($$select tests_tmp.create_user('Petra.Private@gmail.com', 'a1000000-0000-4000-8000-000000000e01')$$,
+  'a personal address listed in the directory can sign up');
+select throws_ok($$select tests_tmp.create_user('stranger@gmail.com')$$, 'P0001', 'email_domain_not_allowed',
+  'an unlisted personal address is still rejected');
 
 select * from finish();
 rollback;

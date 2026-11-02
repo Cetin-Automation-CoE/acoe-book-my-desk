@@ -127,6 +127,11 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
   links itself when the person signs in (or immediately if they already have an account). The first
   account that matches keeps the seat, so ask owners to always use the same address.
 - **Remove an owner:** `update public.seats set owner_emails = '{}', owner_id = null where code = 'B21102';`
+- **Let someone sign in with a personal mailbox** (interim, while the company mail gateway quarantines
+  the codes): list the address in the directory and it is allowed regardless of domain —
+  `insert into public.directory (email, display_name) values ('name@gmail.com', 'Jane Doe') on conflict (email) do update set display_name = excluded.display_name;`
+  Keep personal addresses out of the repo; add them in the SQL editor. A person who uses both a work
+  and a personal address gets two separate accounts, so ask everyone to stick to one.
 - **Add colleagues' names** (so ID-style addresses do not show as "Ma077535"):
   `insert into public.directory (email, display_name) values ('ma077535@cetin.cz', 'Martin Minarovič') on conflict (email) do update set display_name = excluded.display_name;`
   The name is applied at the person's first sign-in; for existing accounts update `profiles.display_name`.
@@ -190,5 +195,6 @@ trigger a release manually.
   `check_in`, `release_my_seat`, `unrelease_my_seat`) that use `auth.uid()` and validate all rules.
   They raise short error codes (`seat_taken`, `outside_window`, …) that `src/strings.ts` translates.
 - The rules are covered by pgTAP tests in `supabase/tests` (run on every PR by CI).
-- Sign-ups are restricted to the allowed email domains by a database trigger, not only in the UI.
+- Sign-ups are restricted by a database trigger, not only in the UI: the address must be on an allowed
+  domain (`settings.allowed_email_domains`) or listed in `public.directory`.
 - The frontend ships only the Supabase URL and anon key.

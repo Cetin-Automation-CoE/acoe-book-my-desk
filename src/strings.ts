@@ -21,8 +21,8 @@ export const strings = {
 
   auth: {
     title: 'Sign in',
-    intro: 'Use your work email. We will send you a 6-digit code.',
-    emailLabel: 'Work email',
+    intro: 'Use your work email, or the personal address an admin registered for you. We will send you a 6-digit code.',
+    emailLabel: 'Email',
     emailPlaceholder: 'name@cetin.cz',
     sendCode: 'Send code',
     sending: 'Sending…',
@@ -34,8 +34,8 @@ export const strings = {
     changeEmail: 'Use a different email',
     signOut: 'Sign out',
     invalidEmail: 'Enter a valid email address.',
-    domainNotAllowed: (domains: string[]) =>
-      `Only ${domains.map((d) => `@${d}`).join(', ')} addresses can sign in.`,
+    addressNotAllowed:
+      'This address is not registered for BookMyDesk. Use your @cetin.cz address, or ask an admin to add this one.',
     invalidCode: 'That code is not valid or has expired. Request a new one.',
     rateLimited: 'Too many attempts. Wait a moment and try again.',
   },
