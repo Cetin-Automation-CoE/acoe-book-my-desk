@@ -1,0 +1,28 @@
+# Free-tier Supabase projects pause after ~7 days without activity.
+# This pings a tiny RPC twice a week so the project stays awake over holidays.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '0 6 * * 1,4' # Monday and Thursday 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call public.ping()
+        env:
+          SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY repository variables are not set; skipping."
+            exit 0
+          fi
+          curl --fail --silent --show-error -X POST "$SUPABASE_URL/rest/v1/rpc/ping" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+          echo

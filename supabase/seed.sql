@@ -1,0 +1,3 @@
+-- Development / first-run data. Applied by `supabase db reset` and `supabase start`.
+-- For the hosted project run `supabase db push --include-seed` once (see README).
+-- Tables are created in supabase/migrations; this file only inserts rows.

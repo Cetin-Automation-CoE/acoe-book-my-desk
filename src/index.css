@@ -1,0 +1,30 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Avenir Next LT Pro', 'Avenir Next', Avenir, Arial, ui-sans-serif, system-ui, sans-serif;
+
+  /* CETIN brand */
+  --color-brand: #300091;
+  --color-brand-deep: #1a0060;
+  --color-accent: #f12e49;
+  --color-sky: #41b6e6;
+  --color-lilac: #6f79bd;
+  --color-lilac-soft: #a7a4e0;
+
+  /* Digital background palette */
+  --color-surface: #f5f6fa;
+  --color-line: #d7dae1;
+  --color-line-strong: #cdd4e5;
+  --color-muted: #66678a;
+}
+
+html {
+  background: var(--color-surface);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  @apply bg-surface text-neutral-900 antialiased;
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+}
