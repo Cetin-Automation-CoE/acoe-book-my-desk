@@ -28,13 +28,13 @@ export function TodayCard({ variant, seats, selected, today, busy, onManage, onQ
           <span className="text-[12.5px] font-extrabold tracking-[-0.01em] tabular-nums">{codes[0]}</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-px">
-          <span className="text-xs font-bold uppercase leading-4 tracking-[0.04em] text-muted">{t.card.booked}</span>
-          <span className="truncate text-[17px] font-extrabold leading-[22px] tabular-nums text-ink">{codes.join(' · ')}</span>
-          <span className="truncate text-[13.5px] leading-[18px] text-muted">
+          <span className="truncate text-xs font-bold uppercase leading-4 tracking-[0.04em] text-muted">{t.card.booked}</span>
+          <span className="truncate text-base font-extrabold leading-[22px] tabular-nums text-ink">{codes.join(' · ')}</span>
+          <span className="text-[13.5px] leading-[18px] text-muted">
             {t.slots[variant.slotLabel]} · {formatDayLong(selected, today)}
           </span>
         </div>
-        <Button variant="secondary" className="min-h-11 rounded-[14px] px-[18px] text-[15px] font-extrabold" onClick={onManage}>
+        <Button variant="secondary" className="min-h-11 rounded-[14px] px-3.5 text-[15px] font-extrabold" onClick={onManage}>
           {t.card.manage}
         </Button>
       </section>
@@ -57,17 +57,17 @@ export function TodayCard({ variant, seats, selected, today, busy, onManage, onQ
         <span className="text-[12.5px] font-extrabold tracking-[-0.01em] tabular-nums">{code}</span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-px">
-        <span className={`flex items-center gap-1.5 text-xs font-bold uppercase leading-4 tracking-[0.04em] ${isAlt ? 'text-accent' : 'text-muted'}`}>
+        <span className={`flex min-w-0 items-center gap-1.5 text-xs font-bold uppercase leading-4 tracking-[0.04em] ${isAlt ? 'text-accent' : 'text-muted'}`}>
           {isAlt && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />}
-          {eyebrow}
+          <span className="truncate">{eyebrow}</span>
         </span>
-        <span className="truncate text-[17px] font-extrabold leading-[22px] tabular-nums text-ink">{code}</span>
-        <span className="truncate text-[13.5px] leading-[18px] text-muted">
+        <span className="truncate text-base font-extrabold leading-[22px] tabular-nums text-ink">{code}</span>
+        <span className="text-[13.5px] leading-[18px] text-muted">
           {t.slots[variant.slot]} · {sub}
         </span>
       </div>
       <Button
-        className="min-h-11 rounded-[14px] px-[18px] text-[15px] font-extrabold"
+        className="min-h-11 rounded-[14px] px-3.5 text-[15px] font-extrabold"
         onClick={() => onQuickBook(variant.seatId, variant.slot)}
         disabled={busy}
       >

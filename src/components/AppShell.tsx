@@ -44,7 +44,7 @@ export function AppShell({ showMySeat }: { showMySeat: boolean }) {
 
   return (
     <ShellContext.Provider value={{ openProfile: () => setProfileOpen(true), initials: initialsOf(name), name }}>
-      <div className="mx-auto min-h-dvh max-w-md">
+      <div className="min-h-dvh">
         <Outlet />
       </div>
       <nav

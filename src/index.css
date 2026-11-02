@@ -45,6 +45,7 @@
   --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Brand behind the page so an overscroll above the band stays blue. */
 html {
   background: var(--color-brand);
   -webkit-tap-highlight-color: transparent;

@@ -66,7 +66,7 @@ export function SignIn() {
 
   return (
     <main className="band flex min-h-dvh flex-col">
-      <div className="flex min-h-0 flex-1 flex-col px-6 pb-9 pt-[calc(env(safe-area-inset-top)+2rem)] text-white">
+      <div className="mx-auto flex w-full min-h-0 max-w-md flex-1 flex-col px-6 pb-9 pt-[calc(env(safe-area-inset-top)+2rem)] text-white">
         <div className="flex justify-end">
           <div className="flex rounded-xl border border-white/16 bg-white/10 p-[3px]" role="radiogroup" aria-label={t.profile.language}>
             {LANGS.map((l) => (
@@ -95,6 +95,7 @@ export function SignIn() {
       </div>
 
       <div className="shrink-0 rounded-t-[32px] bg-white px-6 pb-[calc(2.875rem+env(safe-area-inset-bottom))] pt-7 shadow-[0_-12px_40px_rgba(10,0,50,0.25)]">
+        <div className="mx-auto w-full max-w-md">
         {step === 'email' ? (
           <form onSubmit={sendCode} className="flex flex-col gap-4">
             <p className="text-[15px] leading-[22px] text-ink-soft">{t.auth.intro}</p>
@@ -183,6 +184,7 @@ export function SignIn() {
             </div>
           </form>
         )}
+        </div>
       </div>
     </main>
   )

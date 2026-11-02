@@ -33,7 +33,9 @@ function SignedInApp() {
     return (
       <main className="band flex min-h-dvh items-end">
         <div className="w-full rounded-t-[28px] bg-surface p-4 pb-10">
-          <ErrorCard error={settings.error} onRetry={() => settings.refetch()} />
+          <div className="mx-auto max-w-md">
+            <ErrorCard error={settings.error} onRetry={() => settings.refetch()} />
+          </div>
         </div>
       </main>
     )

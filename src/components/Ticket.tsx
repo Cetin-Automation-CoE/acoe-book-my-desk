@@ -39,7 +39,7 @@ export function Ticket({ date, bookings, seats, settings, today, now, index, bus
         <span className={`text-xs font-semibold leading-[15px] ${muted}`}>{label.month}</span>
         {label.relative && (
           <span
-            className={`mt-1.5 rounded-full px-2 py-0.5 text-[10.5px] font-extrabold uppercase tracking-[0.04em] ${
+            className={`mt-1.5 max-w-full truncate rounded-full px-1.5 py-0.5 text-[9.5px] font-extrabold uppercase tracking-[0.02em] ${
               hero ? 'bg-white/18 text-white' : 'bg-brand/8 text-brand'
             }`}
           >

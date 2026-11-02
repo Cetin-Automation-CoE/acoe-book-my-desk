@@ -11,10 +11,12 @@ interface PageBandProps {
 
 // The CETIN Blue header of every tab: avatar row, large title, optional figure, then whatever the
 // page puts on the band (day strip, slot toggle). The content panel overlaps its bottom by 24px.
+// Band and panel run edge to edge; only their content is kept to phone width.
 export function PageBand({ title, sub, figure, children }: PageBandProps) {
   const { openProfile, initials } = useShell()
   return (
     <header className="band px-4 pb-11 pt-[calc(env(safe-area-inset-top)+0.875rem)]">
+      <div className="mx-auto w-full max-w-md">
       <div className="flex h-11 items-center justify-end">
         <button
           type="button"
@@ -38,11 +40,16 @@ export function PageBand({ title, sub, figure, children }: PageBandProps) {
         )}
       </div>
       {children}
+      </div>
     </header>
   )
 }
 
 // The scrolling content panel under the band.
 export function Panel({ children }: { children: ReactNode }) {
-  return <div className="relative -mt-6 min-h-[480px] rounded-t-[28px] bg-surface px-4 pb-[124px] pt-5">{children}</div>
+  return (
+    <div className="relative -mt-6 min-h-[480px] rounded-t-[28px] bg-surface px-4 pb-[124px] pt-5">
+      <div className="mx-auto w-full max-w-md">{children}</div>
+    </div>
+  )
 }
