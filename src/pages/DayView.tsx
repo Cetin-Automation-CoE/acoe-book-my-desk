@@ -22,10 +22,13 @@ export function DayView({ settings }: { settings: Settings }) {
   const userId = user!.id
   const now = useNow()
   const today = todayIn(settings.timezone, now)
-  const days = useMemo(() => bookableDays(today, settings.booking_window_days), [today, settings.booking_window_days])
+  const days = useMemo(
+    () => bookableDays(today, settings.booking_window_days, settings.working_days),
+    [today, settings.booking_window_days, settings.working_days],
+  )
   const [selectedDay, setSelected] = useState(today)
-  // If the day rolled over since the last tap, fall back to today rather than a past date.
-  const selected = selectedDay < today ? today : selectedDay
+  // Fall back to the first bookable day when the selection is stale (day rolled over) or a weekend.
+  const selected = days.includes(selectedDay) ? selectedDay : days[0]
   const [choice, setChoice] = useState<SlotChoice>(() =>
     minutesSinceMidnightIn(settings.timezone) >= parseTime(settings.pm_start) ? 'PM' : 'AM',
   )

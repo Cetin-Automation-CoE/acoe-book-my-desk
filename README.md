@@ -161,7 +161,7 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | Rule | Behaviour |
 |------|-----------|
 | Slots | `AM` 06:00–13:00, `PM` 13:00–24:00 (`am_start`, `pm_start`). "Full day" books both halves atomically. |
-| Window | Today + `booking_window_days` (7). Earlier or later dates are rejected (`outside_window`). |
+| Window | Today + `booking_window_days` (7), working days only (`working_days`, default Mon–Fri). Other dates are rejected (`outside_window`, `not_working_day`). |
 | Same day | A half day can be booked until it ends. Booking after its check-in deadline counts as checked in (walk-in). |
 | Limits | One active booking per seat per half day; one per person per half day (partial unique indexes). Optional `max_days_per_week`. |
 | Check-in | "I'm here" on the day, until `am_checkin_deadline` (10:00) / `pm_checkin_deadline` (14:00). |
@@ -177,6 +177,7 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | `allowed_email_domains` | `{cetin.cz}` | Who may sign up; empty array allows everyone |
 | `timezone` | `Europe/Prague` | Office time zone for every rule |
 | `booking_window_days` | `7` | Days ahead that can be booked |
+| `working_days` | `{1,2,3,4,5}` | ISO weekdays that can be booked (1 = Mon … 7 = Sun); weekends are hidden in the app |
 | `am_start`, `pm_start` | `06:00`, `13:00` | When each half day starts (PM start is also the AM/PM split) |
 | `am_checkin_deadline`, `pm_checkin_deadline` | `10:00`, `14:00` | Check-in deadlines |
 | `owner_checkin_exempt` | `true` | Seat owners are never auto-released |

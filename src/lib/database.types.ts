@@ -147,14 +147,14 @@ isOneToOne: false
                   ]
                 },"settings": {
                   Row: {
-                    "allowed_email_domains": (string)[],"am_checkin_deadline": string,"am_start": string,"booking_retention_days": number,"booking_window_days": number,"id": boolean,"max_days_per_week": number | null,"owner_checkin_exempt": boolean,"pm_checkin_deadline": string,"pm_start": string,"timezone": string,"updated_at": string
+                    "allowed_email_domains": (string)[],"am_checkin_deadline": string,"am_start": string,"booking_retention_days": number,"booking_window_days": number,"id": boolean,"max_days_per_week": number | null,"owner_checkin_exempt": boolean,"pm_checkin_deadline": string,"pm_start": string,"timezone": string,"updated_at": string,"working_days": (number)[]
                   }
                   ComputedFields: never
                   Insert: {
-                    "allowed_email_domains"?: (string)[],"am_checkin_deadline"?: string,"am_start"?: string,"booking_retention_days"?: number,"booking_window_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"owner_checkin_exempt"?: boolean,"pm_checkin_deadline"?: string,"pm_start"?: string,"timezone"?: string,"updated_at"?: string
+                    "allowed_email_domains"?: (string)[],"am_checkin_deadline"?: string,"am_start"?: string,"booking_retention_days"?: number,"booking_window_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"owner_checkin_exempt"?: boolean,"pm_checkin_deadline"?: string,"pm_start"?: string,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Update: {
-                    "allowed_email_domains"?: (string)[],"am_checkin_deadline"?: string,"am_start"?: string,"booking_retention_days"?: number,"booking_window_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"owner_checkin_exempt"?: boolean,"pm_checkin_deadline"?: string,"pm_start"?: string,"timezone"?: string,"updated_at"?: string
+                    "allowed_email_domains"?: (string)[],"am_checkin_deadline"?: string,"am_start"?: string,"booking_retention_days"?: number,"booking_window_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"owner_checkin_exempt"?: boolean,"pm_checkin_deadline"?: string,"pm_start"?: string,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Relationships: [
                     

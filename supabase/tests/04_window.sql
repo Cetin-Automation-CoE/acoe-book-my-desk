@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(21);
 
 create schema tests_tmp;
 create function tests_tmp.create_user(p_email text, p_id uuid default gen_random_uuid()) returns uuid
@@ -86,12 +86,30 @@ select tests_tmp.login('a1000000-0000-4000-8000-000000000004');
 set local role authenticated;
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-05', 'AM')$$, 'weekly limit: first day');
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-06', 'AM')$$, 'weekly limit: second day');
-select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-07', 'AM')$$,
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-04', 'AM')$$,
   'P0001', 'weekly_limit', 'weekly limit: third distinct day in the same ISO week is rejected');
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-06', 'PM')$$,
   'weekly limit: another half of an already booked day is fine');
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-09', 'AM')$$,
   'weekly limit: next ISO week starts fresh');
+
+-- Working days: weekends are not bookable by default (2026-11-07 is a Saturday, 11-08 a Sunday)
+reset role;
+update public.settings set max_days_per_week = null;
+select tests_tmp.login('a1000000-0000-4000-8000-000000000001');
+set local role authenticated;
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-07', 'AM')$$,
+  'P0001', 'not_working_day', 'Saturday cannot be booked');
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-08', 'PM')$$,
+  'P0001', 'not_working_day', 'Sunday cannot be booked');
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-06', 'AM')$$,
+  'Friday can be booked');
+reset role;
+update public.settings set working_days = '{1,2,3,4,5,6}';
+select tests_tmp.login('a1000000-0000-4000-8000-000000000001');
+set local role authenticated;
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-07', 'AM')$$,
+  'Saturday is bookable once added to working_days');
 
 select * from finish();
 rollback;

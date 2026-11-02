@@ -119,6 +119,7 @@ export const strings = {
     not_authenticated: 'You are signed out. Sign in again.',
     invalid_slot: 'Pick a morning or afternoon slot.',
     outside_window: 'That date is outside the booking window.',
+    not_working_day: 'Seats can only be booked on working days.',
     slot_ended: 'That half day is already over.',
     seat_not_found: 'That seat does not exist.',
     seat_inactive: 'That seat is not available.',

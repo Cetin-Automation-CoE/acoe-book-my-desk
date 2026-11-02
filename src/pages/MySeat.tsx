@@ -29,7 +29,10 @@ export function MySeat({ settings }: { settings: Settings }) {
   const userId = user!.id
   const now = useNow()
   const today = todayIn(settings.timezone, now)
-  const days = useMemo(() => bookableDays(today, settings.booking_window_days), [today, settings.booking_window_days])
+  const days = useMemo(
+    () => bookableDays(today, settings.booking_window_days, settings.working_days),
+    [today, settings.booking_window_days, settings.working_days],
+  )
   const seats = useSeats()
   const seat = seats.data?.find((s) => s.owner_id === userId && s.active) ?? null
   const schedule = useSeatSchedule(seat?.id ?? null, today)

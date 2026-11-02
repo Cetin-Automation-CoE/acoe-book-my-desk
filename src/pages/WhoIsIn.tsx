@@ -16,9 +16,12 @@ interface Row {
 
 export function WhoIsIn({ settings }: { settings: Settings }) {
   const today = useToday(settings.timezone)
-  const days = useMemo(() => bookableDays(today, settings.booking_window_days), [today, settings.booking_window_days])
+  const days = useMemo(
+    () => bookableDays(today, settings.booking_window_days, settings.working_days),
+    [today, settings.booking_window_days, settings.working_days],
+  )
   const [selectedDay, setSelected] = useState(today)
-  const selected = selectedDay < today ? today : selectedDay
+  const selected = days.includes(selectedDay) ? selectedDay : days[0]
 
   const bookings = useDayBookings(selected)
   const seats = useSeats()

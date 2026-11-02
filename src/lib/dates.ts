@@ -36,8 +36,17 @@ export function addDays(isoDate: string, days: number): string {
   return `${utc.getUTCFullYear()}-${pad(utc.getUTCMonth() + 1)}-${pad(utc.getUTCDate())}`
 }
 
-export function bookableDays(today: string, windowDays: number): string[] {
-  return Array.from({ length: windowDays + 1 }, (_, i) => addDays(today, i))
+// ISO weekday: 1 = Monday … 7 = Sunday.
+export function isoWeekday(isoDate: string): number {
+  const [y, m, d] = isoDate.split('-').map(Number)
+  const dow = new Date(Date.UTC(y, m - 1, d)).getUTCDay()
+  return dow === 0 ? 7 : dow
+}
+
+export function bookableDays(today: string, windowDays: number, workingDays: readonly number[]): string[] {
+  return Array.from({ length: windowDays + 1 }, (_, i) => addDays(today, i)).filter((d) =>
+    workingDays.includes(isoWeekday(d)),
+  )
 }
 
 export interface DayLabel {

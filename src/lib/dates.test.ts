@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, bookableDays, canCancel, checkInState, dayLabel, minutesSinceMidnightIn, todayIn } from './dates'
+import {
+  addDays,
+  bookableDays,
+  canCancel,
+  checkInState,
+  dayLabel,
+  isoWeekday,
+  minutesSinceMidnightIn,
+  todayIn,
+} from './dates'
 import type { Booking, Settings } from './types'
 
 const TZ = 'Europe/Prague'
@@ -16,6 +25,7 @@ const settings: Settings = {
   owner_checkin_exempt: true,
   max_days_per_week: null,
   booking_retention_days: 90,
+  working_days: [1, 2, 3, 4, 5],
   updated_at: '',
 }
 
@@ -117,15 +127,36 @@ describe('addDays', () => {
 })
 
 describe('bookableDays', () => {
-  it('returns today plus the window length', () => {
-    const days = bookableDays('2026-11-03', 7)
+  const ALL = [1, 2, 3, 4, 5, 6, 7]
+  const WEEKDAYS = [1, 2, 3, 4, 5]
+
+  it('returns today plus the window length when every day is a working day', () => {
+    const days = bookableDays('2026-11-03', 7, ALL)
     expect(days).toHaveLength(8)
     expect(days[0]).toBe('2026-11-03')
     expect(days[7]).toBe('2026-11-10')
   })
 
   it('returns only today for a zero-day window', () => {
-    expect(bookableDays('2026-11-03', 0)).toEqual(['2026-11-03'])
+    expect(bookableDays('2026-11-03', 0, ALL)).toEqual(['2026-11-03'])
+  })
+
+  it('drops the weekend from the window', () => {
+    // Tuesday 3 Nov + 7 days = Tue..Tue; Sat 7 and Sun 8 are removed
+    expect(bookableDays('2026-11-03', 7, WEEKDAYS)).toEqual([
+      '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-09', '2026-11-10',
+    ])
+  })
+
+  it('starts on Monday when today is a Saturday', () => {
+    expect(bookableDays('2026-11-07', 7, WEEKDAYS)[0]).toBe('2026-11-09')
+  })
+})
+
+describe('isoWeekday', () => {
+  it('gives 1 for Monday and 7 for Sunday', () => {
+    expect(isoWeekday('2026-11-02')).toBe(1)
+    expect(isoWeekday('2026-11-08')).toBe(7)
   })
 })
 
