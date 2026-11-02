@@ -14,6 +14,7 @@ export const keys = {
   presence: (from: string, to: string) => ['bookings', 'range', from, to] as const,
   stats: (userId: string) => ['progress', 'stats', userId] as const,
   badges: (userId: string) => ['progress', 'badges', userId] as const,
+  myRecent: (userId: string, from: string, to: string) => ['my-bookings', 'recent', userId, from, to] as const,
 }
 
 export function useSettings() {
@@ -56,6 +57,17 @@ export function useStats(userId: string) {
 export function useBadges(userId: string) {
   return useQuery({ queryKey: keys.badges(userId), queryFn: () => api.myBadges(userId) })
 }
+
+// My bookings over the recent past, for the "usual seat" suggestion.
+export function useMyRecentBookings(userId: string, fromDate: string, toDate: string) {
+  return useQuery({
+    queryKey: keys.myRecent(userId, fromDate, toDate),
+    queryFn: () => api.myRecentBookings(userId, fromDate, toDate),
+    staleTime: 5 * 60_000,
+  })
+}
+
+export const useData = { badges: useBadges }
 
 export function useSeatSchedule(seatId: string | null, fromDate: string) {
   return useQuery({

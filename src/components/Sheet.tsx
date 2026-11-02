@@ -1,14 +1,17 @@
 import { useEffect, type ReactNode } from 'react'
-import { strings } from '../strings'
+import { useT } from '../hooks/useLang'
 
 interface SheetProps {
   open: boolean
+  // Accessible name; shown as a heading only when `heading` is true.
   title: string
+  heading?: boolean
   onClose: () => void
   children: ReactNode
 }
 
-export function Sheet({ open, title, onClose, children }: SheetProps) {
+export function Sheet({ open, title, heading = false, onClose, children }: SheetProps) {
+  const t = useT()
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -20,9 +23,10 @@ export function Sheet({ open, title, onClose, children }: SheetProps) {
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
-      <button type="button" className="absolute inset-0 bg-brand-deep/40" aria-label={strings.close} onClick={onClose} />
-      <div className="sheet-panel relative w-full max-w-md rounded-t-2xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(48,0,145,0.15)]">
-        <h2 className="mb-3 text-lg font-bold text-neutral-900">{title}</h2>
+      <button type="button" className="sheet-overlay absolute inset-0 bg-brand-deep/45" aria-label={t.close} onClick={onClose} />
+      <div className="sheet-panel relative w-full max-w-md rounded-t-[32px] bg-white px-5 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-2 shadow-sheet">
+        <div aria-hidden className="mx-auto mb-4 h-[5px] w-[38px] rounded-full bg-line" />
+        {heading && <h2 className="mb-2 text-[21px] font-extrabold leading-[26px] text-ink">{title}</h2>}
         {children}
       </div>
     </div>

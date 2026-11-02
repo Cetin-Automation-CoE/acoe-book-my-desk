@@ -1,15 +1,16 @@
 import { useEffect } from 'react'
 import { useToast } from '../components/Toast'
 import type { BadgeKey } from '../lib/progress'
-import { strings } from '../strings'
-import { useBadges } from './useData'
+import { useData } from './useData'
+import { useT } from './useLang'
 
 // Announces badges that appeared since this device last saw the list — right after a same-day
 // booking, or on the next open when the counting job awarded one in between. The very first load
 // on a device only records what is already earned.
 export function useBadgeToasts(userId: string) {
-  const badges = useBadges(userId)
+  const badges = useData.badges(userId)
   const toast = useToast()
+  const t = useT()
   const storageKey = `bmd:badges-seen:${userId}`
 
   useEffect(() => {
@@ -25,14 +26,14 @@ export function useBadgeToasts(userId: string) {
     if (seen) {
       for (const key of keys) {
         if (seen.includes(key)) continue
-        const badge = strings.badges[key as BadgeKey]
-        if (badge) toast(strings.progress.newBadge(badge.name))
+        const badge = t.badges[key as BadgeKey]
+        if (badge) toast(t.progress.newBadge(badge.name))
       }
     }
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(keys))
     } catch {
-      // Private mode or blocked storage: badges still show on My bookings.
+      // Private mode or blocked storage: badges still show in the profile sheet.
     }
-  }, [badges.data, toast, storageKey])
+  }, [badges.data, toast, storageKey, t])
 }

@@ -6,6 +6,7 @@
   /* CETIN brand */
   --color-brand: #300091;
   --color-brand-deep: #1a0060;
+  --color-brand-hi: #5a33d6;
   --color-accent: #f12e49;
   --color-sky: #41b6e6;
   --color-lilac: #6f79bd;
@@ -16,35 +17,136 @@
   --color-line: #d7dae1;
   --color-line-strong: #cdd4e5;
   --color-muted: #66678a;
+  --color-taken: #eff0f5;
+  --color-taken-ink: #9497b0;
+  --color-ink: #171717;
+  --color-ink-soft: #404040;
+  --color-rule: #eef0f4;
+  --color-divider: #e3e5ee;
+
+  --shadow-card: 0 1px 2px rgba(26, 0, 96, 0.05), 0 10px 24px rgba(26, 0, 96, 0.06);
+  --shadow-card-raised: 0 1px 2px rgba(26, 0, 96, 0.05), 0 14px 32px rgba(26, 0, 96, 0.1);
+  --shadow-brand: 0 10px 22px rgba(48, 0, 145, 0.3);
+  --shadow-mine: 0 10px 22px rgba(48, 0, 145, 0.32);
+  --shadow-pill: 0 10px 22px rgba(10, 0, 50, 0.3);
+  --shadow-nav: 0 12px 32px rgba(26, 0, 96, 0.18), 0 1px 3px rgba(26, 0, 96, 0.08);
+  --shadow-sheet: 0 -12px 40px rgba(26, 0, 96, 0.22);
+  --shadow-toast: 0 14px 34px rgba(10, 0, 50, 0.35);
+  --shadow-focus: 0 0 0 4px rgba(48, 0, 145, 0.14);
+  --shadow-flash: 0 0 0 4px rgba(65, 182, 230, 0.9);
+  --shadow-selected: 0 0 0 4px rgba(48, 0, 145, 0.22);
+  --shadow-danger: 0 10px 22px rgba(241, 46, 73, 0.28);
+  --shadow-ticket: 0 16px 34px rgba(48, 0, 145, 0.32);
+  --shadow-white-btn: 0 8px 18px rgba(10, 0, 50, 0.3);
+  --shadow-toggle: 0 6px 16px rgba(10, 0, 50, 0.25);
+  --shadow-icon: 0 18px 40px rgba(10, 0, 50, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.12);
+  --shadow-cell-mine: 0 8px 18px rgba(48, 0, 145, 0.28);
+
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 html {
-  background: var(--color-surface);
+  background: var(--color-brand);
   -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  @apply bg-surface text-neutral-900 antialiased;
+  @apply bg-surface text-ink antialiased;
   min-height: 100dvh;
   overscroll-behavior-y: none;
 }
 
+/* The CETIN Blue band behind every tab header: two soft glows and a faint 22px floor-plan grid. */
+.band {
+  color: #fff;
+  background-color: var(--color-brand);
+  background-image:
+    radial-gradient(120% 90% at 100% 0%, rgba(111, 121, 189, 0.55) 0%, rgba(48, 0, 145, 0) 60%),
+    radial-gradient(90% 70% at 0% 100%, rgba(65, 182, 230, 0.18) 0%, rgba(48, 0, 145, 0) 60%),
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    100% 100%,
+    22px 22px,
+    22px 22px;
+}
+
+/* "Mine" gradient: my seat tile, today's ticket, sheet badge, avatar, future-booking badge. */
+.bg-mine {
+  background: radial-gradient(120% 120% at 100% 0%, #5a33d6 0%, #300091 55%);
+}
+
+/* Sheets slide up; the overlay fades. */
 @keyframes sheet-in {
   from {
-    transform: translateY(100%);
+    transform: translateY(110%);
   }
   to {
     transform: translateY(0);
   }
 }
-
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
 .sheet-panel {
-  animation: sheet-in 180ms ease-out;
+  animation: sheet-in 320ms var(--ease-out-soft);
+}
+.sheet-overlay {
+  animation: fade-in 250ms ease;
+}
+
+/* Toasts drop in from the top. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.toast-panel {
+  animation: toast-in 300ms var(--ease-out-soft);
+}
+
+/* Staggered enter for lists: set --i on each item. */
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.enter {
+  animation: enter-up 550ms var(--ease-out-soft) both;
+  animation-delay: calc(var(--i, 0) * 32ms);
+}
+
+/* Realtime flash on a tile that was just taken. */
+.flash {
+  box-shadow: var(--shadow-flash);
+  transition: box-shadow 700ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sheet-panel {
+  .sheet-panel,
+  .sheet-overlay,
+  .toast-panel,
+  .enter {
     animation: none;
+  }
+  .flash {
+    transition: none;
   }
 }
 

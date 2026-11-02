@@ -1,56 +1,95 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useBadgeToasts } from '../hooks/useBadgeToasts'
-import { useRealtime } from '../hooks/useRealtime'
-import { strings } from '../strings'
+import { useMyBookings, useNow, useProfiles, useSeats } from '../hooks/useData'
+import { useT } from '../hooks/useLang'
+import { checkInState, todayIn } from '../lib/dates'
+import { initialsOf } from '../lib/people'
+import type { Settings } from '../lib/types'
 import { BookmarkIcon, DeskIcon, PeopleIcon, StarIcon } from './icons'
+import { ProfileSheet } from './ProfileSheet'
 
-export interface NavItem {
-  to: string
-  label: string
-  icon: typeof DeskIcon
+interface ShellApi {
+  openProfile: () => void
+  initials: string
+  name: string
 }
 
-const items: NavItem[] = [
-  { to: '/', label: strings.nav.book, icon: DeskIcon },
-  { to: '/bookings', label: strings.nav.myBookings, icon: BookmarkIcon },
-  { to: '/who', label: strings.nav.whoIsIn, icon: PeopleIcon },
-]
+const ShellContext = createContext<ShellApi>({ openProfile: () => {}, initials: '', name: '' })
 
-export function AppShell({ showMySeat }: { showMySeat: boolean }) {
+export function useShell() {
+  return useContext(ShellContext)
+}
+
+export function AppShell({ showMySeat, settings }: { showMySeat: boolean; settings: Settings }) {
+  const t = useT()
   const { user } = useAuth()
-  useRealtime()
-  useBadgeToasts(user!.id)
-  const nav = showMySeat ? [...items, { to: '/seat', label: strings.nav.mySeat, icon: StarIcon }] : items
+  const userId = user!.id
+  const location = useLocation()
+  const now = useNow()
+  const today = todayIn(settings.timezone, now)
+  const profiles = useProfiles()
+  const seats = useSeats()
+  const myToday = useMyBookings(userId, today)
+  const [profileOpen, setProfileOpen] = useState(false)
+  useBadgeToasts(userId)
+
+  // Tab switch: start at the top.
+  useEffect(() => {
+    window.scrollTo({ top: 0 })
+  }, [location.pathname])
+
+  const name = profiles.data?.get(userId) ?? ''
+  const checkInOpen = (myToday.data ?? []).some(
+    (b) =>
+      b.date === today &&
+      checkInState(b, settings, seats.data?.find((s) => s.id === b.seat_id)?.owner_id === userId, now) === 'open',
+  )
+
+  const items: { to: string; label: string; icon: typeof DeskIcon; dot?: boolean }[] = [
+    { to: '/', label: t.nav.book, icon: DeskIcon },
+    { to: '/bookings', label: t.nav.myBookings, icon: BookmarkIcon, dot: checkInOpen },
+    { to: '/who', label: t.nav.whoIsIn, icon: PeopleIcon },
+  ]
+  if (showMySeat) items.push({ to: '/seat', label: t.nav.mySeat, icon: StarIcon })
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col">
-      <main className="flex-1 px-4 pb-28 pt-[calc(1rem+env(safe-area-inset-top))]">
+    <ShellContext.Provider value={{ openProfile: () => setProfileOpen(true), initials: initialsOf(name), name }}>
+      <div className="mx-auto min-h-dvh max-w-md">
         <Outlet />
-      </main>
+      </div>
       <nav
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-3.5 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md gap-0.5 rounded-[26px] border border-white/70 bg-white/86 p-1.5 shadow-nav backdrop-blur-[20px] backdrop-saturate-[1.8]"
         aria-label="Main"
       >
-        <ul className="mx-auto flex max-w-md">
-          {nav.map(({ to, label, icon: Icon }) => (
-            <li key={to} className="flex-1">
-              <NavLink
-                to={to}
-                end={to === '/'}
-                className={({ isActive }) =>
-                  `flex flex-col items-center gap-0.5 px-1 py-2 text-[11px] font-semibold ${
-                    isActive ? 'text-brand' : 'text-muted'
-                  }`
-                }
-              >
-                <Icon />
-                <span>{label}</span>
-              </NavLink>
-            </li>
-          ))}
-        </ul>
+        {items.map(({ to, label, icon: Icon, dot }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === '/'}
+            className={({ isActive }) =>
+              `relative flex flex-1 flex-col items-center gap-0.5 rounded-[20px] px-0.5 pb-1.5 pt-[7px] text-[11px] font-bold leading-[14px] transition ${
+                isActive ? 'bg-brand/9 text-brand' : 'text-muted'
+              }`
+            }
+          >
+            <Icon />
+            <span className="whitespace-nowrap">{label}</span>
+            {dot && (
+              <span
+                aria-hidden
+                className="absolute left-[calc(50%+8px)] top-1 h-[9px] w-[9px] rounded-full border-2 border-white bg-accent box-content"
+              />
+            )}
+          </NavLink>
+        ))}
       </nav>
-    </div>
+      <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} userId={userId} name={name} email={user?.email ?? ''} />
+    </ShellContext.Provider>
   )
+}
+
+export function ShellProviders({ children }: { children: ReactNode }) {
+  return children
 }

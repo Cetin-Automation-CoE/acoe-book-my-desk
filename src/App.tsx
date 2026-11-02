@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from './components/AppShell'
+import { ErrorCard } from './components/States'
 import { ToastProvider } from './components/Toast'
 import { AuthProvider, useAuth } from './hooks/useAuth'
 import { useSeats, useSettings } from './hooks/useData'
+import { LangProvider, useT } from './hooks/useLang'
+import { RealtimeProvider } from './hooks/useRealtime'
 import { env } from './lib/env'
-import { errorMessage } from './lib/errors'
 import { DayView } from './pages/DayView'
 import { MyBookings } from './pages/MyBookings'
 import { MySeat } from './pages/MySeat'
@@ -22,31 +24,48 @@ function Centered({ children }: { children: React.ReactNode }) {
 }
 
 function SignedInApp() {
+  const t = useT()
   const { user } = useAuth()
   const settings = useSettings()
   const seats = useSeats()
 
-  if (settings.error) return <Centered><p className="text-accent">{errorMessage(settings.error)}</p></Centered>
-  if (!settings.data) return <Centered><p className="text-muted">{strings.loading}</p></Centered>
+  if (settings.error) {
+    return (
+      <main className="band flex min-h-dvh items-end">
+        <div className="w-full rounded-t-[28px] bg-surface p-4 pb-10">
+          <ErrorCard error={settings.error} onRetry={() => settings.refetch()} />
+        </div>
+      </main>
+    )
+  }
+  if (!settings.data) {
+    return (
+      <main className="band min-h-dvh">
+        <p className="sr-only">{t.loading}</p>
+      </main>
+    )
+  }
 
   const ownsSeat = (seats.data ?? []).some((s) => s.owner_id === user?.id && s.active)
 
   return (
-    <Routes>
-      <Route element={<AppShell showMySeat={ownsSeat} />}>
-        <Route index element={<DayView settings={settings.data} />} />
-        <Route path="bookings" element={<MyBookings settings={settings.data} />} />
-        <Route path="who" element={<WhoIsIn settings={settings.data} />} />
-        <Route path="seat" element={<MySeat settings={settings.data} />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+    <RealtimeProvider>
+      <Routes>
+        <Route element={<AppShell showMySeat={ownsSeat} settings={settings.data} />}>
+          <Route index element={<DayView settings={settings.data} />} />
+          <Route path="bookings" element={<MyBookings settings={settings.data} />} />
+          <Route path="who" element={<WhoIsIn settings={settings.data} />} />
+          <Route path="seat" element={<MySeat settings={settings.data} />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </RealtimeProvider>
   )
 }
 
 function Gate() {
   const { session, loading } = useAuth()
-  if (loading) return <Centered><p className="text-muted">{strings.loading}</p></Centered>
+  if (loading) return <main className="band min-h-dvh" />
   return session ? <SignedInApp /> : <SignIn />
 }
 
@@ -60,13 +79,15 @@ export default function App() {
   }
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
-          <HashRouter>
-            <Gate />
-          </HashRouter>
-        </ToastProvider>
-      </AuthProvider>
+      <LangProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <HashRouter>
+              <Gate />
+            </HashRouter>
+          </ToastProvider>
+        </AuthProvider>
+      </LangProvider>
     </QueryClientProvider>
   )
 }

@@ -1,7 +1,7 @@
 // Calendar dates are ISO strings (YYYY-MM-DD) in the office time zone; instants are Date objects.
 // The database is the authority on "today" and deadlines; these helpers only mirror it for the UI.
 
-import { strings } from '../strings'
+import { getLang, getStrings } from '../strings'
 import type { Booking, Settings } from './types'
 
 function partsIn(tz: string, at: Date): { year: number; month: number; day: number; hour: number; minute: number } {
@@ -19,6 +19,7 @@ function partsIn(tz: string, at: Date): { year: number; month: number; day: numb
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
+const locale = () => (getLang() === 'cs' ? 'cs-CZ' : 'en-GB')
 
 export function todayIn(tz: string, at: Date = new Date()): string {
   const { year, month, day } = partsIn(tz, at)
@@ -28,6 +29,12 @@ export function todayIn(tz: string, at: Date = new Date()): string {
 export function minutesSinceMidnightIn(tz: string, at: Date = new Date()): number {
   const { hour, minute } = partsIn(tz, at)
   return hour * 60 + minute
+}
+
+// "08:40" wall-clock time of an instant in the office time zone.
+export function clockIn(tz: string, at: Date): string {
+  const { hour, minute } = partsIn(tz, at)
+  return `${pad(hour)}:${pad(minute)}`
 }
 
 export function addDays(isoDate: string, days: number): string {
@@ -49,32 +56,71 @@ export function bookableDays(today: string, windowDays: number, workingDays: rea
   )
 }
 
+// Dates in the strip that do not directly follow the previous one (Friday → Monday) get a gap before them.
+export function gapsBefore(days: readonly string[]): Set<string> {
+  const gaps = new Set<string>()
+  for (let i = 1; i < days.length; i++) if (addDays(days[i - 1], 1) !== days[i]) gaps.add(days[i])
+  return gaps
+}
+
 export interface DayLabel {
   weekday: string
+  weekdayLong: string
   day: string
   month: string
   relative?: string
 }
 
-export function dayLabel(isoDate: string, today: string): DayLabel {
+function utcDate(isoDate: string): Date {
   const [y, m, d] = isoDate.split('-').map(Number)
-  const date = new Date(Date.UTC(y, m - 1, d))
-  const fmt = (opts: Intl.DateTimeFormatOptions) =>
-    new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', ...opts }).format(date)
+  return new Date(Date.UTC(y, m - 1, d))
+}
+
+const fmt = (date: Date, opts: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat(locale(), { timeZone: 'UTC', ...opts }).format(date)
+
+export function dayLabel(isoDate: string, today: string): DayLabel {
+  const date = utcDate(isoDate)
   const label: DayLabel = {
-    weekday: fmt({ weekday: 'short' }),
-    day: String(d),
-    month: fmt({ month: 'short' }),
+    weekday: fmt(date, { weekday: 'short' }).replace(/\.$/, ''),
+    weekdayLong: fmt(date, { weekday: 'long' }),
+    day: String(date.getUTCDate()),
+    month: fmt(date, { month: 'short' }).replace(/\.$/, ''),
   }
-  if (isoDate === today) label.relative = strings.days.today
-  else if (isoDate === addDays(today, 1)) label.relative = strings.days.tomorrow
+  const days = getStrings().days
+  if (isoDate === today) label.relative = days.today
+  else if (isoDate === addDays(today, 1)) label.relative = days.tomorrow
   return label
 }
 
+// "Thu 5 Nov" / "čt 5. 11."
+export function formatDayShort(isoDate: string): string {
+  const l = dayLabel(isoDate, '')
+  return getLang() === 'cs' ? `${l.weekday} ${l.day}. ${utcDate(isoDate).getUTCMonth() + 1}.` : `${l.weekday} ${l.day} ${l.month}`
+}
+
+// "Today, Thu 5 Nov" / "Dnes, čt 5. 11."
 export function formatDayLong(isoDate: string, today: string): string {
   const l = dayLabel(isoDate, today)
-  const base = `${l.weekday} ${l.day} ${l.month}`
+  const base = formatDayShort(isoDate)
   return l.relative ? `${l.relative}, ${base}` : base
+}
+
+// Band sub line: "Monday, 2 November" / "pondělí 2. listopadu"; without the weekday: "2 November".
+export function formatBandDate(isoDate: string, withWeekday: boolean): string {
+  const date = utcDate(isoDate)
+  if (getLang() === 'cs') {
+    const dm = fmt(date, { day: 'numeric', month: 'long' })
+    return withWeekday ? `${fmt(date, { weekday: 'long' })} ${dm}` : dm
+  }
+  const dm = `${date.getUTCDate()} ${fmt(date, { month: 'long' })}`
+  return withWeekday ? `${fmt(date, { weekday: 'long' })}, ${dm}` : dm
+}
+
+// Band title: "Today" / "Tomorrow" / "Thursday".
+export function dayTitle(isoDate: string, today: string): string {
+  const l = dayLabel(isoDate, today)
+  return l.relative ?? l.weekdayLong.charAt(0).toUpperCase() + l.weekdayLong.slice(1)
 }
 
 export function parseTime(hhmm: string): number {
@@ -103,4 +149,23 @@ export function canCancel(b: Booking, s: Settings, now: Date = new Date()): bool
   if (b.date < today) return false
   const start = parseTime(b.slot === 'AM' ? s.am_start : s.pm_start)
   return minutesSinceMidnightIn(s.timezone, now) < start
+}
+
+export function slotStart(slot: Booking['slot'], s: Settings): number {
+  return parseTime(slot === 'AM' ? s.am_start : s.pm_start)
+}
+
+export function slotEnd(slot: Booking['slot'], s: Settings): number {
+  return slot === 'AM' ? parseTime(s.pm_start) : 24 * 60
+}
+
+export function slotDeadline(slot: Booking['slot'], s: Settings): number {
+  return parseTime(slot === 'AM' ? s.am_checkin_deadline : s.pm_checkin_deadline)
+}
+
+// "06:00–13:00" for the booking sheet's slot cards.
+export function slotRange(slot: 'AM' | 'PM' | 'FULL', s: Settings): string {
+  const start = slot === 'PM' ? s.pm_start : s.am_start
+  const end = slot === 'AM' ? s.pm_start : '24:00'
+  return `${formatTime(start)}–${formatTime(end)}`
 }

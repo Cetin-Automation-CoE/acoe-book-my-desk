@@ -21,7 +21,7 @@ export default defineConfig({
         description: 'Book a seat in the office open space.',
         lang: 'en',
         theme_color: '#300091',
-        background_color: '#ffffff',
+        background_color: '#300091',
         display: 'standalone',
         start_url: './',
         scope: './',

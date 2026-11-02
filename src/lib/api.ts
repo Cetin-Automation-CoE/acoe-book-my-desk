@@ -76,6 +76,19 @@ export const api = {
     return unwrap(await supabase.from('achievements').select('*').eq('user_id', userId).order('earned_at'))
   },
 
+  // Everything I booked in a date range except cancellations (for the "usual seat" suggestion).
+  async myRecentBookings(userId: string, fromDate: string, toDate: string): Promise<Pick<Booking, 'seat_id' | 'date'>[]> {
+    return unwrap(
+      await supabase
+        .from('bookings')
+        .select('seat_id, date')
+        .eq('user_id', userId)
+        .gte('date', fromDate)
+        .lte('date', toDate)
+        .neq('status', 'cancelled'),
+    )
+  },
+
   async bookSeat(seatId: string, date: string, slot: SlotChoice): Promise<Booking[]> {
     return unwrap(await supabase.rpc('book_seat', { p_seat_id: seatId, p_date: date, p_slot: slot }))
   },

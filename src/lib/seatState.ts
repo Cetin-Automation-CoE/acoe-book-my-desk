@@ -1,6 +1,11 @@
 import { ACTIVE_STATUSES, slotsFor, type Booking, type Release, type Seat, type Slot, type SlotChoice } from './types'
 
 export type SeatKind = 'free' | 'partly' | 'mine' | 'taken' | 'held' | 'inactive'
+export type HalfState = 'free' | 'mine' | 'taken' | 'held'
+export interface Half {
+  state: HalfState
+  booking?: Booking
+}
 
 export interface SeatView {
   seat: Seat
@@ -11,6 +16,8 @@ export interface SeatView {
   mineBookings: Booking[]
   takenBy: string[]
   heldSlots: Slot[]
+  // Per wanted half: who has it (for captions, glyphs and the mini map).
+  halves: Partial<Record<Slot, Half>>
 }
 
 interface SeatViewArgs {
@@ -35,6 +42,7 @@ export function seatView({ seat, date, bookings, releases, choice, userId }: Sea
     mineBookings: [],
     takenBy: [],
     heldSlots: [],
+    halves: {},
   }
 
   if (!seat.active) return { ...view, kind: 'inactive' }
@@ -47,8 +55,10 @@ export function seatView({ seat, date, bookings, releases, choice, userId }: Sea
       if (booking.user_id === userId) {
         view.mineSlots.push(slot)
         view.mineBookings.push(booking)
+        view.halves[slot] = { state: 'mine', booking }
       } else {
         view.takenBy.push(booking.user_id)
+        view.halves[slot] = { state: 'taken', booking }
       }
       continue
     }
@@ -56,8 +66,13 @@ export function seatView({ seat, date, bookings, releases, choice, userId }: Sea
     // A seat assigned by email is held even before its owner has signed in (owner_id still null).
     const semiFixed = seat.owner_id !== null || seat.owner_emails.length > 0
     const heldByOwner = semiFixed && seat.owner_id !== userId && !released
-    if (heldByOwner) view.heldSlots.push(slot)
-    else view.bookableSlots.push(slot)
+    if (heldByOwner) {
+      view.heldSlots.push(slot)
+      view.halves[slot] = { state: 'held' }
+    } else {
+      view.bookableSlots.push(slot)
+      view.halves[slot] = { state: 'free' }
+    }
   }
 
   if (view.mineSlots.length === wantedSlots.length) view.kind = 'mine'
