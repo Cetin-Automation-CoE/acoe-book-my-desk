@@ -5,8 +5,8 @@ import { supabase } from '../lib/supabase'
 import type { Lang, Strings } from '../strings'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const CODE_BOXES = 6
-const CODE_MAX = 10
+// Exactly six digits: the hosted project's Email OTP Length must be 6 (README, production setup).
+const CODE_LENGTH = 6
 const LANGS: Lang[] = ['en', 'cs']
 
 function authErrorMessage(t: Strings, err: { message?: string; status?: number; code?: string }): string {
@@ -43,16 +43,24 @@ export function SignIn() {
     setStep('code')
   }
 
-  const verify = async (e: FormEvent) => {
-    e.preventDefault()
+  const verify = async (token: string, e?: FormEvent) => {
+    e?.preventDefault()
+    if (token.length !== CODE_LENGTH || busy) return
     setError(null)
     setBusy(true)
-    const { error } = await supabase.auth.verifyOtp({ email, token: code.trim(), type: 'email' })
+    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
     setBusy(false)
     if (error) setError(authErrorMessage(t, error))
   }
 
-  const boxes = Math.max(CODE_BOXES, code.length)
+  // Typing the sixth digit submits; the button stays for pasted codes and retries.
+  const onCode = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, CODE_LENGTH)
+    setCode(digits)
+    if (error) setError(null)
+    if (digits.length === CODE_LENGTH) void verify(digits)
+  }
+
   const inputClass =
     'min-h-14 rounded-[14px] border-[1.5px] border-line-strong bg-white px-4 text-[17px] text-ink outline-none focus:border-brand focus:shadow-focus'
 
@@ -110,14 +118,14 @@ export function SignIn() {
             </Button>
           </form>
         ) : (
-          <form onSubmit={verify} className="flex flex-col gap-4">
+          <form onSubmit={(e) => verify(code, e)} className="flex flex-col gap-4">
             <p className="text-[15px] leading-[22px] text-ink-soft">{notice ?? t.auth.codeSentTo(email)}</p>
             <div className="flex flex-col gap-1.5">
               <span className="text-[13px] font-bold">{t.auth.codeLabel}</span>
-              <div className="relative grid gap-2" style={{ gridTemplateColumns: `repeat(${boxes}, minmax(0, 1fr))` }}>
-                {Array.from({ length: boxes }, (_, i) => {
+              <div className="relative grid grid-cols-6 gap-2">
+                {Array.from({ length: CODE_LENGTH }, (_, i) => {
                   const ch = code[i] ?? ''
-                  const active = codeFocus && i === Math.min(code.length, boxes - 1)
+                  const active = codeFocus && i === Math.min(code.length, CODE_LENGTH - 1)
                   const box = error
                     ? 'border-accent'
                     : active
@@ -139,21 +147,21 @@ export function SignIn() {
                   type="text"
                   inputMode="numeric"
                   autoComplete="one-time-code"
-                  pattern="[0-9]{6,10}"
-                  maxLength={CODE_MAX}
+                  pattern="[0-9]{6}"
+                  maxLength={CODE_LENGTH}
                   autoFocus
                   required
                   aria-label={t.auth.codeLabel}
                   value={code}
                   onFocus={() => setCodeFocus(true)}
                   onBlur={() => setCodeFocus(false)}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, CODE_MAX))}
+                  onChange={(e) => onCode(e.target.value)}
                   className="absolute inset-0 h-full w-full cursor-text opacity-0"
                 />
               </div>
             </div>
             {error && <p className="text-sm font-semibold leading-5 text-accent">{error}</p>}
-            <Button type="submit" disabled={busy || code.length < CODE_BOXES}>
+            <Button type="submit" disabled={busy || code.length !== CODE_LENGTH}>
               {busy ? t.auth.verifying : t.auth.verify}
             </Button>
             <div className="flex justify-between gap-2">
