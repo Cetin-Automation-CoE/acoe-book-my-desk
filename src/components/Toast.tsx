@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 
 type Tone = 'info' | 'error'
 interface Toast {
@@ -8,15 +8,41 @@ interface Toast {
 
 const ToastContext = createContext<(message: string, tone?: Tone) => void>(() => {})
 
+// Info toasts queue up so "Checked in" and a badge earned right after it are both seen;
+// an error jumps the queue and drops whatever was waiting.
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<Toast | null>(null)
+  const queue = useRef<Toast[]>([])
+  const showing = useRef(false)
   const timer = useRef<number | undefined>(undefined)
 
-  const show = useCallback((message: string, tone: Tone = 'info') => {
-    window.clearTimeout(timer.current)
-    setToast({ message, tone })
-    timer.current = window.setTimeout(() => setToast(null), tone === 'error' ? 4000 : 2500)
+  const next = useCallback(function advance() {
+    const item = queue.current.shift()
+    if (!item) {
+      showing.current = false
+      setToast(null)
+      return
+    }
+    showing.current = true
+    setToast(item)
+    timer.current = window.setTimeout(advance, item.tone === 'error' ? 4000 : 2500)
   }, [])
+
+  const show = useCallback(
+    (message: string, tone: Tone = 'info') => {
+      if (tone === 'error') {
+        window.clearTimeout(timer.current)
+        queue.current = [{ message, tone }]
+        next()
+        return
+      }
+      queue.current.push({ message, tone })
+      if (!showing.current) next()
+    },
+    [next],
+  )
+
+  useEffect(() => () => window.clearTimeout(timer.current), [])
 
   return (
     <ToastContext.Provider value={show}>

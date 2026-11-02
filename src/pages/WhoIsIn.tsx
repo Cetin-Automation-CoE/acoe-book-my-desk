@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { DayStrip } from '../components/DayStrip'
 import { CheckIcon } from '../components/icons'
-import { useDayBookings, useProfiles, useSeats, useToday } from '../hooks/useData'
+import { useAuth } from '../hooks/useAuth'
+import { useDayBookings, usePresence, useProfiles, useSeats, useToday } from '../hooks/useData'
 import { bookableDays } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
+import { presenceByDay } from '../lib/progress'
 import { SLOTS, type Booking, type Settings, type Slot } from '../lib/types'
 import { strings } from '../strings'
 
@@ -15,6 +17,8 @@ interface Row {
 }
 
 export function WhoIsIn({ settings }: { settings: Settings }) {
+  const { user } = useAuth()
+  const userId = user!.id
   const today = useToday(settings.timezone)
   const days = useMemo(
     () => bookableDays(today, settings.booking_window_days, settings.working_days),
@@ -26,6 +30,12 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   const bookings = useDayBookings(selected)
   const seats = useSeats()
   const profiles = useProfiles()
+  const presenceRows = usePresence(days[0], days[days.length - 1])
+  const presence = useMemo(() => presenceByDay(presenceRows.data ?? [], userId), [presenceRows.data, userId])
+  const teamDays = useMemo(
+    () => new Set(days.filter((d) => (presence.get(d)?.people ?? 0) >= settings.team_day_threshold)),
+    [days, presence, settings.team_day_threshold],
+  )
 
   const rowsFor = (slot: Slot): Row[] =>
     (bookings.data ?? [])
@@ -41,12 +51,13 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   const failed = bookings.error ?? seats.error ?? profiles.error
   const loading = bookings.isPending || seats.isPending || profiles.isPending
   const total = bookings.data?.length ?? 0
+  const people = new Set((bookings.data ?? []).map((b) => b.user_id)).size
 
   return (
     <>
       <header className="sticky top-0 z-20 -mx-4 bg-surface px-4 pb-3 pt-1">
         <h1 className="mb-3 text-2xl font-bold text-brand">{strings.whoIsIn.title}</h1>
-        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} />
+        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} marks={teamDays} />
       </header>
 
       {failed ? (
@@ -57,6 +68,9 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
         <p className="mt-2 rounded-xl bg-white p-4 text-neutral-700">{strings.whoIsIn.empty}</p>
       ) : (
         <div className="mt-2 flex flex-col gap-5">
+          {people >= settings.team_day_threshold && (
+            <p className="rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white">{strings.teamDay.whoIsIn(people)}</p>
+          )}
           {SLOTS.map((slot) => {
             const rows = rowsFor(slot)
             return (

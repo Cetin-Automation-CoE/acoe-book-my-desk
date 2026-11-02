@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Button } from '../components/Button'
 import { CheckIcon } from '../components/icons'
+import { ProgressCard } from '../components/ProgressCard'
 import { Sheet } from '../components/Sheet'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../hooks/useAuth'
@@ -27,8 +28,7 @@ export function MyBookings({ settings }: { settings: Settings }) {
   const seatOf = (id: string): Seat | undefined => seats.data?.find((s) => s.id === id)
   const seatCode = (id: string) => seatOf(id)?.code ?? '…'
   const refresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['my-bookings'] })
-    queryClient.invalidateQueries({ queryKey: ['bookings'] })
+    for (const key of ['my-bookings', 'bookings', 'progress']) queryClient.invalidateQueries({ queryKey: [key] })
   }
 
   const cancel = useMutation({
@@ -81,6 +81,8 @@ export function MyBookings({ settings }: { settings: Settings }) {
   return (
     <>
       <h1 className="mb-4 text-2xl font-bold text-brand">{strings.myBookings.title}</h1>
+
+      <ProgressCard userId={userId} today={today} />
 
       {bookings.error ? (
         <p className="text-sm font-semibold text-accent">{errorMessage(bookings.error)}</p>

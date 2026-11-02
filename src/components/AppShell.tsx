@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { useBadgeToasts } from '../hooks/useBadgeToasts'
 import { useRealtime } from '../hooks/useRealtime'
 import { strings } from '../strings'
 import { BookmarkIcon, DeskIcon, PeopleIcon, StarIcon } from './icons'
@@ -16,7 +18,9 @@ const items: NavItem[] = [
 ]
 
 export function AppShell({ showMySeat }: { showMySeat: boolean }) {
+  const { user } = useAuth()
   useRealtime()
+  useBadgeToasts(user!.id)
   const nav = showMySeat ? [...items, { to: '/seat', label: strings.nav.mySeat, icon: StarIcon }] : items
 
   return (

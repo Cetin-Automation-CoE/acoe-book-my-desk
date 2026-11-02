@@ -146,8 +146,8 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
 - **Add seats, floors or offices:** insert rows into `seats`, `floors`, `offices`.
 - **Room order:** the Book screen draws seats in `seats.sort_order` as side-by-side pairs (two pairs
   per table block, then a gap). Change `sort_order` to rearrange; keep partners on consecutive numbers.
-- **Change rules:** edit the single row in `settings` (booking window, check-in deadlines, slot
-  times, owner check-in exemption, weekly limit, data retention).
+- **Change rules:** edit the single row in `settings` (booking window, working days, check-in deadlines,
+  slot times, owner check-in exemption, weekly limit, data retention, team-day threshold).
 - **Fix a display name:** `update public.profiles set display_name = 'Jane Doe' where email = '...';`
 - **Sign-in codes stop arriving:** check Mailjet → Statistics (Delivered / Blocked / Bounced), then
   the recipient's Junk folder and the Microsoft 365 quarantine (https://security.microsoft.com/quarantine).
@@ -164,11 +164,41 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | Window | Today + `booking_window_days` (7), working days only (`working_days`, default Mon–Fri). Other dates are rejected (`outside_window`, `not_working_day`). |
 | Same day | A half day can be booked until it ends. Booking after its check-in deadline counts as checked in (walk-in). |
 | Limits | One active booking per seat per half day; one per person per half day (partial unique indexes). Optional `max_days_per_week`. |
-| Check-in | "I'm here" on the day, until `am_checkin_deadline` (10:00) / `pm_checkin_deadline` (14:00). |
+| Check-in | "I'm here" on the day, until `am_checkin_deadline` (10:00) / `pm_checkin_deadline` (14:00). Exempt seat owners may check in until the half day ends. |
 | Auto-release | Every 15 minutes, `booked` bookings past their deadline become `released`. Seat owners are exempt while `owner_checkin_exempt` is true. |
 | Cancel | Any time before the half day starts. Checked-in bookings cannot be cancelled. |
 | Semi-fixed seats | `seats.owner_id` holds the seat; others can book a half day only after the owner releases it (My seat tab). Releasing cancels the owner's own booking for that half day; a released half day cannot be taken back once a colleague booked it. |
 | Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
+| Team day | A day with `team_day_threshold` (8) or more people booked is marked on the day strip; the Book tab nudges towards it and Who's in shows a banner. |
+
+### Progress and badges (private to each person)
+
+Every check-in (a tap on "I'm here", or a walk-in booking made after the deadline) updates
+`user_stats` and may award badges in `achievements`. Both tables survive the 90-day purge and are
+readable only by the person themselves — there is no leaderboard and colleagues never see each
+other's numbers. Seat owners are exempt from auto-release but can still tap "I'm here" (until the
+half day ends) so their days count too.
+
+| Shown on My bookings | Meaning |
+|------|---------|
+| Week streak | Consecutive ISO weeks with at least one checked-in office day (best streak kept alongside) |
+| Office days | Distinct days checked in, ever |
+| Check-in rate | Checked in ÷ (checked in + auto-released) over the last 90 days |
+
+| Badge | Rule |
+|-------|------|
+| First day in | First check-in |
+| Early bird | Checked in before 08:00 |
+| Regular / Resident | 10 / 50 office days |
+| Explorer | Sat in 6 different seats |
+| Full house | Checked in on a half day when every active seat was booked |
+| Team day | Checked in on a day with `team_day_threshold` people booked |
+| On a roll | 4-week streak |
+| Reliable | Last 30 days: at least 4 check-ins and no auto-released booking |
+
+Badges are awarded in `bmd_record_checkin()`; adding one means a new key in its `check` constraint,
+a rule in that function and a name in `src/strings.ts`. To reset someone's progress:
+`delete from public.user_stats where user_id = '…'; delete from public.achievements where user_id = '…';`
 
 ### Settings reference (`public.settings`, one row)
 
@@ -183,6 +213,7 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | `owner_checkin_exempt` | `true` | Seat owners are never auto-released |
 | `max_days_per_week` | `null` | Optional limit of distinct booked days per ISO week |
 | `booking_retention_days` | `90` | Nightly purge threshold |
+| `team_day_threshold` | `8` | People booked on one day for it to count as a team day |
 
 ### Scheduled jobs
 

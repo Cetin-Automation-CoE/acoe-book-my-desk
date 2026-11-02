@@ -5,12 +5,14 @@ import { DayStrip } from '../components/DayStrip'
 import { SeatGrid } from '../components/SeatGrid'
 import { Sheet } from '../components/Sheet'
 import { SlotToggle } from '../components/SlotToggle'
+import { TeamDayNudge } from '../components/TeamDayNudge'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../hooks/useAuth'
-import { useDayBookings, useDayReleases, useNow, useProfiles, useSeats } from '../hooks/useData'
+import { useDayBookings, useDayReleases, useNow, usePresence, useProfiles, useSeats } from '../hooks/useData'
 import { api } from '../lib/api'
 import { bookableDays, canCancel, checkInState, formatDayLong, minutesSinceMidnightIn, parseTime, todayIn } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
+import { presenceByDay, teamDayNudge } from '../lib/progress'
 import { seatView, type SeatView } from '../lib/seatState'
 import type { Settings, Slot, SlotChoice } from '../lib/types'
 import { strings } from '../strings'
@@ -40,6 +42,14 @@ export function DayView({ settings }: { settings: Settings }) {
   const bookings = useDayBookings(selected)
   const releases = useDayReleases(selected)
   const profiles = useProfiles()
+  const presenceRows = usePresence(days[0], days[days.length - 1])
+
+  const presence = useMemo(() => presenceByDay(presenceRows.data ?? [], userId), [presenceRows.data, userId])
+  const teamDays = useMemo(
+    () => new Set(days.filter((d) => (presence.get(d)?.people ?? 0) >= settings.team_day_threshold)),
+    [days, presence, settings.team_day_threshold],
+  )
+  const nudge = teamDayNudge({ days, selected, presence, threshold: settings.team_day_threshold })
 
   const views = useMemo(
     () =>
@@ -50,8 +60,7 @@ export function DayView({ settings }: { settings: Settings }) {
   )
 
   const refresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['bookings'] })
-    queryClient.invalidateQueries({ queryKey: ['my-bookings'] })
+    for (const key of ['bookings', 'my-bookings', 'progress']) queryClient.invalidateQueries({ queryKey: [key] })
   }
 
   const book = useMutation({
@@ -110,7 +119,7 @@ export function DayView({ settings }: { settings: Settings }) {
     <>
       <header className="sticky top-0 z-20 -mx-4 bg-surface px-4 pb-3 pt-1">
         <h1 className="mb-3 text-2xl font-bold text-brand">{strings.nav.book}</h1>
-        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} />
+        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} marks={teamDays} />
         <div className="mt-3">
           <SlotToggle value={choice} onChange={setChoice} />
         </div>
@@ -123,8 +132,12 @@ export function DayView({ settings }: { settings: Settings }) {
           <p className="text-muted">{strings.loading}</p>
         ) : (
           <>
+            {nudge && <TeamDayNudge nudge={nudge} today={today} onShow={setSelected} />}
             <SeatGrid views={views} names={profiles.data ?? new Map()} onTap={onTap} />
-            <p className="mt-4 text-sm text-muted">{strings.seats.legend}</p>
+            <p className="mt-4 text-sm text-muted">
+              {strings.seats.legend}
+              {teamDays.size > 0 && ` ${strings.teamDay.legend}`}
+            </p>
           </>
         )}
       </section>

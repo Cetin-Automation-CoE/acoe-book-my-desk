@@ -1,5 +1,17 @@
 import { supabase } from './supabase'
-import { ACTIVE_STATUSES, type Booking, type Profile, type Release, type Seat, type Settings, type SlotChoice } from './types'
+import {
+  ACTIVE_STATUSES,
+  type Achievement,
+  type Booking,
+  type OutcomeRow,
+  type PresenceRow,
+  type Profile,
+  type Release,
+  type Seat,
+  type Settings,
+  type SlotChoice,
+  type UserStats,
+} from './types'
 
 function unwrap<T>(res: { data: T | null; error: { message: string } | null }): T {
   if (res.error) throw res.error
@@ -47,6 +59,33 @@ export const api = {
         .neq('status', 'cancelled')
         .order('date')
         .order('slot'),
+    )
+  },
+
+  // Who is booked on each day of the window (team-day marks and nudges).
+  async bookingsForRange(from: string, to: string): Promise<PresenceRow[]> {
+    return unwrap(
+      await supabase.from('bookings').select('date, user_id').gte('date', from).lte('date', to).in('status', ACTIVE_STATUSES),
+    )
+  },
+
+  async myStats(userId: string): Promise<UserStats | null> {
+    return unwrap(await supabase.from('user_stats').select('*').eq('user_id', userId).maybeSingle())
+  },
+
+  async myBadges(userId: string): Promise<Achievement[]> {
+    return unwrap(await supabase.from('achievements').select('*').eq('user_id', userId).order('earned_at'))
+  },
+
+  // Final outcomes of my past bookings (checked in or auto-released) for the check-in rate.
+  async myOutcomes(userId: string, fromDate: string): Promise<OutcomeRow[]> {
+    return unwrap(
+      await supabase
+        .from('bookings')
+        .select('date, status')
+        .eq('user_id', userId)
+        .gte('date', fromDate)
+        .in('status', ['checked_in', 'released']),
     )
   },
 

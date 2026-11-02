@@ -1,5 +1,9 @@
 // All user-facing text lives here so a Czech version can be added as a second object later.
 
+import type { BadgeKey } from './lib/progress'
+
+const colleagues = (n: number) => `${n} ${n === 1 ? 'colleague' : 'colleagues'}`
+
 export const strings = {
   appName: 'BookMyDesk',
   tagline: 'Book a seat in the open space',
@@ -105,6 +109,39 @@ export const strings = {
     takeBack: 'Take back',
     working: 'Saving…',
     hint: 'Tap a held half day to release it, or a released one to take it back. Releasing cancels your own booking for that half day.',
+  },
+
+  progress: {
+    title: 'Your office days',
+    streak: 'week streak',
+    best: (n: number) => `best ${n}`,
+    days: (n: number) => (n === 1 ? 'office day' : 'office days'),
+    rate: 'check-in rate',
+    noRate: '–',
+    start: 'Tap “I’m here” on the day of a booking to start your streak.',
+    badges: (earned: number, total: number) => `Badges · ${earned} of ${total}`,
+    newBadge: (name: string) => `New badge: ${name}`,
+  },
+
+  badges: {
+    first_day: { name: 'First day in', rule: 'Check in for the first time' },
+    early_bird: { name: 'Early bird', rule: 'Check in before 08:00' },
+    regular: { name: 'Regular', rule: '10 office days' },
+    resident: { name: 'Resident', rule: '50 office days' },
+    explorer: { name: 'Explorer', rule: 'Sit in 6 different seats' },
+    full_house: { name: 'Full house', rule: 'Be in when every seat is taken' },
+    team_day: { name: 'Team day', rule: 'Be in on a team day' },
+    on_a_roll: { name: 'On a roll', rule: 'Office days 4 weeks in a row' },
+    reliable: { name: 'Reliable', rule: 'A month of check-ins without a no-show' },
+  } satisfies Record<BadgeKey, { name: string; rule: string }>,
+
+  teamDay: {
+    here: (n: number) => (n === 0 ? 'Team day.' : `Team day – ${colleagues(n)} are in.`),
+    join: (when: string, n: number) => `${when} is a team day – ${colleagues(n)} in.`,
+    show: 'Show',
+    some: (n: number, when: string) => `${colleagues(n)} in ${when}.`,
+    whoIsIn: (n: number) => `Team day – ${n} people in the office.`,
+    legend: 'A blue dot marks a team day.',
   },
 
   profile: {

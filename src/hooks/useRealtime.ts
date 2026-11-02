@@ -12,8 +12,9 @@ export function useRealtime() {
     const refresh = () => {
       window.clearTimeout(timer)
       timer = window.setTimeout(() => {
-        // Profiles are included so a colleague's first-ever booking shows their name, not a placeholder.
-        for (const key of ['bookings', 'my-bookings', 'releases', 'seat-schedule', 'seats', 'profiles']) {
+        // Profiles are included so a colleague's first-ever booking shows their name, not a placeholder;
+        // progress so a check-in (a bookings update) refreshes the streak and badges.
+        for (const key of ['bookings', 'my-bookings', 'releases', 'seat-schedule', 'seats', 'profiles', 'progress']) {
           queryClient.invalidateQueries({ queryKey: [key] })
         }
       }, 150)

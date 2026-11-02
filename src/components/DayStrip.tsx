@@ -6,9 +6,11 @@ interface DayStripProps {
   selected: string
   today: string
   onSelect: (date: string) => void
+  // Days to flag with a corner dot (team days).
+  marks?: ReadonlySet<string>
 }
 
-export function DayStrip({ days, selected, today, onSelect }: DayStripProps) {
+export function DayStrip({ days, selected, today, onSelect, marks }: DayStripProps) {
   const selectedRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -22,6 +24,7 @@ export function DayStrip({ days, selected, today, onSelect }: DayStripProps) {
           const label = dayLabel(date, today)
           const isSelected = date === selected
           const isToday = date === today
+          const isMarked = marks?.has(date) ?? false
           return (
             <button
               key={date}
@@ -29,12 +32,18 @@ export function DayStrip({ days, selected, today, onSelect }: DayStripProps) {
               type="button"
               role="tab"
               aria-selected={isSelected}
-              aria-label={label.relative ?? `${label.weekday} ${label.day} ${label.month}`}
+              aria-label={`${label.relative ?? `${label.weekday} ${label.day} ${label.month}`}${isMarked ? ', team day' : ''}`}
               onClick={() => onSelect(date)}
-              className={`flex min-w-14 shrink-0 flex-col items-center rounded-xl px-2 py-2 transition ${
+              className={`relative flex min-w-14 shrink-0 flex-col items-center rounded-xl px-2 py-2 transition ${
                 isSelected ? 'bg-brand text-white' : 'bg-white text-neutral-900 hover:bg-line/50'
               }`}
             >
+              {isMarked && (
+                <span
+                  aria-hidden
+                  className={`absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-white/80' : 'bg-sky'}`}
+                />
+              )}
               <span className={`text-xs ${isSelected ? 'text-white/80' : 'text-muted'}`}>{label.weekday}</span>
               <span className="text-xl font-semibold leading-tight tabular-nums">{label.day}</span>
               <span

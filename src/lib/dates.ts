@@ -90,10 +90,17 @@ export type CheckInState = 'open' | 'closed' | 'not_today' | 'exempt' | 'done'
 
 export function checkInState(b: Booking, s: Settings, ownerOfSeat: boolean, now: Date = new Date()): CheckInState {
   if (b.status === 'checked_in') return 'done'
-  if (ownerOfSeat && s.owner_checkin_exempt) return 'exempt'
-  if (b.date !== todayIn(s.timezone, now)) return 'not_today'
+  const exempt = ownerOfSeat && s.owner_checkin_exempt
+  if (b.date !== todayIn(s.timezone, now)) return exempt ? 'exempt' : 'not_today'
+  const minutes = minutesSinceMidnightIn(s.timezone, now)
+  if (exempt) {
+    // Never auto-released, so no deadline: an owner may still check in (it counts as an office day)
+    // until the half day ends.
+    const ends = b.slot === 'AM' ? parseTime(s.pm_start) : 24 * 60
+    return minutes < ends ? 'open' : 'exempt'
+  }
   const deadline = parseTime(b.slot === 'AM' ? s.am_checkin_deadline : s.pm_checkin_deadline)
-  return minutesSinceMidnightIn(s.timezone, now) > deadline ? 'closed' : 'open'
+  return minutes > deadline ? 'closed' : 'open'
 }
 
 export function canCancel(b: Booking, s: Settings, now: Date = new Date()): boolean {
