@@ -137,6 +137,9 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
 - **Change rules:** edit the single row in `settings` (booking window, check-in deadlines, slot
   times, owner check-in exemption, weekly limit, data retention).
 - **Fix a display name:** `update public.profiles set display_name = 'Jane Doe' where email = '...';`
+- **Sign-in codes stop arriving:** the Brevo SMTP key expires on its set date and after 90 days with no
+  email sent. Generate a new key in Brevo → SMTP & API and paste it into Supabase → Authentication →
+  Emails → SMTP Settings. Also check Brevo's daily quota (300/day on the free plan).
 
 ## Booking rules (as implemented)
 
