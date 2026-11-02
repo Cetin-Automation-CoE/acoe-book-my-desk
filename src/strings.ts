@@ -149,6 +149,13 @@ export const en = {
     signedInAs: (email: string) => `Signed in as ${email}`,
     language: 'Language',
     languages: { en: 'English', cs: 'Čeština' },
+    addPhoto: 'Add photo',
+    changePhoto: 'Change photo',
+    removePhoto: 'Remove',
+    uploading: 'Uploading…',
+    photoSaved: 'Photo saved.',
+    photoRemoved: 'Photo removed.',
+    photoFailed: 'That photo could not be used. Try a JPEG or PNG.',
   },
 
   progress: {
@@ -347,6 +354,13 @@ export const cs: Strings = {
     signedInAs: (email: string) => `Přihlášeno jako ${email}`,
     language: 'Jazyk',
     languages: { en: 'English', cs: 'Čeština' },
+    addPhoto: 'Přidat fotku',
+    changePhoto: 'Změnit fotku',
+    removePhoto: 'Odebrat',
+    uploading: 'Nahrávám…',
+    photoSaved: 'Fotka uložena.',
+    photoRemoved: 'Fotka odebrána.',
+    photoFailed: 'Tuto fotku nelze použít. Zkuste JPEG nebo PNG.',
   },
 
   progress: {

@@ -107,14 +107,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "created_at": string,"display_name": string,"email": string,"role": Database["public"]['Enums']["user_role"],"user_id": string
+                    "avatar_url": string | null,"created_at": string,"display_name": string,"email": string,"role": Database["public"]['Enums']["user_role"],"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_name": string,"email": string,"role"?: Database["public"]['Enums']["user_role"],"user_id": string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name": string,"email": string,"role"?: Database["public"]['Enums']["user_role"],"user_id": string
                   }
                   Update: {
-                    "created_at"?: string,"display_name"?: string,"email"?: string,"role"?: Database["public"]['Enums']["user_role"],"user_id"?: string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string,"email"?: string,"role"?: Database["public"]['Enums']["user_role"],"user_id"?: string
                   }
                   Relationships: [
                     

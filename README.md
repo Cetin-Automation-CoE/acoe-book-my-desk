@@ -150,6 +150,9 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
 - **Change rules:** edit the single row in `settings` (working days, slot times, weekly limit, data
   retention, team-day threshold).
 - **Fix a display name:** `update public.profiles set display_name = 'Jane Doe' where email = '...';`
+- **Profile photos** live in the public `avatars` storage bucket (created by migration `20261104120000`, 2 MB
+  limit, JPEG/PNG/WebP) as `<user_id>/avatar.jpg`; the app shrinks them to 256 px before upload. To remove
+  someone's photo: delete the object in Storage and `update public.profiles set avatar_url = null where ...`.
 - **Sign-in codes stop arriving:** check Mailjet → Statistics (Delivered / Blocked / Bounced), then
   the recipient's Junk folder and the Microsoft 365 quarantine (https://security.microsoft.com/quarantine).
   Mailjet's free tier allows 200 emails/day; the API key and secret in Supabase → Authentication →

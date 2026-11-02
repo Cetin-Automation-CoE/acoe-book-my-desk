@@ -1,13 +1,13 @@
 import { useT } from '../hooks/useLang'
 import { shortName } from '../lib/people'
 import type { HalfState, SeatView } from '../lib/seatState'
-import { SLOTS, type Slot } from '../lib/types'
+import { SLOTS, type PeopleMap, type Slot } from '../lib/types'
 import { Avatar } from './Avatar'
 import { StarIcon } from './icons'
 
 export interface SeatTileProps {
   view: SeatView
-  names: Map<string, string>
+  people: PeopleMap
   userId: string
   myName: string
   // Halves I already hold on another seat that day: those halves are not bookable for me.
@@ -47,9 +47,9 @@ function halfColor(state: HalfState | undefined, look: Look): string {
 
 // One seat in the grid: big desk number, who has it, and in Full-day mode a glyph of both halves.
 export function SeatTile(props: SeatTileProps) {
-  const { view, names, userId, myName, myHeldSlots, endedSlots, flash, selected, index, onTap } = props
+  const { view, people, userId, myName, myHeldSlots, endedSlots, flash, selected, index, onTap } = props
   const t = useT()
-  const nameOf = (id: string) => (id === userId ? myName : (names.get(id) ?? '…'))
+  const nameOf = (id: string) => (id === userId ? myName : (people.get(id)?.name ?? '…'))
 
   const allEnded = view.wantedSlots.length > 0 && view.wantedSlots.every((s) => endedSlots.has(s))
   const look: Look =
@@ -102,7 +102,7 @@ export function SeatTile(props: SeatTileProps) {
     case 'held': {
       star = true
       caption = t.seats.held
-      const ownerName = (view.seat.owner_id && names.get(view.seat.owner_id)) || view.seat.owner_name
+      const ownerName = (view.seat.owner_id && people.get(view.seat.owner_id)?.name) || view.seat.owner_name
       sub = ownerName ? shortName(ownerName) : ''
       break
     }
@@ -136,7 +136,7 @@ export function SeatTile(props: SeatTileProps) {
         <span className="shrink-0 text-[17px] font-extrabold leading-5 tracking-[-0.02em] tabular-nums">{view.seat.code}</span>
         <span className="flex min-w-0 flex-col gap-px pr-3">
           <span className="flex min-w-0 items-center gap-1.5">
-            {avatarId && <Avatar userId={avatarId} name={nameOf(avatarId)} size={18} />}
+            {avatarId && <Avatar userId={avatarId} name={nameOf(avatarId)} src={people.get(avatarId)?.avatar} size={18} />}
             {star && <StarIcon width={13} height={13} className="shrink-0" strokeWidth={2.2} />}
             <span className={`truncate text-[13px] font-bold leading-[17px] ${captionColor}`}>{caption}</span>
           </span>

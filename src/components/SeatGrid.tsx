@@ -1,12 +1,12 @@
 import { useT } from '../hooks/useLang'
 import { roomBlocks } from '../lib/layout'
 import type { SeatView } from '../lib/seatState'
-import type { Slot } from '../lib/types'
+import type { PeopleMap, Slot } from '../lib/types'
 import { SeatTile } from './SeatTile'
 
 interface SeatGridProps {
   views: SeatView[]
-  names: Map<string, string>
+  people: PeopleMap
   userId: string
   myName: string
   myHeldSlots: ReadonlySet<Slot>
@@ -20,7 +20,7 @@ interface SeatGridProps {
 // Seats arrive in room order (seats.sort_order), so the grid mirrors the floor without a map.
 export const PAIRS_PER_BLOCK = 2
 
-export function SeatGrid({ views, names, userId, myName, myHeldSlots, endedSlots, flashId, selectedId, onTap }: SeatGridProps) {
+export function SeatGrid({ views, people, userId, myName, myHeldSlots, endedSlots, flashId, selectedId, onTap }: SeatGridProps) {
   const t = useT()
   if (views.length === 0) return <p className="text-muted">{t.seats.noSeats}</p>
 
@@ -65,7 +65,7 @@ export function SeatGrid({ views, names, userId, myName, myHeldSlots, endedSlots
                       <SeatTile
                         key={view.seat.id}
                         view={view}
-                        names={names}
+                        people={people}
                         userId={userId}
                         myName={myName}
                         myHeldSlots={myHeldSlots}

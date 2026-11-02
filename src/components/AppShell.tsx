@@ -12,9 +12,10 @@ interface ShellApi {
   openProfile: () => void
   initials: string
   name: string
+  avatar: string | null
 }
 
-const ShellContext = createContext<ShellApi>({ openProfile: () => {}, initials: '', name: '' })
+const ShellContext = createContext<ShellApi>({ openProfile: () => {}, initials: '', name: '', avatar: null })
 
 export function useShell() {
   return useContext(ShellContext)
@@ -34,7 +35,9 @@ export function AppShell({ showMySeat }: { showMySeat: boolean }) {
     window.scrollTo({ top: 0 })
   }, [location.pathname])
 
-  const name = profiles.data?.get(userId) ?? ''
+  const me = profiles.data?.get(userId)
+  const name = me?.name ?? ''
+  const avatar = me?.avatar ?? null
   const items: { to: string; label: string; icon: typeof DeskIcon }[] = [
     { to: '/', label: t.nav.book, icon: DeskIcon },
     { to: '/bookings', label: t.nav.myBookings, icon: BookmarkIcon },
@@ -43,7 +46,7 @@ export function AppShell({ showMySeat }: { showMySeat: boolean }) {
   if (showMySeat) items.push({ to: '/seat', label: t.nav.mySeat, icon: StarIcon })
 
   return (
-    <ShellContext.Provider value={{ openProfile: () => setProfileOpen(true), initials: initialsOf(name), name }}>
+    <ShellContext.Provider value={{ openProfile: () => setProfileOpen(true), initials: initialsOf(name), name, avatar }}>
       <div className="min-h-dvh">
         <Outlet />
       </div>
@@ -67,7 +70,14 @@ export function AppShell({ showMySeat }: { showMySeat: boolean }) {
           </NavLink>
         ))}
       </nav>
-      <ProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} userId={userId} name={name} email={user?.email ?? ''} />
+      <ProfileSheet
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        userId={userId}
+        name={name}
+        avatar={avatar}
+        email={user?.email ?? ''}
+      />
     </ShellContext.Provider>
   )
 }

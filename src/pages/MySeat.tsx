@@ -64,7 +64,7 @@ export function MySeat({ settings }: { settings: Settings }) {
     const released = schedule.data?.releases.some((r) => r.date === date && r.slot === slot) ?? false
     if (date === today && nowMinutes >= slotEnd(slot, settings)) return { kind: 'ended', label: '–' }
     if (booking && booking.user_id !== userId) {
-      return { kind: 'booked', label: shortName(profiles.data?.get(booking.user_id) ?? '…'), userId: booking.user_id }
+      return { kind: 'booked', label: shortName(profiles.data?.get(booking.user_id)?.name ?? '…'), userId: booking.user_id }
     }
     if (booking) return { kind: 'mine', label: t.seats.mine }
     if (released) return { kind: 'released', label: t.mySeat.released }
@@ -138,7 +138,9 @@ export function MySeat({ settings }: { settings: Settings }) {
                           className={`flex min-h-[54px] items-center gap-[7px] rounded-2xl px-3 text-left text-sm font-bold transition active:scale-[0.97] disabled:active:scale-100 ${cellStyles[c.kind]}`}
                         >
                           {c.kind === 'held' && <StarIcon width={14} height={14} className="shrink-0" strokeWidth={2.2} />}
-                          {c.kind === 'booked' && c.userId && <Avatar userId={c.userId} name={c.label} size={22} className="!bg-white" />}
+                          {c.kind === 'booked' && c.userId && (
+                            <Avatar userId={c.userId} name={c.label} src={profiles.data?.get(c.userId)?.avatar} size={22} className="!bg-white" />
+                          )}
                           <span className="truncate">{c.label}</span>
                         </button>
                       )

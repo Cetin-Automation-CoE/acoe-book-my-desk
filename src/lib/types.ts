@@ -4,7 +4,12 @@ export type Settings = Tables<'settings'>
 export type Seat = Tables<'seats'>
 export type Booking = Tables<'bookings'>
 export type Release = Tables<'seat_releases'>
-export type Profile = Pick<Tables<'profiles'>, 'user_id' | 'display_name'>
+export type Profile = Pick<Tables<'profiles'>, 'user_id' | 'display_name' | 'avatar_url'>
+export interface Person {
+  name: string
+  avatar: string | null
+}
+export type PeopleMap = Map<string, Person>
 export type UserStats = Tables<'user_stats'>
 export type Achievement = Tables<'achievements'>
 export type PresenceRow = Pick<Booking, 'date' | 'user_id'>

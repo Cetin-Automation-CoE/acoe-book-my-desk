@@ -236,7 +236,7 @@ export function DayView({ settings }: { settings: Settings }) {
             <div key={`${selected}-${choice}`}>
               <SeatGrid
                 views={views}
-                names={profiles.data ?? new Map()}
+                people={profiles.data ?? new Map()}
                 userId={userId}
                 myName={myName}
                 myHeldSlots={myHeldSlots}

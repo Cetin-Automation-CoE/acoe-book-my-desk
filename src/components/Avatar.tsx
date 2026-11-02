@@ -3,13 +3,27 @@ import { avatarTint, initialsOf } from '../lib/people'
 interface AvatarProps {
   userId: string
   name: string
-  // The current user is always solid brand with white initials.
+  src?: string | null
+  // The current user is always solid brand with white initials (when they have no photo).
   me?: boolean
   size?: number
   className?: string
 }
 
-export function Avatar({ userId, name, me = false, size = 40, className = '' }: AvatarProps) {
+export function Avatar({ userId, name, src, me = false, size = 40, className = '' }: AvatarProps) {
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        loading="lazy"
+        className={`shrink-0 rounded-full object-cover ${className}`}
+        style={{ width: size, height: size }}
+      />
+    )
+  }
   const fontSize = Math.round(size * 0.34)
   return (
     <span

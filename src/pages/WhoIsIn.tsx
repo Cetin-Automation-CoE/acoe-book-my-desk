@@ -6,9 +6,10 @@ import { HalfGlyph } from '../components/HalfGlyph'
 import { PageBand, Panel } from '../components/PageBand'
 import { ErrorCard, Skeleton } from '../components/States'
 import { useAuth } from '../hooks/useAuth'
-import { useDayBookings, useMyBookings, usePresence, useProfiles, useSeats, useToday } from '../hooks/useData'
+import { useDayBookings, useDayReleases, useMyBookings, usePresence, useProfiles, useSeats, useToday } from '../hooks/useData'
 import { useT } from '../hooks/useLang'
 import { bookableDays, formatBandDate } from '../lib/dates'
+import { occupiedCount, seatOccupancy } from '../lib/occupancy'
 import { presenceByDay } from '../lib/progress'
 import { ACTIVE_STATUSES, SLOTS, type Booking, type Settings, type Slot } from '../lib/types'
 
@@ -34,6 +35,7 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   const selected = days.includes(selectedDay) ? selectedDay : days[0]
 
   const bookings = useDayBookings(selected)
+  const releases = useDayReleases(selected)
   const seats = useSeats()
   const profiles = useProfiles()
   const myUpcoming = useMyBookings(userId, today)
@@ -49,7 +51,7 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   )
 
   const activeSeats = (seats.data ?? []).filter((s) => s.active).sort((a, b) => a.code.localeCompare(b.code))
-  const nameOf = (id: string) => (id === userId ? myName : (profiles.data?.get(id) ?? '…'))
+  const nameOf = (id: string) => (id === userId ? myName : (profiles.data?.get(id)?.name ?? '…'))
 
   const rowsFor = (slot: Slot): Row[] =>
     (bookings.data ?? [])
@@ -61,8 +63,8 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
       })
       .sort((a, b) => a.name.localeCompare(b.name))
 
-  const failed = bookings.error ?? seats.error ?? profiles.error
-  const loading = bookings.isPending || seats.isPending || profiles.isPending
+  const failed = bookings.error ?? seats.error ?? profiles.error ?? releases.error
+  const loading = bookings.isPending || seats.isPending || profiles.isPending || releases.isPending
   const total = bookings.data?.length ?? 0
   const people = new Set((bookings.data ?? []).map((b) => b.user_id)).size
 
@@ -93,7 +95,8 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
             )}
             <div className="mb-[22px] grid grid-cols-2 rounded-3xl bg-white shadow-card-raised">
               {SLOTS.map((slot, i) => {
-                const taken = new Map((bookings.data ?? []).filter((b) => b.slot === slot).map((b) => [b.seat_id, b.user_id]))
+                // Held seats count as taken: nobody else can sit there even if the owner has not booked.
+                const occupancy = seatOccupancy(activeSeats, bookings.data ?? [], releases.data ?? [], selected, slot)
                 return (
                   <div key={slot} className={`flex flex-col gap-1 p-4 ${i > 0 ? 'border-l border-rule' : ''}`}>
                     <span className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.06em] text-muted">
@@ -102,19 +105,16 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
                     </span>
                     <span className="flex items-baseline gap-1.5">
                       <span className="text-[38px] font-extrabold leading-[42px] tracking-[-0.03em] tabular-nums text-brand">
-                        {new Set(taken.values()).size}
+                        {occupiedCount(occupancy)}
                       </span>
                       <span className="text-[13px] text-muted">{t.whoIsIn.ofSeats(activeSeats.length)}</span>
                     </span>
                     <span aria-hidden className="mt-1 grid grid-cols-[repeat(6,8px)] gap-1">
                       {activeSeats.map((s) => {
-                        const who = taken.get(s.id)
-                        return (
-                          <span
-                            key={s.id}
-                            className={`h-2 w-2 rounded-[3px] ${who === userId ? 'bg-sky' : who ? 'bg-brand' : 'bg-divider'}`}
-                          />
-                        )
+                        const o = occupancy.get(s.id)
+                        const color =
+                          o?.state === 'taken' ? (o.userId === userId ? 'bg-sky' : 'bg-brand') : o?.state === 'held' ? 'bg-lilac-soft' : 'bg-divider'
+                        return <span key={s.id} className={`h-2 w-2 rounded-[3px] ${color}`} />
                       })}
                     </span>
                   </div>
@@ -144,7 +144,13 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
                             className={`enter flex items-center gap-3 py-[11px] pl-3 pr-4 ${i > 0 ? 'border-t border-rule' : ''}`}
                             style={{ '--i': i } as React.CSSProperties}
                           >
-                            <Avatar userId={row.userId} name={row.name} me={row.userId === userId} size={40} />
+                            <Avatar
+                              userId={row.userId}
+                              name={row.name}
+                              src={profiles.data?.get(row.userId)?.avatar}
+                              me={row.userId === userId}
+                              size={40}
+                            />
                             <span className="flex min-w-0 flex-1 flex-col">
                               <span className="flex items-center gap-1.5 text-[15.5px] font-bold leading-5">
                                 <span className="truncate">{row.name}</span>

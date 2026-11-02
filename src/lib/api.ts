@@ -27,7 +27,25 @@ export const api = {
   },
 
   async profiles(): Promise<Profile[]> {
-    return unwrap(await supabase.from('profiles').select('user_id, display_name'))
+    return unwrap(await supabase.from('profiles').select('user_id, display_name, avatar_url'))
+  },
+
+  // Profile photo: one JPEG per person in the public avatars bucket, replaced in place.
+  async uploadAvatar(userId: string, blob: Blob): Promise<string> {
+    const path = `${userId}/avatar.jpg`
+    const { error } = await supabase.storage.from('avatars').upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' })
+    if (error) throw error
+    const url = `${supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl}?v=${Date.now()}`
+    const { error: saveError } = await supabase.from('profiles').update({ avatar_url: url }).eq('user_id', userId)
+    if (saveError) throw saveError
+    return url
+  },
+
+  async removeAvatar(userId: string): Promise<void> {
+    const { error } = await supabase.storage.from('avatars').remove([`${userId}/avatar.jpg`])
+    if (error) throw error
+    const { error: saveError } = await supabase.from('profiles').update({ avatar_url: null }).eq('user_id', userId)
+    if (saveError) throw saveError
   },
 
   async bookingsForDate(date: string): Promise<Booking[]> {

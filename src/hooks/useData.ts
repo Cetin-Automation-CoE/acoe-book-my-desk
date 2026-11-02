@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import { todayIn } from '../lib/dates'
+import type { PeopleMap } from '../lib/types'
 
 export const keys = {
   settings: ['settings'] as const,
@@ -30,7 +31,7 @@ export function useProfiles() {
     queryKey: keys.profiles,
     queryFn: api.profiles,
     staleTime: 60_000,
-    select: (rows) => new Map(rows.map((p) => [p.user_id, p.display_name])),
+    select: (rows): PeopleMap => new Map(rows.map((p) => [p.user_id, { name: p.display_name, avatar: p.avatar_url }])),
   })
 }
 
