@@ -14,7 +14,7 @@ Plan and decisions: [Project plan](https://claude.ai/artifact/95CmY1gzyEdUJVkzhL
 | Frontend | Vite + React + TypeScript + Tailwind, installable PWA (`vite-plugin-pwa`), `HashRouter`; visual design from `docs/design/` |
 | Hosting | GitHub Pages, deployed by GitHub Actions on every push to `main` |
 | Backend | Supabase (Postgres, Auth, Realtime, pg_cron), EU region; schema in `supabase/migrations` |
-| Email | Custom SMTP (Brevo or Resend) for sign-in codes |
+| Email | Custom SMTP (Mailjet) for sign-in codes; Web Push (VAPID) for notifications |
 
 All booking rules are enforced in Postgres functions behind RLS; the frontend only calls them.
 
