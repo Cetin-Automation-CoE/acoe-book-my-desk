@@ -89,6 +89,7 @@ export const en = {
     cancelRule: (t: string) => `You can cancel until it starts at ${t}.`,
     startedRule: 'Already under way – it cannot be cancelled once booked.',
     over: 'Over',
+    halfOver: (slot: string) => `${slot} over`,
     other: (slot: string, who: string) => `${slot}: ${who}`,
   },
 
@@ -287,6 +288,7 @@ export const cs: Strings = {
     cancelRule: (t: string) => `Zrušit lze až do začátku v ${t}.`,
     startedRule: 'Už probíhá – po rezervaci ji nelze zrušit.',
     over: 'Skončilo',
+    halfOver: (slot: string) => `${slot} skončilo`,
     other: (slot: string, who: string) => `${slot}: ${who}`,
   },
 

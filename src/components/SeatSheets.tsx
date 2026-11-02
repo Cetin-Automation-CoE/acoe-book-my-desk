@@ -92,10 +92,13 @@ export function BookSheet({
           {(['AM', 'PM', 'FULL'] as SlotChoice[]).map((choice) => {
             const ok = allowed(choice)
             const active = slot === choice
+            const ended = slotsFor(choice).filter((s) => endedSlots.has(s))
             const why = ok
               ? slotRange(choice, settings)
-              : slotsFor(choice).some((s) => endedSlots.has(s))
-                ? t.seats.over
+              : ended.length > 0
+                ? choice === 'FULL' && ended.length === 1
+                  ? t.seats.halfOver(t.slots[ended[0]])
+                  : t.seats.over
                 : slotsFor(choice).some((s) => !seatFree(s))
                   ? t.seats.taken
                   : t.seats.youHave
