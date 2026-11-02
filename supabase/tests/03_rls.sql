@@ -42,7 +42,7 @@ select throws_ok($$delete from public.bookings$$, '42501', null, 'direct delete 
 select throws_ok($$insert into public.seat_releases (seat_id, date, slot, created_by) values
   ('51000000-0000-4000-8000-000000000001', '2026-11-06', 'AM', 'a1000000-0000-4000-8000-000000000001')$$,
   '42501', null, 'direct insert into seat_releases is blocked');
-select throws_ok($$update public.settings set booking_window_days = 30$$, '42501', null, 'users cannot change settings');
+select throws_ok($$update public.settings set team_day_threshold = 30$$, '42501', null, 'users cannot change settings');
 select throws_ok($$insert into public.seats (floor_id, code) values ('f1000000-0000-4000-8000-00000000aaaa', 'T99')$$,
   '42501', null, 'non-admins cannot add seats');
 update public.seats set owner_id = 'a1000000-0000-4000-8000-000000000001';

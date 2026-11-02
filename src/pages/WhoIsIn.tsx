@@ -1,28 +1,34 @@
 import { useMemo, useState } from 'react'
+import { useShell } from '../components/AppShell'
+import { Avatar } from '../components/Avatar'
 import { DayStrip } from '../components/DayStrip'
-import { CheckIcon } from '../components/icons'
+import { HalfGlyph } from '../components/HalfGlyph'
+import { PageBand, Panel } from '../components/PageBand'
+import { ErrorCard, Skeleton } from '../components/States'
 import { useAuth } from '../hooks/useAuth'
-import { useDayBookings, usePresence, useProfiles, useSeats, useToday } from '../hooks/useData'
-import { bookableDays } from '../lib/dates'
-import { errorMessage } from '../lib/errors'
+import { useDayBookings, useMyBookings, usePresence, useProfiles, useSeats, useToday } from '../hooks/useData'
+import { useT } from '../hooks/useLang'
+import { bookableDays, formatBandDate } from '../lib/dates'
 import { presenceByDay } from '../lib/progress'
-import { SLOTS, type Booking, type Settings, type Slot } from '../lib/types'
-import { strings } from '../strings'
+import { ACTIVE_STATUSES, SLOTS, type Booking, type Settings, type Slot } from '../lib/types'
 
 interface Row {
   id: string
+  userId: string
   name: string
   seat: string
-  checkedIn: boolean
+  sub: string
 }
 
 export function WhoIsIn({ settings }: { settings: Settings }) {
+  const t = useT()
   const { user } = useAuth()
   const userId = user!.id
+  const { name: myName } = useShell()
   const today = useToday(settings.timezone)
   const days = useMemo(
-    () => bookableDays(today, settings.booking_window_days, settings.working_days),
-    [today, settings.booking_window_days, settings.working_days],
+    () => bookableDays(today, settings.working_days),
+    [today, settings.working_days],
   )
   const [selectedDay, setSelected] = useState(today)
   const selected = days.includes(selectedDay) ? selectedDay : days[0]
@@ -30,22 +36,29 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   const bookings = useDayBookings(selected)
   const seats = useSeats()
   const profiles = useProfiles()
+  const myUpcoming = useMyBookings(userId, today)
   const presenceRows = usePresence(days[0], days[days.length - 1])
   const presence = useMemo(() => presenceByDay(presenceRows.data ?? [], userId), [presenceRows.data, userId])
   const teamDays = useMemo(
     () => new Set(days.filter((d) => (presence.get(d)?.people ?? 0) >= settings.team_day_threshold)),
     [days, presence, settings.team_day_threshold],
   )
+  const myDays = useMemo(
+    () => new Set((myUpcoming.data ?? []).filter((b) => ACTIVE_STATUSES.includes(b.status)).map((b) => b.date)),
+    [myUpcoming.data],
+  )
+
+  const activeSeats = (seats.data ?? []).filter((s) => s.active).sort((a, b) => a.code.localeCompare(b.code))
+  const nameOf = (id: string) => (id === userId ? myName : (profiles.data?.get(id) ?? '…'))
 
   const rowsFor = (slot: Slot): Row[] =>
     (bookings.data ?? [])
       .filter((b: Booking) => b.slot === slot)
-      .map((b) => ({
-        id: b.id,
-        name: profiles.data?.get(b.user_id) ?? '…',
-        seat: seats.data?.find((s) => s.id === b.seat_id)?.code ?? '',
-        checkedIn: b.status === 'checked_in',
-      }))
+      .map((b) => {
+        const seat = seats.data?.find((s) => s.id === b.seat_id)
+        const sub = seat?.owner_id === b.user_id ? t.mySeat.semiFixed : ''
+        return { id: b.id, userId: b.user_id, name: nameOf(b.user_id), seat: seat?.code ?? '', sub }
+      })
       .sort((a, b) => a.name.localeCompare(b.name))
 
   const failed = bookings.error ?? seats.error ?? profiles.error
@@ -55,50 +68,106 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
 
   return (
     <>
-      <header className="sticky top-0 z-20 -mx-4 bg-surface px-4 pb-3 pt-1">
-        <h1 className="mb-3 text-2xl font-bold text-brand">{strings.whoIsIn.title}</h1>
-        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} marks={teamDays} />
-      </header>
+      <PageBand title={t.whoIsIn.title} sub={formatBandDate(selected, true)}>
+        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} mine={myDays} marks={teamDays} />
+      </PageBand>
 
-      {failed ? (
-        <p className="text-sm font-semibold text-accent">{errorMessage(failed)}</p>
-      ) : loading ? (
-        <p className="text-muted">{strings.loading}</p>
-      ) : total === 0 ? (
-        <p className="mt-2 rounded-xl bg-white p-4 text-neutral-700">{strings.whoIsIn.empty}</p>
-      ) : (
-        <div className="mt-2 flex flex-col gap-5">
-          {people >= settings.team_day_threshold && (
-            <p className="rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white">{strings.teamDay.whoIsIn(people)}</p>
-          )}
-          {SLOTS.map((slot) => {
-            const rows = rowsFor(slot)
-            return (
-              <section key={slot}>
-                <h2 className="mb-2 flex items-baseline justify-between">
-                  <span className="font-semibold">{strings.slots[slot]}</span>
-                  <span className="text-sm text-muted">{strings.whoIsIn.people(rows.length)}</span>
-                </h2>
-                {rows.length === 0 ? (
-                  <p className="text-sm text-muted">–</p>
-                ) : (
-                  <ul className="divide-y divide-line rounded-xl bg-white">
-                    {rows.map((row) => (
-                      <li key={row.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                        <span className="flex items-center gap-2">
-                          {row.name}
-                          {row.checkedIn && <CheckIcon width={18} height={18} className="text-brand" />}
-                        </span>
-                        <span className="text-sm tabular-nums text-muted">{row.seat}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            )
-          })}
-        </div>
-      )}
+      <Panel>
+        {failed ? (
+          <ErrorCard
+            error={failed}
+            onRetry={() => {
+              bookings.refetch()
+              seats.refetch()
+              profiles.refetch()
+            }}
+          />
+        ) : loading ? (
+          <Skeleton cards={2} />
+        ) : total === 0 ? (
+          <p className="rounded-3xl bg-white p-5 text-base leading-6 text-ink-soft shadow-card">{t.whoIsIn.empty}</p>
+        ) : (
+          <>
+            {people >= settings.team_day_threshold && (
+              <p className="mb-3.5 rounded-2xl bg-brand px-4 py-3 text-sm font-bold text-white shadow-brand">{t.teamDay.whoIsIn(people)}</p>
+            )}
+            <div className="mb-[22px] grid grid-cols-2 rounded-3xl bg-white shadow-card-raised">
+              {SLOTS.map((slot, i) => {
+                const taken = new Map((bookings.data ?? []).filter((b) => b.slot === slot).map((b) => [b.seat_id, b.user_id]))
+                return (
+                  <div key={slot} className={`flex flex-col gap-1 p-4 ${i > 0 ? 'border-l border-rule' : ''}`}>
+                    <span className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.06em] text-muted">
+                      <HalfGlyph slot={slot} size={12} />
+                      {t.slots[slot]}
+                    </span>
+                    <span className="flex items-baseline gap-1.5">
+                      <span className="text-[38px] font-extrabold leading-[42px] tracking-[-0.03em] tabular-nums text-brand">
+                        {new Set(taken.values()).size}
+                      </span>
+                      <span className="text-[13px] text-muted">{t.whoIsIn.ofSeats(activeSeats.length)}</span>
+                    </span>
+                    <span aria-hidden className="mt-1 grid grid-cols-[repeat(6,8px)] gap-1">
+                      {activeSeats.map((s) => {
+                        const who = taken.get(s.id)
+                        return (
+                          <span
+                            key={s.id}
+                            className={`h-2 w-2 rounded-[3px] ${who === userId ? 'bg-sky' : who ? 'bg-brand' : 'bg-divider'}`}
+                          />
+                        )
+                      })}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="flex flex-col gap-[22px]">
+              {SLOTS.map((slot) => {
+                const rows = rowsFor(slot)
+                return (
+                  <section key={slot}>
+                    <h2 className="mx-1 mb-2 flex items-center justify-between">
+                      <span className="flex items-center gap-2 text-lg font-extrabold text-ink">
+                        <HalfGlyph slot={slot} size={14} className="text-brand" />
+                        {t.slots[slot]}
+                      </span>
+                      <span className="text-[13.5px] font-semibold text-muted">{t.whoIsIn.people(rows.length)}</span>
+                    </h2>
+                    {rows.length === 0 ? (
+                      <p className="mx-1 text-sm text-muted">–</p>
+                    ) : (
+                      <ul className="overflow-hidden rounded-[22px] bg-white shadow-card">
+                        {rows.map((row, i) => (
+                          <li
+                            key={row.id}
+                            className={`enter flex items-center gap-3 py-[11px] pl-3 pr-4 ${i > 0 ? 'border-t border-rule' : ''}`}
+                            style={{ '--i': i } as React.CSSProperties}
+                          >
+                            <Avatar userId={row.userId} name={row.name} me={row.userId === userId} size={40} />
+                            <span className="flex min-w-0 flex-1 flex-col">
+                              <span className="flex items-center gap-1.5 text-[15.5px] font-bold leading-5">
+                                <span className="truncate">{row.name}</span>
+                                {row.userId === userId && (
+                                  <span className="shrink-0 rounded-full bg-brand/8 px-[7px] py-px text-[11px] font-extrabold text-brand">{t.you}</span>
+                                )}
+                              </span>
+                              {row.sub && <span className="text-[12.5px] leading-[17px] text-muted">{row.sub}</span>}
+                            </span>
+                            <span className="shrink-0 rounded-[9px] bg-surface px-[9px] py-1 text-[13px] font-extrabold tabular-nums text-brand">
+                              {row.seat}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </Panel>
     </>
   )
 }

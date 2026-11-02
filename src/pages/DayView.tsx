@@ -28,13 +28,13 @@ import {
   addDays,
   bookableDays,
   canCancel,
-  clockIn,
   dayLabel,
   dayTitle,
   formatBandDate,
   minutesSinceMidnightIn,
   parseTime,
   slotEnd,
+  slotStart,
   todayIn,
 } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
@@ -55,8 +55,8 @@ export function DayView({ settings }: { settings: Settings }) {
   const today = todayIn(tz, now)
   const nowMinutes = minutesSinceMidnightIn(tz, now)
   const days = useMemo(
-    () => bookableDays(today, settings.booking_window_days, settings.working_days),
-    [today, settings.booking_window_days, settings.working_days],
+    () => bookableDays(today, settings.working_days),
+    [today, settings.working_days],
   )
   const [selectedDay, setSelected] = useState(today)
   // Fall back to the first bookable day when the selection is stale (day rolled over) or a weekend.
@@ -99,27 +99,17 @@ export function DayView({ settings }: { settings: Settings }) {
     () => new Set<Slot>(selected === today ? SLOTS.filter((s) => nowMinutes >= slotEnd(s, settings)) : []),
     [selected, today, nowMinutes, settings],
   )
+  const startedSlots = useMemo(
+    () => new Set<Slot>(selected === today ? SLOTS.filter((s) => nowMinutes >= slotStart(s, settings)) : []),
+    [selected, today, nowMinutes, settings],
+  )
   const myDays = useMemo(
     () => new Set((myUpcoming.data ?? []).filter((b) => ACTIVE_STATUSES.includes(b.status)).map((b) => b.date)),
     [myUpcoming.data],
   )
   const ownerSeat = seats.data?.find((s) => s.owner_id === userId && s.active) ?? null
   const usualId = useMemo(() => usualSeat(recent.data ?? [], ownerSeat?.id ?? null), [recent.data, ownerSeat?.id])
-  const variant = useMemo(
-    () =>
-      cardVariant({
-        selected,
-        today,
-        nowMinutes,
-        settings,
-        mine: mineOnDay,
-        isOwnerOf: (id) => ownerSeat?.id === id,
-        usualId,
-        views,
-        choice,
-      }),
-    [selected, today, nowMinutes, settings, mineOnDay, ownerSeat?.id, usualId, views, choice],
-  )
+  const variant = useMemo(() => cardVariant({ mine: mineOnDay, usualId, views, choice }), [mineOnDay, usualId, views, choice])
 
   const presence = useMemo(() => presenceByDay(presenceRows.data ?? [], userId), [presenceRows.data, userId])
   const teamDays = useMemo(
@@ -180,16 +170,6 @@ export function DayView({ settings }: { settings: Settings }) {
     onError: fail,
   })
 
-  const checkIn = useMutation({
-    mutationFn: (list: Booking[]) => Promise.all(list.map((b) => api.checkIn(b.id))),
-    onSuccess: (done) => {
-      const at = done[0]?.checked_in_at ? clockIn(tz, new Date(done[0].checked_in_at)) : clockIn(tz, now)
-      toast(t.card.checkedInToast(at))
-      refresh()
-    },
-    onError: fail,
-  })
-
   // Realtime: flash the tile that just changed; drop the book sheet if its seat was taken meanwhile.
   const change = useSeatChange()
   const flashId = change && change.date === selected ? change.seatId : null
@@ -212,7 +192,7 @@ export function DayView({ settings }: { settings: Settings }) {
     else if (view.mineSlots.length > 0) setPending({ kind: 'mine', seatId: view.seat.id })
   }
 
-  const busy = book.isPending || quickBook.isPending || cancel.isPending || checkIn.isPending
+  const busy = book.isPending || quickBook.isPending || cancel.isPending
   const loading = seats.isPending || bookings.isPending || profiles.isPending
   const failed = seats.error ?? bookings.error ?? profiles.error
   const retry = () => {
@@ -247,9 +227,7 @@ export function DayView({ settings }: { settings: Settings }) {
                 seats={seats.data ?? []}
                 selected={selected}
                 today={today}
-                tz={tz}
                 busy={busy}
-                onCheckInAll={() => variant.kind === 'ring' && checkIn.mutate(variant.openBookings)}
                 onManage={() => variant.kind === 'booked' && setPending({ kind: 'mine', seatId: variant.bookings[0].seat_id })}
                 onQuickBook={(seatId, slot) => quickBook.mutate({ seatId, slot })}
               />
@@ -263,8 +241,6 @@ export function DayView({ settings }: { settings: Settings }) {
                 myName={myName}
                 myHeldSlots={myHeldSlots}
                 endedSlots={endedSlots}
-                isToday={selected === today}
-                tz={tz}
                 flashId={flashId}
                 selectedId={pending?.kind === 'book' ? pending.seatId : null}
                 onTap={onTap}
@@ -283,11 +259,10 @@ export function DayView({ settings }: { settings: Settings }) {
         views={views}
         date={selected}
         today={today}
-        nowMinutes={nowMinutes}
         settings={settings}
-        userId={userId}
         myHeldSlots={myHeldSlots}
         endedSlots={endedSlots}
+        startedSlots={startedSlots}
         myHeldCode={mineOnDay[0] ? codeOf(mineOnDay[0].seat_id) : null}
         busy={busy}
         onBook={(seatId, slot) => book.mutate({ seatId, slot })}
@@ -300,9 +275,7 @@ export function DayView({ settings }: { settings: Settings }) {
         today={today}
         now={now}
         settings={settings}
-        userId={userId}
         busy={busy}
-        onCheckIn={(b) => checkIn.mutate([b])}
         onCancel={(b) => setToCancel(b)}
         onClose={() => setPending(null)}
       />

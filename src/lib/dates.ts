@@ -50,10 +50,19 @@ export function isoWeekday(isoDate: string): number {
   return dow === 0 ? 7 : dow
 }
 
-export function bookableDays(today: string, windowDays: number, workingDays: readonly number[]): string[] {
-  return Array.from({ length: windowDays + 1 }, (_, i) => addDays(today, i)).filter((d) =>
-    workingDays.includes(isoWeekday(d)),
-  )
+// The bookable days: today through the last working day of the current week. Past the last working
+// day (the weekend) it is the coming week. Mirrors bmd_assert_window() in the database.
+export function bookableDays(today: string, workingDays: readonly number[]): string[] {
+  const dow = isoWeekday(today)
+  const lastWorking = Math.max(...workingDays)
+  let monday = addDays(today, 1 - dow)
+  if (dow > lastWorking) monday = addDays(monday, 7)
+  const days: string[] = []
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(monday, i)
+    if (d >= today && workingDays.includes(isoWeekday(d))) days.push(d)
+  }
+  return days
 }
 
 // Dates in the strip that do not directly follow the previous one (Friday → Monday) get a gap before them.
@@ -132,16 +141,6 @@ export function formatTime(hhmm: string): string {
   return hhmm.slice(0, 5)
 }
 
-export type CheckInState = 'open' | 'closed' | 'not_today' | 'exempt' | 'done'
-
-export function checkInState(b: Booking, s: Settings, ownerOfSeat: boolean, now: Date = new Date()): CheckInState {
-  if (b.status === 'checked_in') return 'done'
-  if (ownerOfSeat && s.owner_checkin_exempt) return 'exempt'
-  if (b.date !== todayIn(s.timezone, now)) return 'not_today'
-  const deadline = parseTime(b.slot === 'AM' ? s.am_checkin_deadline : s.pm_checkin_deadline)
-  return minutesSinceMidnightIn(s.timezone, now) > deadline ? 'closed' : 'open'
-}
-
 export function canCancel(b: Booking, s: Settings, now: Date = new Date()): boolean {
   if (b.status !== 'booked') return false
   const today = todayIn(s.timezone, now)
@@ -157,10 +156,6 @@ export function slotStart(slot: Booking['slot'], s: Settings): number {
 
 export function slotEnd(slot: Booking['slot'], s: Settings): number {
   return slot === 'AM' ? parseTime(s.pm_start) : 24 * 60
-}
-
-export function slotDeadline(slot: Booking['slot'], s: Settings): number {
-  return parseTime(slot === 'AM' ? s.am_checkin_deadline : s.pm_checkin_deadline)
 }
 
 // "06:00–13:00" for the booking sheet's slot cards.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { gapsBefore } from './dates'
-import { alternativeSeat, ringProgress, usualSeat } from './smart'
+import { alternativeSeat, usualSeat } from './smart'
 
 const seats = Array.from({ length: 12 }, (_, i) => {
   const n = i + 1
@@ -51,21 +51,6 @@ describe('alternativeSeat', () => {
 
   it('is null when nothing is free', () => {
     expect(alternativeSeat('s5', [], inRoomOrder)).toBeNull()
-  })
-})
-
-describe('ringProgress', () => {
-  it('is the share of the check-in window still left', () => {
-    // AM: starts 06:00, deadline 10:00 → 240 min window; 08:40 leaves 80 min = 33%
-    expect(ringProgress(8 * 60 + 40, 6 * 60, 10 * 60)).toBe(33)
-  })
-
-  it('never drops below 4% while open', () => {
-    expect(ringProgress(9 * 60 + 59, 6 * 60, 10 * 60)).toBe(4)
-  })
-
-  it('is 100 before the window starts', () => {
-    expect(ringProgress(5 * 60, 6 * 60, 10 * 60)).toBe(100)
   })
 })
 

@@ -30,21 +30,25 @@ select tests_tmp.create_user('bob@cetin.cz',   'a1000000-0000-4000-8000-00000000
 select tests_tmp.create_user('carol@cetin.cz', 'a1000000-0000-4000-8000-000000000003');
 select tests_tmp.create_user('dave@cetin.cz',  'a1000000-0000-4000-8000-000000000004');
 
--- Wednesday 2026-11-04 09:00 Prague; window = today + 7 days
+-- Wednesday 2026-11-04 09:00 Prague: the window runs to Friday 2026-11-06
 select tests_tmp.freeze('2026-11-04 09:00:00+01');
 select tests_tmp.login('a1000000-0000-4000-8000-000000000001');
 set local role authenticated;
 
 select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-03', 'AM')$$,
   'P0001', 'outside_window', 'yesterday cannot be booked');
-select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-11', 'AM')$$,
-  'today + 7 is the last bookable day');
-select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-12', 'AM')$$,
-  'P0001', 'outside_window', 'today + 8 is rejected');
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-06', 'AM')$$,
+  'Friday of this week is the last bookable day');
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-09', 'AM')$$,
+  'P0001', 'outside_window', 'next Monday is outside the current week');
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-07', 'AM')$$,
+  'P0001', 'not_working_day', 'Saturday of this week is not a working day');
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-08', 'PM')$$,
+  'P0001', 'not_working_day', 'Sunday is not a working day either');
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-04', 'AM')$$,
-  'today AM can be booked before the check-in deadline');
+  'today AM can be booked while it is running');
 select is((select status::text from public.bookings where seat_id = '51000000-0000-4000-8000-000000000001' and date = '2026-11-04'),
-  'booked', 'a booking made before the deadline still needs check-in');
+  'booked', 'a same-day booking is a plain booking');
 
 -- 23:30 UTC on Nov 4 is already 00:30 on Nov 5 in Prague: the window must follow Prague, not UTC.
 reset role;
@@ -53,10 +57,10 @@ select tests_tmp.login('a1000000-0000-4000-8000-000000000002');
 set local role authenticated;
 select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-04', 'PM')$$,
   'P0001', 'outside_window', 'after Prague midnight the previous day is gone even though UTC has not rolled over');
-select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-12', 'AM')$$,
-  'after Prague midnight the window already reaches Nov 12');
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-05', 'AM')$$,
+  'after Prague midnight Thursday is today and bookable');
 
--- Same day, 14:30 Prague: AM is over, PM booking is auto-checked-in because its deadline (14:00) passed.
+-- Same day, 14:30 Prague: AM is over, PM can still be booked.
 reset role;
 select tests_tmp.freeze('2026-11-04 14:30:00+01');
 select tests_tmp.login('a1000000-0000-4000-8000-000000000003');
@@ -65,47 +69,44 @@ select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003
   'P0001', 'slot_ended', 'a half day that already ended cannot be booked');
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-04', 'PM')$$,
   'the current half day can still be booked');
-select is((select status::text from public.bookings where seat_id = '51000000-0000-4000-8000-000000000003' and date = '2026-11-04'),
-  'checked_in', 'booking after the check-in deadline counts as checked in');
 
--- Same day, 10:30 Prague: AM deadline (10:00) passed but AM has not ended -> walk-in, auto-checked-in.
+-- Saturday 2026-11-07: the coming week opens up
 reset role;
-select tests_tmp.freeze('2026-11-04 10:30:00+01');
-select tests_tmp.login('a1000000-0000-4000-8000-000000000002');
+select tests_tmp.freeze('2026-11-07 10:00:00+01');
+select tests_tmp.login('a1000000-0000-4000-8000-000000000003');
 set local role authenticated;
-select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-04', 'AM')$$,
-  'a walk-in can still take a free seat after the AM deadline');
-select is((select status::text from public.bookings where seat_id = '51000000-0000-4000-8000-000000000002' and date = '2026-11-04' and slot = 'AM'),
-  'checked_in', 'the walk-in booking is auto-checked-in');
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-07', 'PM')$$,
+  'P0001', 'outside_window', 'the weekend itself is not bookable');
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-09', 'AM')$$,
+  'from the weekend, next Monday is bookable');
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-13', 'AM')$$,
+  'and next Friday');
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-16', 'AM')$$,
+  'P0001', 'outside_window', 'but not the Monday after');
 
 -- Weekly limit (off by default): max 2 distinct days per ISO week
 reset role;
 update public.settings set max_days_per_week = 2;
-select tests_tmp.freeze('2026-11-04 09:00:00+01');
+select tests_tmp.freeze('2026-11-02 09:00:00+01');
 select tests_tmp.login('a1000000-0000-4000-8000-000000000004');
 set local role authenticated;
-select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-05', 'AM')$$, 'weekly limit: first day');
-select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-06', 'AM')$$, 'weekly limit: second day');
-select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-04', 'AM')$$,
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-03', 'AM')$$, 'weekly limit: first day');
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-05', 'AM')$$, 'weekly limit: second day');
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-02', 'AM')$$,
   'P0001', 'weekly_limit', 'weekly limit: third distinct day in the same ISO week is rejected');
-select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-06', 'PM')$$,
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-05', 'PM')$$,
   'weekly limit: another half of an already booked day is fine');
-select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-09', 'AM')$$,
+reset role;
+select tests_tmp.freeze('2026-11-09 09:00:00+01');
+select tests_tmp.login('a1000000-0000-4000-8000-000000000004');
+set local role authenticated;
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-09', 'AM')$$,
   'weekly limit: next ISO week starts fresh');
 
--- Working days: weekends are not bookable by default (2026-11-07 is a Saturday, 11-08 a Sunday)
+-- Saturday becomes bookable once it is a working day
 reset role;
-update public.settings set max_days_per_week = null;
-select tests_tmp.login('a1000000-0000-4000-8000-000000000001');
-set local role authenticated;
-select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-07', 'AM')$$,
-  'P0001', 'not_working_day', 'Saturday cannot be booked');
-select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-08', 'PM')$$,
-  'P0001', 'not_working_day', 'Sunday cannot be booked');
-select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-06', 'AM')$$,
-  'Friday can be booked');
-reset role;
-update public.settings set working_days = '{1,2,3,4,5,6}';
+update public.settings set max_days_per_week = null, working_days = '{1,2,3,4,5,6}';
+select tests_tmp.freeze('2026-11-04 09:00:00+01');
 select tests_tmp.login('a1000000-0000-4000-8000-000000000001');
 set local role authenticated;
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-07', 'AM')$$,

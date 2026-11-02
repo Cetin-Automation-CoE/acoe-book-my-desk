@@ -1,10 +1,9 @@
 import { useT } from '../hooks/useLang'
-import { clockIn } from '../lib/dates'
-import { shortName, splitCode } from '../lib/people'
+import { shortName } from '../lib/people'
 import type { HalfState, SeatView } from '../lib/seatState'
 import { SLOTS, type Slot } from '../lib/types'
 import { Avatar } from './Avatar'
-import { CheckIcon, StarIcon } from './icons'
+import { StarIcon } from './icons'
 
 export interface SeatTileProps {
   view: SeatView
@@ -15,8 +14,6 @@ export interface SeatTileProps {
   myHeldSlots: ReadonlySet<Slot>
   // Halves of the selected day that are already over.
   endedSlots: ReadonlySet<Slot>
-  isToday: boolean
-  tz: string
   flash: boolean
   selected: boolean
   index: number
@@ -35,16 +32,6 @@ const tile: Record<Look, string> = {
   inactive: 'bg-transparent border-dashed border-line-strong text-[#b4b6c6]',
 }
 
-const prefixColor: Record<Look, string> = {
-  free: 'text-brand/50',
-  partly: 'text-brand/50',
-  mine: 'text-white/65',
-  taken: 'text-taken-ink',
-  held: 'text-lilac',
-  ended: 'text-[#b4b6c6]',
-  inactive: 'text-[#b4b6c6]',
-}
-
 function halfColor(state: HalfState | undefined, look: Look): string {
   switch (state) {
     case 'mine':
@@ -60,10 +47,9 @@ function halfColor(state: HalfState | undefined, look: Look): string {
 
 // One seat in the grid: big desk number, who has it, and in Full-day mode a glyph of both halves.
 export function SeatTile(props: SeatTileProps) {
-  const { view, names, userId, myName, myHeldSlots, endedSlots, isToday, tz, flash, selected, index, onTap } = props
+  const { view, names, userId, myName, myHeldSlots, endedSlots, flash, selected, index, onTap } = props
   const t = useT()
   const nameOf = (id: string) => (id === userId ? myName : (names.get(id) ?? '…'))
-  const { prefix, digits } = splitCode(view.seat.code)
 
   const allEnded = view.wantedSlots.length > 0 && view.wantedSlots.every((s) => endedSlots.has(s))
   const look: Look =
@@ -78,9 +64,6 @@ export function SeatTile(props: SeatTileProps) {
   let sub = ''
   let avatarId: string | null = null
   let star = false
-  let check = false
-  const checkedTime = (b?: { status: string; checked_in_at: string | null }) =>
-    isToday && b?.status === 'checked_in' && b.checked_in_at ? clockIn(tz, new Date(b.checked_in_at)) : ''
 
   switch (look) {
     case 'free':
@@ -100,13 +83,7 @@ export function SeatTile(props: SeatTileProps) {
     }
     case 'mine': {
       caption = t.you
-      const done = view.mineBookings.find((b) => checkedTime(b))
-      if (done) {
-        check = true
-        sub = checkedTime(done)
-      } else if (view.wantedSlots.length > 1 && view.mineSlots.length === 1) {
-        sub = t.slots[view.mineSlots[0]]
-      }
+      if (view.wantedSlots.length > 1 && view.mineSlots.length === 1) sub = t.slots[view.mineSlots[0]]
       break
     }
     case 'taken': {
@@ -114,11 +91,6 @@ export function SeatTile(props: SeatTileProps) {
       if (distinct.length === 1) {
         avatarId = distinct[0]
         caption = shortName(nameOf(distinct[0]))
-        const done = SLOTS.map((s) => view.halves[s]?.booking).find((b) => checkedTime(b))
-        if (done) {
-          check = true
-          sub = checkedTime(done)
-        }
       } else {
         caption = t.seats.taken
         sub = SLOTS.filter((s) => view.halves[s]?.booking)
@@ -157,26 +129,18 @@ export function SeatTile(props: SeatTileProps) {
         disabled={!tappable || dimmed}
         onClick={() => onTap(view)}
         aria-label={`${view.seat.code}: ${caption}${sub ? `, ${sub}` : ''}`}
-        className={`relative flex h-[76px] w-full items-center gap-2 rounded-2xl border-[1.5px] py-0 pl-[11px] pr-2 text-left transition-[transform,box-shadow] duration-150 active:scale-[0.96] disabled:active:scale-100 ${tile[look]} ${
+        className={`relative flex h-[76px] w-full flex-col justify-center gap-[3px] rounded-2xl border-[1.5px] py-0 pl-[11px] pr-2 text-left transition-[transform,box-shadow] duration-150 active:scale-[0.96] disabled:active:scale-100 ${tile[look]} ${
           flash ? 'flash' : ''
         } ${selected ? 'shadow-selected' : ''} ${dimmed ? 'opacity-50' : ''}`}
       >
-        <span className="flex w-[33px] shrink-0 flex-col">
-          <span className={`text-[9.5px] font-bold leading-3 tracking-[0.04em] ${prefixColor[look]}`}>{prefix}</span>
-          <span className="text-[26px] font-extrabold leading-7 tracking-[-0.03em] tabular-nums">{digits}</span>
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+        <span className="shrink-0 text-[17px] font-extrabold leading-5 tracking-[-0.02em] tabular-nums">{view.seat.code}</span>
+        <span className="flex min-w-0 flex-col gap-px pr-3">
           <span className="flex min-w-0 items-center gap-1.5">
-            {avatarId && <Avatar userId={avatarId} name={nameOf(avatarId)} size={22} />}
-            {star && <StarIcon width={14} height={14} className="shrink-0" strokeWidth={2.2} />}
-            <span className={`truncate text-sm font-bold leading-[18px] ${captionColor}`}>{caption}</span>
+            {avatarId && <Avatar userId={avatarId} name={nameOf(avatarId)} size={18} />}
+            {star && <StarIcon width={13} height={13} className="shrink-0" strokeWidth={2.2} />}
+            <span className={`truncate text-[13px] font-bold leading-[17px] ${captionColor}`}>{caption}</span>
           </span>
-          {sub && (
-            <span className={`flex min-w-0 items-center gap-1 text-xs font-medium leading-4 ${subColor}`}>
-              {check && <CheckIcon width={13} height={13} className="shrink-0" strokeWidth={2.5} />}
-              <span className="truncate">{sub}</span>
-            </span>
-          )}
+          {sub && <span className={`truncate text-[11.5px] font-medium leading-[15px] ${subColor}`}>{sub}</span>}
         </span>
         {showGlyph && (
           <span

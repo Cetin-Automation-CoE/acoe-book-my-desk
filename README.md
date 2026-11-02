@@ -2,7 +2,7 @@
 
 Mobile-first web app for booking seats in the office open space. Colleagues sign in with their
 work email (6-digit code), pick a day and a half-day slot, and tap a free seat. Seat owners can
-release their semi-fixed seats; bookings without check-in are released automatically.
+release their semi-fixed seats. The UI is in English and Czech (switch in the profile sheet).
 
 Plan and decisions: [Project plan](https://claude.ai/artifact/95CmY1gzyEdUJVkzhLnKLh) ·
 [docs/decisions.md](docs/decisions.md)
@@ -11,7 +11,7 @@ Plan and decisions: [Project plan](https://claude.ai/artifact/95CmY1gzyEdUJVkzhL
 
 | Part | Choice |
 |------|--------|
-| Frontend | Vite + React + TypeScript + Tailwind, installable PWA (`vite-plugin-pwa`), `HashRouter` |
+| Frontend | Vite + React + TypeScript + Tailwind, installable PWA (`vite-plugin-pwa`), `HashRouter`; visual design from `docs/design/` |
 | Hosting | GitHub Pages, deployed by GitHub Actions on every push to `main` |
 | Backend | Supabase (Postgres, Auth, Realtime, pg_cron), EU region; schema in `supabase/migrations` |
 | Email | Custom SMTP (Brevo or Resend) for sign-in codes |
@@ -22,7 +22,7 @@ All booking rules are enforced in Postgres functions behind RLS; the frontend on
 
 ```
 .github/workflows/   deploy.yml (Pages), ci.yml (lint/test/pgTAP), keepalive.yml
-docs/                decisions.md
+docs/                decisions.md, design/ (the Claude Design hand-off: HANDOFF.md + clickable prototype)
 public/              PWA icons (placeholders, regenerate with `npm run icons`)
 scripts/             make-icons.mjs
 src/                 React app; all UI text in src/strings.ts
@@ -83,8 +83,8 @@ Useful scripts:
      default to 8; the app accepts 6–10 digits either way).
    - Email Templates → *Confirm signup* **and** *Magic Link*: replace the body with the contents of
      `supabase/templates/magic_link.html` (it shows `{{ .Token }}`, the 6-digit code, instead of a
-     link, because corporate mail scanners consume links). Set the subject to
-     "Your BookMyDesk sign-in code".
+     link, because corporate mail scanners consume links; its preheader repeats the code so it shows
+     in the phone's notification). Set the subject to "Your BookMyDesk sign-in code".
    - URL Configuration → Site URL: `https://<org>.github.io/<repo>/`.
 4. **Custom SMTP** — the built-in Supabase mailer only reaches project team members at 2 emails
    per hour. The project uses Mailjet (free tier): validate a sender address under Senders & Domains,
@@ -146,8 +146,8 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
 - **Add seats, floors or offices:** insert rows into `seats`, `floors`, `offices`.
 - **Room order:** the Book screen draws seats in `seats.sort_order` as side-by-side pairs (two pairs
   per table block, then a gap). Change `sort_order` to rearrange; keep partners on consecutive numbers.
-- **Change rules:** edit the single row in `settings` (booking window, working days, check-in deadlines,
-  slot times, owner check-in exemption, weekly limit, data retention, team-day threshold).
+- **Change rules:** edit the single row in `settings` (working days, slot times, weekly limit, data
+  retention, team-day threshold).
 - **Fix a display name:** `update public.profiles set display_name = 'Jane Doe' where email = '...';`
 - **Sign-in codes stop arriving:** check Mailjet → Statistics (Delivered / Blocked / Bounced), then
   the recipient's Junk folder and the Microsoft 365 quarantine (https://security.microsoft.com/quarantine).
@@ -161,13 +161,12 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | Rule | Behaviour |
 |------|-----------|
 | Slots | `AM` 06:00–13:00, `PM` 13:00–24:00 (`am_start`, `pm_start`). "Full day" books both halves atomically. |
-| Window | Today + `booking_window_days` (7), working days only (`working_days`, default Mon–Fri). Other dates are rejected (`outside_window`, `not_working_day`). |
-| Same day | A half day can be booked until it ends. Booking after its check-in deadline counts as checked in (walk-in). |
+| Window | The current working week: today through the week's last working day (`working_days`, default Mon–Fri). On a weekend the coming week opens. Other dates are rejected (`outside_window`, `not_working_day`). |
+| Same day | A half day can be booked until it ends. |
 | Limits | One active booking per seat per half day; one per person per half day (partial unique indexes). Optional `max_days_per_week`. |
-| Check-in | "I'm here" on the day, until `am_checkin_deadline` (10:00) / `pm_checkin_deadline` (14:00). |
-| Auto-release | Every 15 minutes, `booked` bookings past their deadline become `released`. Seat owners are exempt while `owner_checkin_exempt` is true. |
 | Cancel | Any time before the half day starts. Checked-in bookings cannot be cancelled. |
 | Semi-fixed seats | `seats.owner_id` holds the seat; others can book a half day only after the owner releases it (My seat tab). Releasing cancels the owner's own booking for that half day; a released half day cannot be taken back once a colleague booked it. |
+| No check-in | A reservation is the commitment: there is no "I'm here", no deadline and no auto-release (removed 2026-11-02; the `checked_in` / `released` statuses only remain for rows written before). |
 | Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
 | Team day | A day with `team_day_threshold` (8) or more people booked is marked on the day strip; the Book tab nudges towards it and Who's in shows a banner. |
 
@@ -175,8 +174,8 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 
 An **office day** is a day with a reservation. A booking is counted once its half day has started
 (06:00 / 13:00 — from then on it cannot be cancelled): the `bookmydesk-count-office-days` job runs
-every 15 minutes, and a booking made after the start is counted immediately. Check-in plays no part:
-a reservation that was auto-released still counts; a cancelled one never does. Counters live in
+every 15 minutes, and a booking made after the start is counted immediately. A cancelled booking
+never counts. Counters live in
 `user_stats` and badges in `achievements` (`bookings.counted_at` marks what has been counted); both
 survive the 90-day purge and are readable only by the person themselves — no leaderboard, colleagues
 never see each other's numbers.
@@ -208,34 +207,30 @@ check constraint, a rule in that function and a name in `src/strings.ts`. To res
 |--------|---------|---------|
 | `allowed_email_domains` | `{cetin.cz}` | Who may sign up; empty array allows everyone |
 | `timezone` | `Europe/Prague` | Office time zone for every rule |
-| `booking_window_days` | `7` | Days ahead that can be booked |
-| `working_days` | `{1,2,3,4,5}` | ISO weekdays that can be booked (1 = Mon … 7 = Sun); weekends are hidden in the app |
+| `working_days` | `{1,2,3,4,5}` | ISO weekdays that can be booked (1 = Mon … 7 = Sun); the week ends on the last one listed |
 | `am_start`, `pm_start` | `06:00`, `13:00` | When each half day starts (PM start is also the AM/PM split) |
-| `am_checkin_deadline`, `pm_checkin_deadline` | `10:00`, `14:00` | Check-in deadlines |
-| `owner_checkin_exempt` | `true` | Seat owners are never auto-released |
 | `max_days_per_week` | `null` | Optional limit of distinct booked days per ISO week |
 | `booking_retention_days` | `90` | Nightly purge threshold |
 | `team_day_threshold` | `8` | People booked on one day for it to count as a team day |
 
 ### Scheduled jobs
 
-The migrations enable `pg_cron` and schedule three jobs (visible in the dashboard under
+The migrations enable `pg_cron` and schedule two jobs (visible in the dashboard under
 Integrations → Cron, or `select * from cron.job;`):
 
-- `bookmydesk-auto-release` — every 15 minutes, `public.auto_release_bookings()`
 - `bookmydesk-purge-old-bookings` — daily 03:30 UTC, `public.purge_old_bookings()`
 - `bookmydesk-count-office-days` — every 15 minutes, `public.count_office_days()` (progress and badges)
 
 pg_cron schedules are in UTC; the functions convert to the office time zone themselves, so DST
-changes need no attention. Run `select public.auto_release_bookings();` in the SQL editor to
-trigger a release manually.
+changes need no attention. Run `select public.count_office_days();` in the SQL editor to count
+started bookings right away.
 
 ## Security notes
 
 - Row-level security is on for every table; signed-in users can read seats, bookings, releases
   and colleagues' display names, and can write nothing directly.
 - Every change goes through `security definer` functions (`book_seat`, `cancel_booking`,
-  `check_in`, `release_my_seat`, `unrelease_my_seat`) that use `auth.uid()` and validate all rules.
+  `release_my_seat`, `unrelease_my_seat`) that use `auth.uid()` and validate all rules.
   They raise short error codes (`seat_taken`, `outside_window`, …) that `src/strings.ts` translates.
 - The rules are covered by pgTAP tests in `supabase/tests` (run on every PR by CI).
 - Sign-ups are restricted by a database trigger, not only in the UI: the address must be on an allowed

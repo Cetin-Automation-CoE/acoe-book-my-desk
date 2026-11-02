@@ -23,9 +23,3 @@ export function avatarTint(userId: string): string {
   for (let i = 0; i < userId.length; i++) h = (h * 31 + userId.charCodeAt(i)) >>> 0
   return TINTS[h % TINTS.length]
 }
-
-// Seat code "B21105" → { prefix: "B211", digits: "05" }
-export function splitCode(code: string): { prefix: string; digits: string } {
-  const m = /^(.*?)(\d{1,2})$/.exec(code)
-  return m ? { prefix: m[1], digits: m[2] } : { prefix: '', digits: code }
-}

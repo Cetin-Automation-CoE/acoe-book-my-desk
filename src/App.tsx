@@ -51,7 +51,7 @@ function SignedInApp() {
   return (
     <RealtimeProvider>
       <Routes>
-        <Route element={<AppShell showMySeat={ownsSeat} settings={settings.data} />}>
+        <Route element={<AppShell showMySeat={ownsSeat} />}>
           <Route index element={<DayView settings={settings.data} />} />
           <Route path="bookings" element={<MyBookings settings={settings.data} />} />
           <Route path="who" element={<WhoIsIn settings={settings.data} />} />

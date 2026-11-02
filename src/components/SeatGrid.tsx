@@ -11,8 +11,6 @@ interface SeatGridProps {
   myName: string
   myHeldSlots: ReadonlySet<Slot>
   endedSlots: ReadonlySet<Slot>
-  isToday: boolean
-  tz: string
   flashId: string | null
   selectedId: string | null
   onTap: (view: SeatView) => void
@@ -22,7 +20,7 @@ interface SeatGridProps {
 // Seats arrive in room order (seats.sort_order), so the grid mirrors the floor without a map.
 export const PAIRS_PER_BLOCK = 2
 
-export function SeatGrid({ views, names, userId, myName, myHeldSlots, endedSlots, isToday, tz, flashId, selectedId, onTap }: SeatGridProps) {
+export function SeatGrid({ views, names, userId, myName, myHeldSlots, endedSlots, flashId, selectedId, onTap }: SeatGridProps) {
   const t = useT()
   if (views.length === 0) return <p className="text-muted">{t.seats.noSeats}</p>
 
@@ -72,8 +70,6 @@ export function SeatGrid({ views, names, userId, myName, myHeldSlots, endedSlots
                         myName={myName}
                         myHeldSlots={myHeldSlots}
                         endedSlots={endedSlots}
-                        isToday={isToday}
-                        tz={tz}
                         flash={flashId === view.seat.id}
                         selected={selectedId === view.seat.id}
                         index={index++}

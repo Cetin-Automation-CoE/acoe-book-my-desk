@@ -1,14 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  addDays,
-  bookableDays,
-  canCancel,
-  checkInState,
-  dayLabel,
-  isoWeekday,
-  minutesSinceMidnightIn,
-  todayIn,
-} from './dates'
+import { addDays, bookableDays, canCancel, dayLabel, isoWeekday, minutesSinceMidnightIn, todayIn } from './dates'
 import type { Booking, Settings } from './types'
 
 const TZ = 'Europe/Prague'
@@ -17,12 +8,8 @@ const settings: Settings = {
   id: true,
   allowed_email_domains: ['cetin.cz'],
   timezone: TZ,
-  booking_window_days: 7,
   am_start: '06:00:00',
   pm_start: '13:00:00',
-  am_checkin_deadline: '10:00:00',
-  pm_checkin_deadline: '14:00:00',
-  owner_checkin_exempt: true,
   max_days_per_week: null,
   booking_retention_days: 90,
   working_days: [1, 2, 3, 4, 5],
@@ -49,38 +36,6 @@ function booking(over: Partial<Booking> = {}): Booking {
 // Wednesday 2026-11-04 in Prague (UTC+1)
 const at = (hhmm: string) => new Date(`2026-11-04T${hhmm}:00+01:00`)
 
-describe('checkInState', () => {
-  it('is open on the day before the deadline', () => {
-    expect(checkInState(booking(), settings, false, at('09:00'))).toBe('open')
-  })
-
-  it('is closed on the day after the deadline', () => {
-    expect(checkInState(booking(), settings, false, at('10:01'))).toBe('closed')
-  })
-
-  it('uses the PM deadline for afternoon bookings', () => {
-    expect(checkInState(booking({ slot: 'PM' }), settings, false, at('13:30'))).toBe('open')
-    expect(checkInState(booking({ slot: 'PM' }), settings, false, at('14:01'))).toBe('closed')
-  })
-
-  it('is not_today for a future booking', () => {
-    expect(checkInState(booking({ date: '2026-11-05' }), settings, false, at('09:00'))).toBe('not_today')
-  })
-
-  it('is exempt for the owner of a semi-fixed seat', () => {
-    expect(checkInState(booking(), settings, true, at('09:00'))).toBe('exempt')
-  })
-
-  it('treats an owner like everyone else when the exemption is off', () => {
-    const strict = { ...settings, owner_checkin_exempt: false }
-    expect(checkInState(booking(), strict, true, at('10:30'))).toBe('closed')
-  })
-
-  it('is done once checked in', () => {
-    expect(checkInState(booking({ status: 'checked_in' }), settings, false, at('09:00'))).toBe('done')
-  })
-})
-
 describe('canCancel', () => {
   it('allows cancelling a future booking', () => {
     expect(canCancel(booking({ date: '2026-11-05' }), settings, at('23:00'))).toBe(true)
@@ -96,7 +51,7 @@ describe('canCancel', () => {
   })
 
   it('refuses for anything that is not booked', () => {
-    expect(canCancel(booking({ date: '2026-11-05', status: 'checked_in' }), settings, at('09:00'))).toBe(false)
+    expect(canCancel(booking({ date: '2026-11-05', status: 'cancelled' }), settings, at('09:00'))).toBe(false)
   })
 })
 
@@ -134,29 +89,25 @@ describe('addDays', () => {
 })
 
 describe('bookableDays', () => {
-  const ALL = [1, 2, 3, 4, 5, 6, 7]
   const WEEKDAYS = [1, 2, 3, 4, 5]
 
-  it('returns today plus the window length when every day is a working day', () => {
-    const days = bookableDays('2026-11-03', 7, ALL)
-    expect(days).toHaveLength(8)
-    expect(days[0]).toBe('2026-11-03')
-    expect(days[7]).toBe('2026-11-10')
+  it('runs from today to Friday of the current week', () => {
+    // Tuesday 3 Nov
+    expect(bookableDays('2026-11-03', WEEKDAYS)).toEqual(['2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06'])
   })
 
-  it('returns only today for a zero-day window', () => {
-    expect(bookableDays('2026-11-03', 0, ALL)).toEqual(['2026-11-03'])
+  it('is the whole week on a Monday and only Friday on a Friday', () => {
+    expect(bookableDays('2026-11-02', WEEKDAYS)).toHaveLength(5)
+    expect(bookableDays('2026-11-06', WEEKDAYS)).toEqual(['2026-11-06'])
   })
 
-  it('drops the weekend from the window', () => {
-    // Tuesday 3 Nov + 7 days = Tue..Tue; Sat 7 and Sun 8 are removed
-    expect(bookableDays('2026-11-03', 7, WEEKDAYS)).toEqual([
-      '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06', '2026-11-09', '2026-11-10',
-    ])
+  it('shows the coming week on a weekend', () => {
+    expect(bookableDays('2026-11-07', WEEKDAYS)).toEqual(['2026-11-09', '2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13'])
+    expect(bookableDays('2026-11-08', WEEKDAYS)[0]).toBe('2026-11-09')
   })
 
-  it('starts on Monday when today is a Saturday', () => {
-    expect(bookableDays('2026-11-07', 7, WEEKDAYS)[0]).toBe('2026-11-09')
+  it('includes Saturday when it is a working day', () => {
+    expect(bookableDays('2026-11-06', [1, 2, 3, 4, 5, 6])).toEqual(['2026-11-06', '2026-11-07'])
   })
 })
 

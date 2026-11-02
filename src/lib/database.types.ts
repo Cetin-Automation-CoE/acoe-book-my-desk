@@ -161,14 +161,14 @@ isOneToOne: false
                   ]
                 },"settings": {
                   Row: {
-                    "allowed_email_domains": (string)[],"am_checkin_deadline": string,"am_start": string,"booking_retention_days": number,"booking_window_days": number,"id": boolean,"max_days_per_week": number | null,"owner_checkin_exempt": boolean,"pm_checkin_deadline": string,"pm_start": string,"team_day_threshold": number,"timezone": string,"updated_at": string,"working_days": (number)[]
+                    "allowed_email_domains": (string)[],"am_start": string,"booking_retention_days": number,"id": boolean,"max_days_per_week": number | null,"pm_start": string,"team_day_threshold": number,"timezone": string,"updated_at": string,"working_days": (number)[]
                   }
                   ComputedFields: never
                   Insert: {
-                    "allowed_email_domains"?: (string)[],"am_checkin_deadline"?: string,"am_start"?: string,"booking_retention_days"?: number,"booking_window_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"owner_checkin_exempt"?: boolean,"pm_checkin_deadline"?: string,"pm_start"?: string,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
+                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Update: {
-                    "allowed_email_domains"?: (string)[],"am_checkin_deadline"?: string,"am_start"?: string,"booking_retention_days"?: number,"booking_window_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"owner_checkin_exempt"?: boolean,"pm_checkin_deadline"?: string,"pm_start"?: string,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
+                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Relationships: [
                     
@@ -195,9 +195,6 @@ isOneToOne: false
           Functions: {
             "admin_set_role":
 { Args: { "p_role": string,"p_user_id": string }; Returns: undefined
-                           },
-"auto_release_bookings":
-{ Args: Record<PropertyKey, never>; Returns: number
                            },
 "bmd_assert_window":
 { Args: { "p_date": string,"p_settings": Omit<Database["public"]['Tables']["settings"]['Row'], Database["public"]['Tables']["settings"]['ComputedFields']>,"p_today": string }; Returns: undefined
@@ -240,25 +237,6 @@ isOneToOne: false
         isSetofReturn: true
       } },
 "cancel_booking":
-{ Args: { "p_booking_id": string }; Returns: {
-              "checked_in_at": string | null,
-"counted_at": string | null,
-"created_at": string,
-"date": string,
-"id": string,
-"seat_id": string,
-"slot": Database["public"]['Enums']["slot"],
-"status": Database["public"]['Enums']["booking_status"],
-"updated_at": string,
-"user_id": string
-            }
-                          SetofOptions: {
-        from: "*"
-        to: "bookings"
-        isOneToOne: true
-        isSetofReturn: false
-      } },
-"check_in":
 { Args: { "p_booking_id": string }; Returns: {
               "checked_in_at": string | null,
 "counted_at": string | null,

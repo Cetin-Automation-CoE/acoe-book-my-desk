@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+html,body{margin:0;background:#e4e5ee}
+body{font-family:'Avenir Next LT Pro','Avenir Next',Avenir,Arial,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#171717}
+a{color:#300091}a:hover{color:#1a0060}
+input::placeholder{color:#9a9bb5}
+button{-webkit-tap-highlight-color:transparent}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:56px;padding:40px 24px 56px;box-sizing:border-box">
+
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" time="{{ clock }}" status-dark="{{ true }}" hint-size="402px,874px">
+<div style="position:absolute;inset:0;z-index:1;overflow:hidden;background:#f5f6fa;color:#171717;font-family:'Avenir Next LT Pro','Avenir Next',Avenir,Arial,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased">
+
+<sc-if value="{{ isSignin }}" hint-placeholder-val="{{ false }}">
+  <div data-screen-label="Sign in" style="position:absolute;inset:0;display:flex;flex-direction:column;background-color:#300091;background-image:radial-gradient(120% 90% at 100% 0%, rgba(111,121,189,0.55) 0%, rgba(48,0,145,0) 60%), radial-gradient(90% 70% at 0% 100%, rgba(65,182,230,0.18) 0%, rgba(48,0,145,0) 60%), linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);background-size:100% 100%, 100% 100%, 22px 22px, 22px 22px">
+    <div style="flex:1;display:flex;flex-direction:column;padding:62px 24px 36px;color:#fff;min-height:0">
+      <div style="display:flex;justify-content:flex-end">
+        <div style="display:flex;padding:3px;border-radius:12px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.16)">
+          <sc-for list="{{ langOpts }}" as="lo" hint-placeholder-count="2">
+            <button onClick="{{ lo.pick }}" style="min-width:40px;height:30px;border:0;border-radius:9px;background:{{ lo.glassBg }};color:{{ lo.glassFg }};font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">{{ lo.short }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">
+        <img src="assets/icon.svg" alt="" style="width:76px;height:76px;display:block;border-radius:18px;box-shadow:0 18px 40px rgba(10,0,50,0.45), 0 0 0 1px rgba(255,255,255,0.12)">
+        <h1 style="margin:24px 0 0;font-size:38px;line-height:42px;font-weight:800;letter-spacing:-0.02em">BookMyDesk</h1>
+        <p style="margin:8px 0 0;font-size:17px;line-height:24px;color:rgba(255,255,255,0.74)">{{ t.tagline }}</p>
+      </div>
+    </div>
+    <div style="flex:none;background:#fff;border-radius:32px 32px 0 0;padding:28px 24px 46px;box-shadow:0 -12px 40px rgba(10,0,50,0.25)">
+      <sc-if value="{{ isEmailStep }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <p style="margin:0;font-size:15px;line-height:22px;color:#404040;text-wrap:pretty">{{ t.auth.intro }}</p>
+          <label style="display:flex;flex-direction:column;gap:6px">
+            <span style="font-size:13px;font-weight:700;color:#171717">{{ t.auth.emailLabel }}</span>
+            <input type="email" value="{{ email }}" onChange="{{ onEmail }}" onKeyDown="{{ onEmailKey }}" placeholder="{{ t.auth.emailPlaceholder }}" style="min-height:56px;padding:0 16px;border-radius:14px;border:1.5px solid {{ emailBorder }};background:#fff;font-family:inherit;font-size:17px;color:#171717;outline:none;box-sizing:border-box" style-focus="border-color:#300091;box-shadow:0 0 0 4px rgba(48,0,145,0.14)">
+          </label>
+          <sc-if value="{{ hasAuthError }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;font-size:14px;line-height:20px;font-weight:600;color:#f12e49;text-wrap:pretty">{{ authError }}</p>
+          </sc-if>
+          <button onClick="{{ sendCode }}" style="min-height:56px;border:0;border-radius:16px;background:#300091;color:#fff;font-family:inherit;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px rgba(48,0,145,0.3);opacity:{{ busyOpacity }}" style-hover="background:#1a0060" style-active="transform:scale(0.98)">{{ sendLabel }}</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isCodeStep }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <p style="margin:0;font-size:15px;line-height:22px;color:#404040;text-wrap:pretty">{{ codeSentTo }}</p>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <span style="font-size:13px;font-weight:700">{{ t.auth.codeLabel }}</span>
+            <div style="position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px">
+              <sc-for list="{{ codeBoxes }}" as="cb" hint-placeholder-count="6">
+                <div style="height:62px;border-radius:14px;border:1.5px solid {{ cb.border }};box-shadow:{{ cb.ring }};background:{{ cb.bg }};display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;color:#300091;box-sizing:border-box;transition:box-shadow .15s, border-color .15s, background .15s">{{ cb.ch }}</div>
+              </sc-for>
+              <input type="text" inputMode="numeric" autoComplete="one-time-code" value="{{ code }}" onChange="{{ onCode }}" onFocus="{{ onCodeFocus }}" onBlur="{{ onCodeBlur }}" onKeyDown="{{ onCodeKey }}" aria-label="{{ t.auth.codeLabel }}" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;font-size:16px;cursor:text">
+            </div>
+          </div>
+          <sc-if value="{{ hasAuthError }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;font-size:14px;line-height:20px;font-weight:600;color:#f12e49">{{ authError }}</p>
+          </sc-if>
+          <button onClick="{{ verify }}" disabled="{{ verifyDisabled }}" style="min-height:56px;border:0;border-radius:16px;background:#300091;color:#fff;font-family:inherit;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 10px 22px rgba(48,0,145,0.3);opacity:{{ verifyOpacity }}" style-active="transform:scale(0.98)">{{ verifyLabel }}</button>
+          <div style="display:flex;justify-content:space-between;gap:8px">
+            <button onClick="{{ resend }}" style="min-height:40px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:#300091;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:#f5f6fa">{{ t.auth.resend }}</button>
+            <button onClick="{{ changeEmail }}" style="min-height:40px;padding:0 8px;border:0;border-radius:10px;background:transparent;color:#300091;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer" style-hover="background:#f5f6fa">{{ t.auth.changeEmail }}</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+  <div onClick="{{ fillCode }}" style="position:absolute;left:10px;right:10px;top:56px;z-index:45;display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:22px;background:rgba(255,255,255,0.96);box-shadow:0 16px 40px rgba(10,0,50,0.35);cursor:pointer;pointer-events:{{ mailPE }};transform:{{ mailTransform }};opacity:{{ mailOpacity }};transition:transform .4s cubic-bezier(.2,.8,.2,1), opacity .25s">
+    <img src="assets/icon.svg" alt="" style="width:38px;height:38px;border-radius:10px;flex:none">
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+      <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700"><span>BookMyDesk</span><span style="font-size:12px;font-weight:500;color:#66678a">{{ t.auth.now }}</span></div>
+      <div style="font-size:14px;line-height:19px;color:#262626">{{ t.auth.mailBody }} <strong style="font-variant-numeric:tabular-nums">482913</strong></div>
+      <div style="font-size:12px;color:#66678a">{{ t.auth.mailHint }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+  <div ref="{{ scrollRef }}" data-screen-label="{{ screenLabel }}" style="position:absolute;inset:0;overflow-y:auto;background:#f5f6fa;scrollbar-width:none">
+    <div style="position:relative;padding:58px 16px 44px;color:#fff;background-color:#300091;background-image:radial-gradient(120% 90% at 100% 0%, rgba(111,121,189,0.55) 0%, rgba(48,0,145,0) 60%), radial-gradient(90% 70% at 0% 100%, rgba(65,182,230,0.18) 0%, rgba(48,0,145,0) 60%), linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);background-size:100% 100%, 100% 100%, 22px 22px, 22px 22px">
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:12px;height:44px">
+        <button onClick="{{ openProfile }}" aria-label="Profile" style="flex:none;width:40px;height:40px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.12);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:0.02em" style-active="transform:scale(0.94)">{{ myInitials }}</button>
+      </div>
+
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:10px">
+        <div style="flex:1;min-width:0">
+          <h1 style="margin:0;font-size:34px;line-height:40px;font-weight:800;letter-spacing:-0.025em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ band.title }}</h1>
+          <div style="margin-top:2px;font-size:15px;line-height:20px;color:rgba(255,255,255,0.72)">{{ band.sub }}</div>
+        </div>
+        <sc-if value="{{ band.showCount }}" hint-placeholder-val="{{ true }}">
+          <div style="flex:none;text-align:right">
+            <div style="font-size:34px;line-height:40px;font-weight:800;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;color:#fff">{{ band.count }}</div>
+            <div style="margin-top:2px;font-size:12.5px;line-height:20px;color:rgba(255,255,255,0.72)">{{ band.countLabel }}</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ band.showSeat }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;gap:14px;margin-top:18px;padding:14px;border-radius:20px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.16)">
+          <div style="flex:none;width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:#fff;color:#300091">
+            <span style="width:28px;height:28px;background:currentColor;-webkit-mask:url(icons/star.svg) center / contain no-repeat;mask:url(icons/star.svg) center / contain no-repeat"></span>
+          </div>
+          <div style="min-width:0">
+            <div style="font-size:24px;line-height:28px;font-weight:800;letter-spacing:-0.01em;font-variant-numeric:tabular-nums">B21101</div>
+            <div style="font-size:13.5px;line-height:19px;color:rgba(255,255,255,0.74)">{{ t.ms.semiFixed }}</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showDays }}" hint-placeholder-val="{{ true }}">
+        <div role="tablist" style="display:flex;gap:6px;margin-top:20px">
+          <sc-for list="{{ days }}" as="d" hint-placeholder-count="6">
+            <button role="tab" onClick="{{ d.select }}" style="flex:1;min-width:0;margin-left:{{ d.gap }};display:flex;flex-direction:column;align-items:center;padding:8px 0 7px;border:0;border-radius:16px;background:{{ d.bg }};color:{{ d.fg }};font-family:inherit;cursor:pointer;box-shadow:{{ d.shadow }};transition:background .2s, color .2s, box-shadow .2s" style-active="transform:scale(0.95)">
+              <span style="font-size:11px;line-height:15px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:{{ d.sub }}">{{ d.wd }}</span>
+              <span style="font-size:21px;line-height:26px;font-weight:800;font-variant-numeric:tabular-nums">{{ d.num }}</span>
+              <span style="display:flex;gap:3px;height:5px;margin-top:3px">
+                <span style="display:{{ d.todayDisp }};width:5px;height:5px;border-radius:50%;background:#f12e49"></span>
+                <span style="display:{{ d.mineDisp }};width:5px;height:5px;border-radius:50%;background:{{ d.mineColor }}"></span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isBook }}" hint-placeholder-val="{{ true }}">
+        <div role="radiogroup" style="display:flex;gap:2px;margin-top:14px;padding:4px;border-radius:16px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.14)">
+          <sc-for list="{{ slotOpts }}" as="so" hint-placeholder-count="3">
+            <button role="radio" onClick="{{ so.pick }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px 0;border:0;border-radius:12px;background:{{ so.bg }};color:{{ so.fg }};font-family:inherit;font-size:14px;line-height:20px;font-weight:700;cursor:pointer;box-shadow:{{ so.shadow }};transition:background .2s, color .2s">
+              <span style="flex:none;width:12px;height:12px;border-radius:50%;border:1.5px solid currentColor;background:{{ so.glyph }};box-sizing:border-box"></span>
+              <span>{{ so.label }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="position:relative;margin-top:-24px;border-radius:28px 28px 0 0;background:#f5f6fa;padding:20px 16px 124px;min-height:480px">
+
+      <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:16px;padding:20px;border-radius:22px;background:#fff;box-shadow:0 1px 2px rgba(26,0,96,0.05), 0 10px 24px rgba(26,0,96,0.06)">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <span style="flex:none;width:36px;height:36px;border-radius:50%;background:rgba(241,46,73,0.12);display:flex;align-items:center;justify-content:center;color:#f12e49;font-size:18px;font-weight:800">!</span>
+            <p style="margin:0;font-size:16px;line-height:23px;font-weight:600;color:#171717;text-wrap:pretty">{{ t.errors.network }}</p>
+          </div>
+          <button onClick="{{ reconnect }}" style="min-height:52px;border:2px solid #300091;border-radius:16px;background:#fff;color:#300091;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer" style-hover="background:#f5f6fa">{{ retryLabel }}</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="height:150px;border-radius:24px;background:#e9ebf2"></div>
+          <sc-for list="{{ skeleton }}" as="sk" hint-placeholder-count="3"><div style="height:184px;border-radius:22px;background:#eceef4"></div></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ bookReady }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ card.isRing }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ card.onCard }}" style="display:flex;flex-direction:column;gap:14px;padding:16px;margin-bottom:22px;border-radius:24px;background:#fff;box-shadow:0 1px 2px rgba(26,0,96,0.05), 0 14px 32px rgba(26,0,96,0.1);cursor:pointer">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="position:relative;flex:none;width:66px;height:66px;border-radius:50%;background:conic-gradient({{ card.ringColor }} {{ card.ringPct }}, rgba(48,0,145,0.08) 0)">
+                <div style="position:absolute;inset:6px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#300091">
+                  <sc-if value="{{ card.ringCheck }}" hint-placeholder-val="{{ false }}">
+                    <span style="width:26px;height:26px;background:#41b6e6;-webkit-mask:url(icons/check.svg) center / contain no-repeat;mask:url(icons/check.svg) center / contain no-repeat"></span>
+                  </sc-if>
+                  <sc-if value="{{ card.ringText }}" hint-placeholder-val="{{ true }}">
+                    <span style="font-size:16px;line-height:18px;font-weight:800;font-variant-numeric:tabular-nums">{{ card.ringMain }}</span>
+                    <span style="font-size:9.5px;line-height:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#66678a">{{ card.ringSub }}</span>
+                  </sc-if>
+                </div>
+              </div>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:12.5px;line-height:16px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#66678a">{{ card.eyebrow }}</span>
+                <span style="font-size:19px;line-height:24px;font-weight:800;letter-spacing:-0.01em;color:#171717">{{ card.title }}</span>
+                <span style="font-size:14px;line-height:19px;color:{{ card.subFg }}">{{ card.sub }}</span>
+              </div>
+            </div>
+            <sc-if value="{{ card.hasBtn }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ card.onBtn }}" style="min-height:54px;border:0;border-radius:16px;background:#300091;color:#fff;font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 10px 22px rgba(48,0,145,0.32);white-space:nowrap" style-hover="background:#1a0060" style-active="transform:scale(0.98)">{{ card.btn }}</button>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ card.isRow }}" hint-placeholder-val="{{ true }}">
+          <div onClick="{{ card.onCard }}" style="display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:22px;border-radius:24px;background:#fff;box-shadow:0 1px 2px rgba(26,0,96,0.05), 0 14px 32px rgba(26,0,96,0.1);cursor:{{ card.cursor }}">
+            <div style="flex:none;width:56px;height:56px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:{{ card.badgeBg }};color:{{ card.badgeFg }};box-shadow:{{ card.badgeShadow }}">
+              <span style="font-size:9.5px;line-height:11px;font-weight:700;letter-spacing:0.05em;opacity:0.7">B211</span>
+              <span style="font-size:23px;line-height:25px;font-weight:800;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">{{ card.digits }}</span>
+            </div>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+              <span style="display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:{{ card.eyebrowFg }}">
+                <span style="display:{{ card.dotDisp }};flex:none;width:6px;height:6px;border-radius:50%;background:#f12e49"></span>{{ card.eyebrow }}
+              </span>
+              <span style="font-size:17px;line-height:22px;font-weight:800;color:#171717;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ card.title }}</span>
+              <span style="font-size:13.5px;line-height:18px;color:#66678a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ card.sub }}</span>
+            </div>
+            <sc-if value="{{ card.hasBtn }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ card.onBtn }}" style="flex:none;min-height:44px;padding:0 18px;border-radius:14px;border:{{ card.btnBorder }};background:{{ card.btnBg }};color:{{ card.btnFg }};font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:{{ card.btnShadow }}" style-active="transform:scale(0.96)">{{ card.btn }}</button>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px">
+          <h2 style="margin:0;font-size:19px;line-height:24px;font-weight:800;letter-spacing:-0.01em">{{ t.seats.title }}</h2>
+          <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:4px 10px;font-size:12px;line-height:16px;font-weight:600;color:#66678a">
+            <sc-for list="{{ legend }}" as="lg" hint-placeholder-count="4">
+              <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:{{ lg.bg }};border:{{ lg.border }};box-sizing:border-box"></span>{{ lg.label }}</span>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:18px">
+          <sc-for list="{{ blocks }}" as="bl" hint-placeholder-count="3">
+            <section>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;padding:0 4px 7px;font-size:11.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#66678a">
+                <span>{{ bl.label }}</span><span style="color:{{ bl.freeColor }}">{{ bl.free }}</span>
+              </div>
+              <div style="padding:8px;border-radius:22px;background:#fff;box-shadow:0 1px 2px rgba(26,0,96,0.05), 0 10px 24px rgba(26,0,96,0.06)">
+                <sc-for list="{{ bl.pairs }}" as="pr" hint-placeholder-count="2">
+                  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:{{ pr.mt }};padding-top:{{ pr.pt }};border-top:{{ pr.divider }}">
+                    <sc-for list="{{ pr.seats }}" as="s" hint-placeholder-count="2">
+                      <div style="opacity:{{ s.op }};transform:{{ s.tf }};transition:{{ s.tr }}">
+                        <button onClick="{{ s.tap }}" disabled="{{ s.disabled }}" aria-label="{{ s.aria }}" style="position:relative;width:100%;height:76px;display:flex;align-items:center;gap:8px;padding:0 8px 0 11px;border-radius:16px;border:{{ s.border }};background:{{ s.bg }};color:{{ s.fg }};box-shadow:{{ s.shadow }};opacity:{{ s.dim }};text-align:left;font-family:inherit;cursor:{{ s.cursor }};box-sizing:border-box;transition:box-shadow .7s ease, transform .12s" style-active="transform:scale(0.96)">
+                          <span style="flex:none;display:flex;flex-direction:column;width:33px">
+                            <span style="font-size:9.5px;line-height:12px;font-weight:700;letter-spacing:0.04em;color:{{ s.pre }}">B211</span>
+                            <span style="font-size:26px;line-height:28px;font-weight:800;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;color:{{ s.numColor }}">{{ s.digits }}</span>
+                          </span>
+                          <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                            <span style="display:flex;align-items:center;gap:6px;min-width:0">
+                              <span style="display:{{ s.avDisp }};flex:none;width:22px;height:22px;border-radius:50%;background:{{ s.avBg }};color:{{ s.avFg }};font-size:9px;font-weight:800;align-items:center;justify-content:center;letter-spacing:0.02em">{{ s.avText }}</span>
+                              <span style="display:{{ s.starDisp }};flex:none;width:14px;height:14px;background:currentColor;-webkit-mask:url(icons/star.svg) center / contain no-repeat;mask:url(icons/star.svg) center / contain no-repeat"></span>
+                              <span style="font-size:14px;line-height:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:{{ s.capColor }}">{{ s.caption }}</span>
+                            </span>
+                            <span style="display:{{ s.subDisp }};align-items:center;gap:4px;min-width:0;font-size:12px;line-height:16px;font-weight:500;color:{{ s.subColor }}">
+                              <span style="display:{{ s.checkDisp }};flex:none;width:13px;height:13px;background:currentColor;-webkit-mask:url(icons/check.svg) center / contain no-repeat;mask:url(icons/check.svg) center / contain no-repeat"></span>
+                              <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.sub }}</span>
+                            </span>
+                          </span>
+                          <span style="display:{{ s.glyphDisp }};position:absolute;top:9px;right:9px;width:11px;height:11px;border-radius:50%;border:1.5px solid {{ s.glyphBorder }};background:{{ s.glyph }};box-sizing:border-box"></span>
+                        </button>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+              </div>
+            </section>
+          </sc-for>
+        </div>
+        <p style="margin:14px 4px 0;font-size:13px;line-height:18px;color:#66678a">{{ t.seats.legendHint }}</p>
+      </sc-if>
+
+      <sc-if value="{{ bookingsReady }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ mb.empty }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:flex-start;gap:16px;padding:22px 20px;border-radius:24px;background:#fff;box-shadow:0 1px 2px rgba(26,0,96,0.05), 0 10px 24px rgba(26,0,96,0.06)">
+            <div style="display:flex;gap:6px">
+              <span style="width:44px;height:30px;border-radius:9px;border:1.5px dashed rgba(48,0,145,0.35)"></span>
+              <span style="width:44px;height:30px;border-radius:9px;border:1.5px dashed rgba(48,0,145,0.35)"></span>
+            </div>
+            <p style="margin:0;font-size:16px;line-height:24px;color:#404040;text-wrap:pretty">{{ t.mb.empty }}</p>
+            <button onClick="{{ goBook }}" style="align-self:stretch;min-height:52px;border:0;border-radius:16px;background:#300091;color:#fff;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 10px 22px rgba(48,0,145,0.3)" style-hover="background:#1a0060">{{ t.mb.findSeat }}</button>
+          </div>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <sc-for list="{{ mb.groups }}" as="g" hint-placeholder-count="3">
+            <div style="opacity:{{ g.op }};transform:{{ g.tf }};transition:{{ g.tr }}">
+              <div style="position:relative;display:flex;border-radius:24px;overflow:hidden;background:{{ g.bg }};color:{{ g.fg }};box-shadow:{{ g.shadow }}">
+                <div style="flex:none;width:78px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 0;gap:1px">
+                  <span style="font-size:11px;line-height:14px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;color:{{ g.mutedFg }}">{{ g.wd }}</span>
+                  <span style="font-size:36px;line-height:38px;font-weight:800;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ g.num }}</span>
+                  <span style="font-size:12px;line-height:15px;font-weight:600;color:{{ g.mutedFg }}">{{ g.mon }}</span>
+                  <span style="display:{{ g.relDisp }};margin-top:6px;padding:2px 8px;border-radius:999px;background:{{ g.relBg }};color:{{ g.relFg }};font-size:10.5px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase">{{ g.rel }}</span>
+                </div>
+                <span style="position:absolute;left:68px;top:-10px;width:20px;height:20px;border-radius:50%;background:#f5f6fa"></span>
+                <span style="position:absolute;left:68px;bottom:-10px;width:20px;height:20px;border-radius:50%;background:#f5f6fa"></span>
+                <div style="flex:none;margin:16px 0;border-left:2px dashed {{ g.perf }}"></div>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;padding:16px 14px 14px 16px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <span style="font-size:20px;line-height:24px;font-weight:800;letter-spacing:-0.01em;font-variant-numeric:tabular-nums">{{ g.seatTitle }}</span>
+                    <span style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:{{ g.mutedFg }}">
+                      <span style="width:12px;height:12px;border-radius:50%;border:1.5px solid currentColor;background:{{ g.glyph }};box-sizing:border-box"></span>{{ g.slotSummary }}
+                    </span>
+                  </div>
+                  <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:32px">
+                      <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                        <span style="font-size:14px;line-height:18px;font-weight:700">{{ r.slot }}</span>
+                        <span style="display:flex;align-items:center;gap:4px;font-size:12.5px;line-height:16px;color:{{ r.statusColor }}">
+                          <span style="display:{{ r.checkDisp }};flex:none;width:13px;height:13px;background:currentColor;-webkit-mask:url(icons/check.svg) center / contain no-repeat;mask:url(icons/check.svg) center / contain no-repeat"></span>
+                          <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.status }}</span>
+                        </span>
+                      </div>
+                      <sc-if value="{{ r.canCancel }}" hint-placeholder-val="{{ true }}">
+                        <button onClick="{{ r.onCancel }}" style="flex:none;min-height:34px;padding:0 12px;border-radius:10px;border:1.5px solid {{ r.cancelBorder }};background:transparent;color:{{ r.cancelFg }};font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">{{ t.mb.cancel }}</button>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ g.hero }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:10px;margin-top:2px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.18)">
+                      <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+                        <span style="font-size:14px;line-height:18px;font-weight:800">{{ g.heroTitle }}</span>
+                        <span style="font-size:12.5px;line-height:16px;color:rgba(255,255,255,0.74)">{{ g.heroSub }}</span>
+                      </div>
+                      <button onClick="{{ g.heroAction }}" style="flex:none;min-height:44px;padding:0 18px;border:0;border-radius:14px;background:#fff;color:#300091;font-family:inherit;font-size:15px;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 8px 18px rgba(10,0,50,0.3)" style-active="transform:scale(0.96)">{{ t.mb.imHere }}</button>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ whoReady }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ who.empty }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0;padding:20px;border-radius:24px;background:#fff;font-size:16px;line-height:24px;color:#404040">{{ t.who.empty }}</p>
+        </sc-if>
+        <sc-if value="{{ who.has }}" hint-placeholder-val="{{ true }}">
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:22px;border-radius:24px;background:#fff;box-shadow:0 1px 2px rgba(26,0,96,0.05), 0 14px 32px rgba(26,0,96,0.08)">
+            <sc-for list="{{ who.summary }}" as="sm" hint-placeholder-count="2">
+              <div style="display:flex;flex-direction:column;gap:4px;padding:16px;border-left:{{ sm.divider }}">
+                <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#66678a">
+                  <span style="width:12px;height:12px;border-radius:50%;border:1.5px solid currentColor;background:{{ sm.glyph }};box-sizing:border-box"></span>{{ sm.label }}
+                </span>
+                <span style="display:flex;align-items:baseline;gap:6px">
+                  <span style="font-size:38px;line-height:42px;font-weight:800;letter-spacing:-0.03em;color:#300091;font-variant-numeric:tabular-nums">{{ sm.n }}</span>
+                  <span style="font-size:13px;color:#66678a">{{ sm.of }}</span>
+                </span>
+                <span style="display:grid;grid-template-columns:repeat(6,8px);gap:4px;margin-top:4px">
+                  <sc-for list="{{ sm.dots }}" as="dt" hint-placeholder-count="12"><span style="width:8px;height:8px;border-radius:3px;background:{{ dt.bg }}"></span></sc-for>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:22px">
+            <sc-for list="{{ who.sections }}" as="sec" hint-placeholder-count="2">
+              <section>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin:0 4px 8px">
+                  <span style="display:flex;align-items:center;gap:8px;font-size:18px;font-weight:800">
+                    <span style="width:14px;height:14px;border-radius:50%;border:2px solid #300091;background:{{ sec.glyph }};box-sizing:border-box;color:#300091"></span>{{ sec.label }}
+                  </span>
+                  <span style="font-size:13.5px;font-weight:600;color:#66678a">{{ sec.count }}</span>
+                </div>
+                <sc-if value="{{ sec.none }}" hint-placeholder-val="{{ false }}"><p style="margin:0 4px;font-size:14px;color:#66678a">–</p></sc-if>
+                <sc-if value="{{ sec.some }}" hint-placeholder-val="{{ true }}">
+                  <div style="border-radius:22px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(26,0,96,0.05), 0 10px 24px rgba(26,0,96,0.06)">
+                    <sc-for list="{{ sec.rows }}" as="p" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:12px;padding:11px 16px 11px 12px;border-top:{{ p.borderTop }};opacity:{{ p.op }};transform:{{ p.tf }};transition:{{ p.tr }}">
+                        <span style="position:relative;flex:none;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ p.avBg }};color:{{ p.avFg }};font-size:13.5px;font-weight:800">
+                          {{ p.initials }}
+                          <span style="display:{{ p.checkDisp }};position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;background:#41b6e6;border:2px solid #fff;align-items:center;justify-content:center;box-sizing:border-box">
+                            <span style="width:11px;height:11px;background:#fff;-webkit-mask:url(icons/check.svg) center / contain no-repeat;mask:url(icons/check.svg) center / contain no-repeat"></span>
+                          </span>
+                        </span>
+                        <span style="flex:1;min-width:0;display:flex;flex-direction:column">
+                          <span style="display:flex;align-items:center;gap:6px;font-size:15.5px;line-height:20px;font-weight:700">
+                            <span style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis">{{ p.name }}</span>
+                            <span style="display:{{ p.youDisp }};flex:none;padding:1px 7px;border-radius:999px;background:rgba(48,0,145,0.08);color:#300091;font-size:11px;font-weight:800">{{ t.you }}</span>
+                          </span>
+                          <span style="font-size:12.5px;line-height:17px;color:#66678a">{{ p.sub }}</span>
+                        </span>
+                        <span style="flex:none;padding:4px 9px;border-radius:9px;background:#f5f6fa;font-size:13px;font-weight:800;color:#300091;font-variant-numeric:tabular-nums">{{ p.seat }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </section>
+            </sc-for>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ seatReady }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ ms.notOwner }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0;padding:20px;border-radius:24px;background:#fff;font-size:16px;line-height:24px;color:#404040">{{ t.ms.notOwner }}</p>
+        </sc-if>
+        <sc-if value="{{ ms.owner }}" hint-placeholder-val="{{ true }}">
+          <p style="margin:0 4px 16px;font-size:14.5px;line-height:21px;color:#404040;text-wrap:pretty">{{ ms.intro }}</p>
+          <div style="display:grid;grid-template-columns:4.75rem minmax(0,1fr) minmax(0,1fr);gap:8px;padding:0 0 8px">
+            <span></span>
+            <span style="display:flex;align-items:center;gap:6px;padding-left:4px;font-size:11.5px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#66678a"><span style="width:11px;height:11px;border-radius:50%;border:1.5px solid currentColor;background:linear-gradient(90deg, currentColor 50%, transparent 50%);box-sizing:border-box"></span>{{ t.slots.AM }}</span>
+            <span style="display:flex;align-items:center;gap:6px;padding-left:4px;font-size:11.5px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;color:#66678a"><span style="width:11px;height:11px;border-radius:50%;border:1.5px solid currentColor;background:linear-gradient(90deg, transparent 50%, currentColor 50%);box-sizing:border-box"></span>{{ t.slots.PM }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ ms.rows }}" as="row" hint-placeholder-count="6">
+              <div style="display:grid;grid-template-columns:4.75rem minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center;opacity:{{ row.op }};transform:{{ row.tf }};transition:{{ row.tr }}">
+                <div style="line-height:1.2;padding-left:4px">
+                  <div style="font-size:15px;font-weight:800">{{ row.main }}</div>
+                  <div style="font-size:12px;color:#66678a">{{ row.sub }}</div>
+                </div>
+                <sc-for list="{{ row.cells }}" as="c" hint-placeholder-count="2">
+                  <button onClick="{{ c.tap }}" disabled="{{ c.disabled }}" style="min-height:54px;padding:0 12px;display:flex;align-items:center;gap:7px;border-radius:16px;border:{{ c.border }};background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.shadow }};font-family:inherit;font-size:14px;font-weight:700;text-align:left;cursor:{{ c.cursor }};box-sizing:border-box;transition:background .2s, box-shadow .2s" style-active="transform:scale(0.97)">
+                    <span style="display:{{ c.starDisp }};flex:none;width:14px;height:14px;background:currentColor;-webkit-mask:url(icons/star.svg) center / contain no-repeat;mask:url(icons/star.svg) center / contain no-repeat"></span>
+                    <span style="display:{{ c.avDisp }};flex:none;width:22px;height:22px;border-radius:50%;background:#fff;color:#1a0060;font-size:9px;font-weight:800;align-items:center;justify-content:center">{{ c.avText }}</span>
+                    <span style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis">{{ c.label }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+          <p style="margin:16px 4px 0;font-size:13px;line-height:18px;color:#66678a;text-wrap:pretty">{{ t.ms.hint }}</p>
+        </sc-if>
+      </sc-if>
+    </div>
+  </div>
+
+  <nav aria-label="Main" style="position:absolute;left:14px;right:14px;bottom:24px;z-index:30;display:flex;gap:2px;padding:6px;border-radius:26px;background:rgba(255,255,255,0.86);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,0.7);box-shadow:0 12px 32px rgba(26,0,96,0.18), 0 1px 3px rgba(26,0,96,0.08)">
+    <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="3">
+      <button onClick="{{ n.go }}" style="flex:1;position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 6px;border:0;border-radius:20px;background:{{ n.pill }};color:{{ n.color }};font-family:inherit;font-size:11px;line-height:14px;font-weight:700;cursor:pointer;transition:background .2s, color .2s">
+        <span style="width:24px;height:24px;background:currentColor;-webkit-mask:url({{ n.icon }}) center / contain no-repeat;mask:url({{ n.icon }}) center / contain no-repeat"></span>
+        <span style="white-space:nowrap">{{ n.label }}</span>
+        <span style="display:{{ n.dotDisp }};position:absolute;top:4px;left:calc(50% + 8px);width:9px;height:9px;border-radius:50%;background:#f12e49;border:2px solid #fff;box-sizing:content-box"></span>
+      </button>
+    </sc-for>
+  </nav>
+</sc-if>
+
+<div style="position:absolute;inset:0;z-index:40;pointer-events:{{ sheetPE }}">
+  <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(26,0,96,0.45);opacity:{{ sheetOpacity }};transition:opacity .25s"></div>
+  <div role="dialog" style="position:absolute;left:0;right:0;bottom:0;padding:8px 20px 40px;border-radius:32px 32px 0 0;background:#fff;box-shadow:0 -12px 40px rgba(26,0,96,0.22);transform:{{ sheetTransform }};transition:transform .32s cubic-bezier(.2,.8,.2,1)">
+    <div style="width:38px;height:5px;border-radius:3px;background:#d7dae1;margin:0 auto 16px"></div>
+
+    <sc-if value="{{ sh.hasSeatHead }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+        <div style="flex:none;width:62px;height:62px;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;background:radial-gradient(120% 120% at 100% 0%, #5a33d6 0%, #300091 55%);box-shadow:0 10px 22px rgba(48,0,145,0.3)">
+          <span style="font-size:10px;line-height:12px;font-weight:700;letter-spacing:0.05em;opacity:0.72">B211</span>
+          <span style="font-size:26px;line-height:28px;font-weight:800;letter-spacing:-0.02em;font-variant-numeric:tabular-nums">{{ sh.digits }}</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <h2 style="margin:0;font-size:21px;line-height:26px;font-weight:800;letter-spacing:-0.01em">{{ sh.title }}</h2>
+          <p style="margin:2px 0 0;font-size:14px;line-height:19px;color:#66678a">{{ sh.sub }}</p>
+        </div>
+        <div style="flex:none;display:flex;gap:6px;padding:8px;border-radius:14px;background:#f5f6fa">
+          <sc-for list="{{ sh.mini }}" as="mb2" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <sc-for list="{{ mb2.pairs }}" as="mp" hint-placeholder-count="2">
+                <div style="display:flex;gap:2px">
+                  <sc-for list="{{ mp.cells }}" as="mc" hint-placeholder-count="2"><span style="width:9px;height:12px;border-radius:3px;background:{{ mc.bg }};box-shadow:{{ mc.ring }}"></span></sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ sh.isBook }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+          <sc-for list="{{ sh.slots }}" as="o" hint-placeholder-count="3">
+            <button onClick="{{ o.pick }}" disabled="{{ o.disabled }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border-radius:16px;border:2px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};font-family:inherit;text-align:left;cursor:{{ o.cursor }};opacity:{{ o.op }};transition:border-color .15s, background .15s">
+              <span style="width:16px;height:16px;border-radius:50%;border:2px solid currentColor;background:{{ o.glyph }};box-sizing:border-box"></span>
+              <span style="font-size:14px;line-height:18px;font-weight:800">{{ o.label }}</span>
+              <span style="font-size:11.5px;line-height:14px;font-weight:600;color:#66678a;font-variant-numeric:tabular-nums">{{ o.time }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ sh.hasNote }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0;padding:10px 12px;border-radius:12px;background:rgba(48,0,145,0.06);font-size:13.5px;line-height:19px;font-weight:600;color:#300091">{{ sh.note }}</p>
+        </sc-if>
+        <p style="margin:0;font-size:13.5px;line-height:19px;color:#66678a;text-wrap:pretty">{{ sh.rule }}</p>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-top:2px">
+          <button onClick="{{ sh.onBook }}" disabled="{{ sh.bookDisabled }}" style="min-height:56px;border:0;border-radius:16px;background:#300091;color:#fff;font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 10px 22px rgba(48,0,145,0.32);opacity:{{ sh.bookOpacity }}" style-hover="background:#1a0060" style-active="transform:scale(0.98)">{{ sh.bookLabel }}</button>
+          <button onClick="{{ closeSheet }}" style="min-height:48px;border:0;border-radius:14px;background:transparent;color:#300091;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer" style-hover="background:#f5f6fa">{{ t.close }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ sh.isMine }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ sh.rows }}" as="mr" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:60px;padding:8px 10px 8px 14px;border-radius:16px;background:#f5f6fa;box-sizing:border-box">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0">
+              <span style="flex:none;width:14px;height:14px;border-radius:50%;border:2px solid #300091;background:{{ mr.glyph }};box-sizing:border-box;color:#300091"></span>
+              <div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+                <span style="font-size:15.5px;font-weight:800">{{ mr.slot }}</span>
+                <span style="font-size:12.5px;color:{{ mr.statusColor }}">{{ mr.status }}</span>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;flex:none">
+              <sc-if value="{{ mr.showCheckIn }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ mr.onCheckIn }}" style="min-height:40px;padding:0 14px;border:0;border-radius:12px;background:#300091;color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap">{{ t.mb.imHere }}</button>
+              </sc-if>
+              <sc-if value="{{ mr.showCancel }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ mr.onCancel }}" style="min-height:40px;padding:0 14px;border:1.5px solid #f12e49;border-radius:12px;background:#fff;color:#f12e49;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">{{ t.mb.cancel }}</button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+        <button onClick="{{ closeSheet }}" style="min-height:48px;margin-top:6px;border:0;border-radius:14px;background:transparent;color:#300091;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer" style-hover="background:#f5f6fa">{{ t.close }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ sh.isCancel }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <h2 style="margin:0;font-size:21px;line-height:26px;font-weight:800">{{ t.mb.confirmCancel }}</h2>
+        <p style="margin:0 0 10px;font-size:15px;line-height:22px;color:#404040">{{ sh.cancelText }}</p>
+        <button onClick="{{ sh.onConfirmCancel }}" style="min-height:56px;border:0;border-radius:16px;background:#f12e49;color:#fff;font-family:inherit;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 10px 22px rgba(241,46,73,0.28)" style-active="transform:scale(0.98)">{{ t.mb.yesCancel }}</button>
+        <button onClick="{{ closeSheet }}" style="min-height:48px;border:0;border-radius:14px;background:transparent;color:#300091;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer" style-hover="background:#f5f6fa">{{ t.mb.keep }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ sh.isProfile }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;align-items:center;gap:14px">
+          <span style="flex:none;width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:21px;font-weight:800;background:radial-gradient(120% 120% at 100% 0%, #5a33d6 0%, #300091 55%);box-shadow:0 10px 22px rgba(48,0,145,0.3)">{{ myInitials }}</span>
+          <div style="min-width:0">
+            <div style="font-size:20px;line-height:25px;font-weight:800">{{ myName }}</div>
+            <div style="font-size:13.5px;color:#66678a;overflow:hidden;text-overflow:ellipsis">{{ signedInAs }}</div>
+          </div>
+        </div>
+        <label style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:13px;font-weight:700">{{ t.profile.nameLabel }}</span>
+          <input type="text" value="{{ nameValue }}" onChange="{{ onName }}" style="min-height:52px;padding:0 14px;border-radius:14px;border:1.5px solid #cdd4e5;background:#fff;font-family:inherit;font-size:16px;color:#171717;outline:none;box-sizing:border-box" style-focus="border-color:#300091;box-shadow:0 0 0 4px rgba(48,0,145,0.14)">
+          <span style="font-size:12px;color:#66678a">{{ t.profile.nameHint }}</span>
+        </label>
+        <sc-if value="{{ showSave }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ saveName }}" style="min-height:52px;border:0;border-radius:16px;background:#300091;color:#fff;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer">{{ t.profile.save }}</button>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:13px;font-weight:700">{{ t.profile.language }}</span>
+          <div style="display:flex;gap:2px;padding:4px;border-radius:16px;background:#f5f6fa;border:1px solid #d7dae1">
+            <sc-for list="{{ langOpts }}" as="lp" hint-placeholder-count="2">
+              <button onClick="{{ lp.pick }}" style="flex:1;padding:10px 0;border:0;border-radius:12px;background:{{ lp.bg }};color:{{ lp.fg }};font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:{{ lp.shadow }}">{{ lp.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <button onClick="{{ signOut }}" style="min-height:52px;border:2px solid #300091;border-radius:16px;background:#fff;color:#300091;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer" style-hover="background:#f5f6fa">{{ t.auth.signOut }}</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+<div role="status" style="position:absolute;left:14px;right:14px;top:56px;z-index:50;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 12px;border-radius:18px;background:{{ toastBg }};color:#fff;font-size:14px;line-height:19px;font-weight:700;box-shadow:0 14px 34px rgba(10,0,50,0.35);opacity:{{ toastOpacity }};transform:{{ toastTransform }};pointer-events:{{ toastPE }};transition:opacity .2s, transform .3s cubic-bezier(.2,.8,.2,1)">
+  <span style="flex:none;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800">
+    <span style="display:{{ toastCheckDisp }};width:15px;height:15px;background:#41b6e6;-webkit-mask:url(icons/check.svg) center / contain no-repeat;mask:url(icons/check.svg) center / contain no-repeat"></span>
+    <span style="display:{{ toastBangDisp }}">!</span>
+  </span>
+  <span style="flex:1;min-height:19px">{{ toastMsg }}</span>
+  <sc-if value="{{ toastHasUndo }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ toastUndo }}" style="flex:none;min-height:34px;padding:0 12px;border:0;border-radius:12px;background:rgba(255,255,255,0.16);color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer">{{ t.undo }}</button>
+  </sc-if>
+</div>
+
+</div>
+</x-import>
+
+<aside style="width:300px;max-width:100%;padding-top:24px;display:flex;flex-direction:column;gap:22px;font-size:13.5px;line-height:20px;color:#404040">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <img src="assets/icon.svg" alt="" style="width:28px;height:28px;border-radius:7px">
+      <span style="font-size:17px;font-weight:800;color:#300091;white-space:nowrap">BookMyDesk · v2</span>
+    </div>
+    <p style="margin:0;color:#66678a;text-wrap:pretty">Visual pass on the current repo: Mon–Fri only, seats grouped by table, owners Martin Minarovič (B21102) and Jiří Forman (B21101), and the new sign-in copy. Earlier version: <a href="BookMyDesk.dc.html">v1</a>.</p>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#300091">Visual system</span>
+    <div style="display:flex;flex-direction:column;gap:7px;text-wrap:pretty">
+      <span>A CETIN Blue band with a faint floor-plan grid sits behind each tab header. The content panel overlaps it with a 28px radius.</span>
+      <span>Half-day glyph: a half-filled circle means morning or afternoon, a full one means the whole day. It appears on tiles, the slot toggle, tickets and Who's in.</span>
+      <span>Seat tiles put the big desk number first. The B211 prefix is shown small above it.</span>
+      <span>My bookings are shown as tickets. Today's ticket is blue and carries the check-in.</span>
+      <span>The tab bar floats at the bottom with a frosted-glass background.</span>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#300091">Try</span>
+    <div style="display:flex;flex-direction:column;gap:7px;text-wrap:pretty">
+      <span>Pick Wed. B21105 is taken, so the card offers B21106 next to it.</span>
+      <span>Stay on Book for about 8 seconds and Dominik Celuch takes B21106 live.</span>
+      <span>Tweaks let you change the clock, sign in as seat owner Jiří Forman, and switch to Offline, Loading or New user.</span>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <span style="font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#300091">Jump to</span>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      <sc-for list="{{ jumps }}" as="j" hint-placeholder-count="5">
+        <button onClick="{{ j.go }}" style="padding:6px 11px;border-radius:999px;border:1px solid #cdd4e5;background:#fff;color:#300091;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer" style-hover="border-color:#300091">{{ j.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+</aside>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;isOwner&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Scenario&quot;},&quot;clock&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;08:40&quot;,&quot;10:20&quot;,&quot;14:30&quot;],&quot;default&quot;:&quot;08:40&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scenario&quot;},&quot;dataState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Normal&quot;,&quot;New user&quot;,&quot;Loading&quot;,&quot;Offline&quot;],&quot;default&quot;:&quot;Normal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scenario&quot;},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Book&quot;,&quot;Sign in&quot;],&quot;default&quot;:&quot;Book&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Scenario&quot;}}">
+const PEOPLE = { krystof: 'Kryštof Pěnka', jiri: 'Jiří Forman', martin: 'Martin Minarovič', dceluch: 'Dominik Celuch', barbora: 'Barbora Haase', dhorak: 'Dominik Horák', ondrej: 'Ondrej Hvorecký', simon: 'Šimon Machač', bohdana: 'Bohdana Semiusova', otomecek: 'Ondřej Tomeček', mkloucek: 'Martin Klouček', petr: 'Petr Funk' };
+const EMAILS = { krystof: 'penka.krystof@cetin.cz', jiri: 'forman.jiri@cetin.cz' };
+const DIRECTORY = ['krystof.penka@outlook.com'];
+const C = { brand: '#300091', deep: '#1a0060', accent: '#f12e49', sky: '#41b6e6', lilac: '#6f79bd', heldBg: 'rgba(167,164,224,0.32)', surface: '#f5f6fa', line: '#d7dae1', lineStrong: '#cdd4e5', muted: '#66678a', ink: '#171717', ink7: '#404040', taken: '#eff0f5', takenNum: '#9497b0' };
+const MINE_BG = 'radial-gradient(120% 120% at 100% 0%, #5a33d6 0%, #300091 55%)';
+const SIGNIN_CODE = '482913';
+const AM_START = 360, PM_START = 780, AM_DL = 600, PM_DL = 840;
+const WORK = [0, 1, 2, 3, 4, 7];
+const ROOM = [[[2, 1], [4, 3]], [[6, 5], [8, 7]], [[10, 9], [12, 11]]];
+const pad = (n) => String(n).padStart(2, '0');
+const seatCode = (n) => 'B211' + pad(n);
+const initialsOf = (name) => (name || '?').trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+const fmtMin = (m) => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+const slotsOf = (o) => (o === 'FULL' ? ['AM', 'PM'] : [o]);
+const dl = (s) => (s === 'AM' ? AM_DL : PM_DL);
+const GLYPH = { AM: 'linear-gradient(90deg, currentColor 50%, transparent 50%)', PM: 'linear-gradient(90deg, transparent 50%, currentColor 50%)', FULL: 'currentColor' };
+const partnerOf = (n) => (n % 2 ? n + 1 : n - 1);
+const blockOf = (n) => Math.floor((n - 1) / 4);
+const AV = ['rgba(65,182,230,0.22)', 'rgba(167,164,224,0.5)', 'rgba(241,46,73,0.13)', 'rgba(111,121,189,0.26)'];
+const avBgOf = (u) => AV[Object.keys(PEOPLE).indexOf(u) % AV.length];
+
+const S = {
+  en: {
+    tagline: 'Book a seat in the open space', retry: 'Try again', reconnecting: 'Reconnecting…', close: 'Close', undo: 'Undo', you: 'You',
+    office: 'Main office · Floor 2', live: 'Live', offline: 'Offline', today: 'Today', tomorrow: 'Tomorrow',
+    nav: { book: 'Book', myBookings: 'My bookings', whoIsIn: "Who's in", mySeat: 'My seat' },
+    auth: { intro: 'Use your work email, or the personal address an admin registered for you. We will email you a one-time code.', emailLabel: 'Email', emailPlaceholder: 'name@cetin.cz', sendCode: 'Send code', sending: 'Sending…', codeLabel: 'Code from the email', verify: 'Sign in', verifying: 'Checking…', resend: 'Send a new code', changeEmail: 'Use a different email', signOut: 'Sign out', invalidEmail: 'Enter a valid email address.', addressNotAllowed: 'This address is not registered for BookMyDesk. Use your @cetin.cz address, or ask an admin to add this one.', invalidCode: 'That code is not valid or has expired. Request a new one.', mailBody: 'Your BookMyDesk sign-in code is', now: 'now', mailHint: 'Tap to fill in the code', resent: 'New code sent.' },
+    slots: { AM: 'Morning', PM: 'Afternoon', FULL: 'Full day' }, short: { AM: 'AM', PM: 'PM' },
+    times: { AM: '06:00–13:00', PM: '13:00–24:00', FULL: '06:00–24:00' },
+    seats: { title: 'Seats', free: 'Free', mine: 'Mine', taken: 'Taken', held: 'Held', halfFree: 'Half free', youHave: "You're booked", legendHint: 'Tap a free seat to book it. Seats sit in pairs, two pairs per table.', book: 'Book', booked: 'Booked' },
+    card: { usual: 'Your usual seat', booked: "You're booked", manage: 'Manage', imHere: "I'm here", nextTo: 'Right next to it', sameTable: 'Same table', closest: 'Closest free seat', exempt: 'Your seat – no check-in needed', missed: 'Check-in deadline passed', left: 'left' },
+    mb: { empty: 'No upcoming bookings. Pick a seat on the Book tab.', findSeat: 'Find a seat', cancel: 'Cancel', confirmCancel: 'Cancel this booking?', keep: 'Keep it', yesCancel: 'Yes, cancel', imHere: "I'm here", missed: 'Check-in deadline passed', ownerNoCheckIn: 'Your seat – no check-in needed', cancelled: 'Cancelled', released: 'Released – no check-in', checkedInToast: 'Checked in' },
+    who: { empty: 'Nobody has booked this day yet.' },
+    ms: { held: 'Held', released: 'Released', mine: 'Mine', semiFixed: 'Semi-fixed seat · held for you', notOwner: 'You do not hold a seat. Seat owners are assigned by an admin.', hint: 'Tap a held half day to release it, or a released one to take it back. Releasing cancels your own booking for that half day.', releasedToast: 'Half day released.', takenBackToast: 'Taken back.' },
+    profile: { nameLabel: 'Your name', nameHint: 'Shown to colleagues on booked seats.', save: 'Save', saved: 'Saved.', language: 'Language' },
+    errors: { seat_taken: 'Someone just took that seat.', user_already_booked: 'You already have a seat for that half day.', seat_held: 'That seat is held by its owner.', slot_ended: 'That half day is already over.', network: 'Cannot reach the server. Check your connection.', seat_booked_by_other: 'A colleague already booked that half day.' },
+    bookTitle: (c) => `Seat ${c}`, bookBtn: (s) => `Book ${s.toLowerCase()}`,
+    codeSentTo: (e) => `We sent a code to ${e}. It can take a minute to arrive.`,
+    checkInBy: (t) => `Check in by ${t}`, people: (n) => `${n} ${n === 1 ? 'person' : 'people'}`,
+    youreAt: (c) => `You're at ${c}`, isTaken: (c) => `${c} is taken`,
+    left: (h, m) => `${h ? h + ' h ' : ''}${m} min left`,
+    alreadyHave: (c) => `You already have ${c} for that half day.`, onlyFree: (s) => `Only the ${s.toLowerCase()} is free.`,
+    ruleOne: (t) => `Check in on the day by ${t}, or the seat is released.`,
+    ruleFull: (a, b) => `Check in on the day by ${a} (morning) and ${b} (afternoon), or the seat is released.`,
+    walkIn: 'Booked after the check-in deadline, so it counts as checked in.', ownRule: 'Your seat – no check-in needed.',
+    intro: (c) => `You hold seat ${c}. Release the half days you will not use so colleagues can book them.`,
+    signedInAs: (e) => `Signed in as ${e}`, checkedInAt: (t) => `Checked in ${t}`, ofSeats: (t) => `of ${t} seats`,
+    freeSeats: (n) => (n === 1 ? 'free seat' : 'free seats'), freeShort: (n) => `${n} free`, table: (i) => `Table ${i}`,
+    upcoming: (n) => `${n} upcoming`, dayLong: (wd, d) => `${wd}, ${d} November`, dateOnly: (d) => `${d} November`, dateShort: (wd, d) => `${wd} ${d} Nov`, mon: 'Nov',
+    other: (s, who) => `${s}: ${who}`, langName: 'English',
+    wd: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], wdl: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+  },
+  cs: {
+    tagline: 'Rezervace místa v open space', retry: 'Zkusit znovu', reconnecting: 'Připojuji…', close: 'Zavřít', undo: 'Zpět', you: 'Vy',
+    office: 'Hlavní kancelář · 2. patro', live: 'Živě', offline: 'Offline', today: 'Dnes', tomorrow: 'Zítra',
+    nav: { book: 'Rezervace', myBookings: 'Moje', whoIsIn: 'Kdo je tu', mySeat: 'Moje místo' },
+    auth: { intro: 'Použijte pracovní e-mail, nebo osobní adresu, kterou vám zaregistroval administrátor. Pošleme vám jednorázový kód.', emailLabel: 'E-mail', emailPlaceholder: 'jmeno@cetin.cz', sendCode: 'Poslat kód', sending: 'Odesílám…', codeLabel: 'Kód z e-mailu', verify: 'Přihlásit se', verifying: 'Ověřuji…', resend: 'Poslat nový kód', changeEmail: 'Jiný e-mail', signOut: 'Odhlásit se', invalidEmail: 'Zadejte platnou e-mailovou adresu.', addressNotAllowed: 'Tato adresa není pro BookMyDesk registrovaná. Použijte adresu @cetin.cz, nebo požádejte administrátora o přidání.', invalidCode: 'Kód není platný nebo vypršel. Vyžádejte si nový.', mailBody: 'Váš přihlašovací kód BookMyDesk je', now: 'nyní', mailHint: 'Klepnutím kód vyplníte', resent: 'Nový kód odeslán.' },
+    slots: { AM: 'Dopoledne', PM: 'Odpoledne', FULL: 'Celý den' }, short: { AM: 'dop.', PM: 'odp.' },
+    times: { AM: '06:00–13:00', PM: '13:00–24:00', FULL: '06:00–24:00' },
+    seats: { title: 'Místa', free: 'Volno', mine: 'Moje', taken: 'Obsazeno', held: 'Drženo', halfFree: 'Napůl volno', youHave: 'Už máte místo', legendHint: 'Klepnutím na volné místo ho zarezervujete. Místa jsou v párech, dva páry u stolu.', book: 'Rezervovat', booked: 'Zarezervováno' },
+    card: { usual: 'Vaše obvyklé místo', booked: 'Máte rezervaci', manage: 'Spravovat', imHere: 'Jsem tu', nextTo: 'Hned vedle', sameTable: 'Stejný stůl', closest: 'Nejbližší volné místo', exempt: 'Vaše místo – bez potvrzení', missed: 'Termín potvrzení vypršel', left: 'zbývá' },
+    mb: { empty: 'Žádné nadcházející rezervace. Vyberte místo na kartě Rezervace.', findSeat: 'Najít místo', cancel: 'Zrušit', confirmCancel: 'Zrušit tuto rezervaci?', keep: 'Ponechat', yesCancel: 'Ano, zrušit', imHere: 'Jsem tu', missed: 'Termín potvrzení vypršel', ownerNoCheckIn: 'Vaše místo – bez potvrzení', cancelled: 'Zrušeno', released: 'Uvolněno – bez potvrzení', checkedInToast: 'Přítomnost potvrzena' },
+    who: { empty: 'Na tento den zatím nikdo nemá rezervaci.' },
+    ms: { held: 'Drženo', released: 'Uvolněno', mine: 'Moje', semiFixed: 'Polofixní místo · drženo pro vás', notOwner: 'Nedržíte žádné místo. Majitele míst přiřazuje administrátor.', hint: 'Klepnutím na držený půlden ho uvolníte, na uvolněný ho vezmete zpět. Uvolněním zrušíte svou rezervaci na ten půlden.', releasedToast: 'Půlden uvolněn.', takenBackToast: 'Vzato zpět.' },
+    profile: { nameLabel: 'Vaše jméno', nameHint: 'Kolegové ho uvidí u rezervovaných míst.', save: 'Uložit', saved: 'Uloženo.', language: 'Jazyk' },
+    errors: { seat_taken: 'Někdo vám to místo právě vzal.', user_already_booked: 'Na tento půlden už místo máte.', seat_held: 'Místo drží jeho majitel.', slot_ended: 'Tento půlden už skončil.', network: 'Nelze se spojit se serverem. Zkontrolujte připojení.', seat_booked_by_other: 'Tento půlden si už zarezervoval kolega.' },
+    bookTitle: (c) => `Místo ${c}`, bookBtn: (s) => `Rezervovat – ${s.toLowerCase()}`,
+    codeSentTo: (e) => `Poslali jsme kód na ${e}. Může trvat minutu, než dorazí.`,
+    checkInBy: (t) => `Potvrďte do ${t}`, people: (n) => `${n} ${n === 1 ? 'osoba' : n >= 2 && n <= 4 ? 'osoby' : 'osob'}`,
+    youreAt: (c) => `Sedíte na ${c}`, isTaken: (c) => `${c} je obsazené`,
+    left: (h, m) => `zbývá ${h ? h + ' h ' : ''}${m} min`,
+    alreadyHave: (c) => `Na tento půlden už máte ${c}.`, onlyFree: (s) => `Volno je jen ${s.toLowerCase()}.`,
+    ruleOne: (t) => `Přítomnost potvrďte v den rezervace do ${t}, jinak se místo uvolní.`,
+    ruleFull: (a, b) => `Přítomnost potvrďte v den rezervace do ${a} (dopoledne) a ${b} (odpoledne), jinak se místo uvolní.`,
+    walkIn: 'Rezervace po termínu potvrzení se počítá jako potvrzená.', ownRule: 'Vaše místo – potvrzení není potřeba.',
+    intro: (c) => `Držíte místo ${c}. Uvolněte půldny, kdy nepřijdete, ať si je mohou zarezervovat kolegové.`,
+    signedInAs: (e) => `Přihlášeno jako ${e}`, checkedInAt: (t) => `Potvrzeno v ${t}`, ofSeats: (t) => `z ${t} míst`,
+    freeSeats: (n) => (n === 1 ? 'volné místo' : n >= 2 && n <= 4 ? 'volná místa' : 'volných míst'), freeShort: (n) => `${n} volno`, table: (i) => `Stůl ${i}`,
+    upcoming: (n) => `${n} nadcházející`, dayLong: (wd, d) => `${wd} ${d}. listopadu`, dateOnly: (d) => `${d}. listopadu`, dateShort: (wd, d) => `${wd} ${d}. 11.`, mon: 'lis',
+    other: (s, who) => `${s}: ${who}`, langName: 'Čeština',
+    wd: ['po', 'út', 'st', 'čt', 'pá', 'so', 'ne'], wdl: ['pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota', 'neděle'],
+  },
+};
+
+function seedBookings(isOwner, empty) {
+  const ME = isOwner ? 'jiri' : 'krystof';
+  const U = isOwner ? 1 : 5;
+  const rows = [
+    [U, 0, 'AM', ME], [U, 0, 'PM', ME],
+    [2, 0, 'AM', 'martin'], [2, 0, 'PM', 'martin'],
+    [3, 0, 'AM', 'barbora', 'checked_in', '08:05'], [3, 0, 'PM', 'barbora', 'checked_in', '08:05'],
+    [4, 0, 'AM', 'dhorak', 'checked_in', '08:22'], [8, 0, 'AM', 'ondrej', 'checked_in', '07:58'], [8, 0, 'PM', 'ondrej', 'checked_in', '07:58'],
+    [10, 0, 'PM', 'simon'], [11, 0, 'AM', 'bohdana'],
+    [3, 1, 'AM', 'barbora'], [3, 1, 'PM', 'barbora'], [4, 1, 'AM', 'dhorak'], [8, 1, 'AM', 'ondrej'], [8, 1, 'PM', 'ondrej'], [10, 1, 'AM', 'simon'], [10, 1, 'PM', 'simon'], [1, 1, 'AM', 'petr'], [2, 1, 'AM', 'martin'], [2, 1, 'PM', 'martin'], [9, 1, 'PM', 'otomecek'],
+    [5, 2, 'AM', 'bohdana'], [5, 2, 'PM', 'bohdana'], [2, 2, 'AM', 'martin'], [2, 2, 'PM', 'martin'], [8, 2, 'AM', 'ondrej'], [3, 2, 'PM', 'barbora'], [12, 2, 'AM', 'otomecek'],
+    [U, 3, 'AM', ME], [U, 3, 'PM', ME], [7, 3, 'AM', 'dhorak'], [7, 3, 'PM', 'dhorak'], [10, 3, 'AM', 'simon'], [2, 3, 'AM', 'martin'], [2, 3, 'PM', 'martin'], [6, 3, 'AM', 'petr'],
+    [U, 4, 'AM', ME], [8, 4, 'AM', 'ondrej'], [11, 4, 'AM', 'bohdana'], [3, 4, 'AM', 'barbora'],
+    [2, 7, 'AM', 'martin'], [2, 7, 'PM', 'martin'], [3, 7, 'AM', 'barbora'], [9, 7, 'AM', 'mkloucek'],
+  ];
+  if (isOwner) rows.push([9, 0, 'AM', 'krystof'], [9, 0, 'PM', 'krystof']);
+  else rows.push([1, 0, 'AM', 'jiri'], [1, 0, 'PM', 'jiri']);
+  let id = 1;
+  return rows.filter((r) => !(empty && r[3] === ME)).map((r) => ({ id: id++, seat: r[0], day: r[1], slot: r[2], user: r[3], status: r[4] || 'booked', at: r[5] || null }));
+}
+const seedReleases = () => [{ seat: 1, day: 1, slot: 'AM' }, { seat: 1, day: 1, slot: 'PM' }, { seat: 1, day: 2, slot: 'AM' }];
+
+class Component extends DCLogic {
+  scrollRef = React.createRef();
+  state = {
+    screen: (this.props.startScreen ?? 'Book') === 'Sign in' ? 'signin' : 'app',
+    signStep: 'email', email: EMAILS[(this.props.isOwner ?? false) ? 'jiri' : 'krystof'], code: '', authError: null, busy: false, mail: false, codeFocus: false,
+    tab: 'book', day: 0, choice: this.nowMin() >= PM_START ? 'PM' : 'AM',
+    bookings: seedBookings(this.props.isOwner ?? false, (this.props.dataState ?? 'Normal') === 'New user'), releases: seedReleases(),
+    nameOverride: null, nameDraft: null,
+    sheet: null, sheetOpen: false, sheetSeat: null, sheetDay: 0, sheetSlot: 'AM', cancelId: null,
+    toast: null, toastOn: false, lang: 'en', flash: null, reconnected: false, reconnecting: false, nextId: 1000, enter: false,
+  };
+
+  p() {
+    const pr = this.props || {};
+    return { isOwner: pr.isOwner ?? false, clock: pr.clock ?? '08:40', dataState: pr.dataState ?? 'Normal', startScreen: pr.startScreen ?? 'Book' };
+  }
+  me() { return this.p().isOwner ? 'jiri' : 'krystof'; }
+  nowMin() { const [h, m] = ((this.props && this.props.clock) || '08:40').split(':').map(Number); return h * 60 + m; }
+  L() { return S[this.state.lang]; }
+
+  componentDidMount() { this.replay(); if (this.state.screen === 'app') this.armLive(); }
+  componentDidUpdate(prev) {
+    const a = prev || {}, b = this.props || {};
+    if ((a.isOwner ?? false) !== (b.isOwner ?? false) || (a.dataState ?? 'Normal') !== (b.dataState ?? 'Normal')) {
+      const own = b.isOwner ?? false;
+      this.setState({ bookings: seedBookings(own, (b.dataState ?? 'Normal') === 'New user'), releases: seedReleases(), reconnected: false, sheetOpen: false, nameOverride: null, email: EMAILS[own ? 'jiri' : 'krystof'], tab: !own && this.state.tab === 'seat' ? 'book' : this.state.tab });
+      this.armLive(); this.replay();
+    }
+    if ((a.clock ?? '08:40') !== (b.clock ?? '08:40')) this.setState({ choice: this.nowMin() >= PM_START ? 'PM' : 'AM' });
+    if ((a.startScreen ?? 'Book') !== (b.startScreen ?? 'Book')) { this.setState({ screen: (b.startScreen ?? 'Book') === 'Sign in' ? 'signin' : 'app', signStep: 'email', code: '', authError: null }); this.replay(); }
+  }
+  componentWillUnmount() { [this.liveT, this.flashT, this.toastT, this.mailT, this.mailHideT].forEach((t) => clearTimeout(t)); cancelAnimationFrame(this.raf1); cancelAnimationFrame(this.raf2); }
+
+  replay() {
+    clearTimeout(this.enterT);
+    this.setState({ enter: false });
+    this.enterT = setTimeout(() => this.setState({ enter: true }), 40);
+  }
+  en(i) {
+    return this.state.enter
+      ? { op: 1, tf: 'none', tr: `opacity .42s ease ${i * 32}ms, transform .55s cubic-bezier(.2,.8,.2,1) ${i * 32}ms` }
+      : { op: 0, tf: 'translateY(12px) scale(0.98)', tr: 'none' };
+  }
+  goTab(k) {
+    this.setState({ tab: k });
+    if (this.scrollRef.current) this.scrollRef.current.scrollTop = 0;
+    this.replay();
+  }
+
+  armLive() { clearTimeout(this.liveT); this.liveT = setTimeout(() => this.liveEvent(), 8000); }
+  liveEvent() {
+    if (this.offline() || this.state.screen !== 'app') return;
+    const slot = this.nowMin() >= PM_START ? 'PM' : 'AM';
+    const st = this.state;
+    if (this.activeAt(6, 0, slot) || st.bookings.some((b) => b.user === 'dceluch' && b.day === 0 && b.slot === slot && this.isActive(b))) return;
+    const nb = { id: st.nextId, seat: 6, day: 0, slot, user: 'dceluch', status: 'booked', at: null };
+    const hit = st.sheetOpen && st.sheet === 'book' && st.sheetSeat === 6 && st.sheetDay === 0;
+    this.setState({ bookings: [...st.bookings, nb], nextId: st.nextId + 1, flash: 6, ...(hit ? { sheetOpen: false } : {}) });
+    if (hit) this.toast(this.L().errors.seat_taken, 'error');
+    clearTimeout(this.flashT);
+    this.flashT = setTimeout(() => this.setState({ flash: null }), 2000);
+  }
+
+  ownerOf(n) { return n === 1 ? 'jiri' : n === 2 ? 'martin' : null; }
+  nameOf(u) { return u === this.me() && this.state.nameOverride ? this.state.nameOverride : PEOPLE[u]; }
+  shortName(u) { const p = this.nameOf(u).split(' '); return p[0] + (p[1] ? ' ' + p[1][0] + '.' : ''); }
+  exempt(b) { return this.ownerOf(b.seat) === b.user; }
+  eff(b) {
+    if (b.status !== 'booked' || b.day !== 0 || this.exempt(b)) return b.status;
+    return this.nowMin() > dl(b.slot) ? 'released' : 'booked';
+  }
+  isActive(b) { const e = this.eff(b); return e === 'booked' || e === 'checked_in'; }
+  activeAt(n, d, s) { return this.state.bookings.find((b) => b.seat === n && b.day === d && b.slot === s && this.isActive(b)); }
+  myAt(d, s) { const me = this.me(); return this.state.bookings.find((b) => b.user === me && b.day === d && b.slot === s && this.isActive(b)); }
+  isReleased(n, d, s) { return this.state.releases.some((r) => r.seat === n && r.day === d && r.slot === s); }
+  ended(d, s) { return d === 0 && this.nowMin() >= (s === 'AM' ? PM_START : 1440); }
+  ciState(b) {
+    const e = this.eff(b);
+    if (e === 'checked_in') return 'done';
+    if (e === 'released') return 'released';
+    if (e === 'cancelled') return 'cancelled';
+    if (this.exempt(b)) return 'exempt';
+    if (b.day !== 0) return 'not_today';
+    return this.nowMin() > dl(b.slot) ? 'closed' : 'open';
+  }
+  canCancel(b) { return this.eff(b) === 'booked' && (b.day > 0 || this.nowMin() < (b.slot === 'AM' ? AM_START : PM_START)); }
+  offline() { return this.p().dataState === 'Offline' && !this.state.reconnected; }
+  loading() { return this.p().dataState === 'Loading'; }
+
+  half(n, d, s) {
+    const me = this.me();
+    const b = this.activeAt(n, d, s);
+    if (b) return { slot: s, st: b.user === me ? 'mine' : 'taken', user: b.user, b };
+    if (this.ended(d, s)) return { slot: s, st: 'ended' };
+    const o = this.ownerOf(n);
+    if (o && o !== me && !this.isReleased(n, d, s)) return { slot: s, st: 'held' };
+    return { slot: s, st: 'free' };
+  }
+  info(n, d, choice) {
+    const wanted = slotsOf(choice);
+    const halves = wanted.map((s) => this.half(n, d, s));
+    const has = (k) => halves.some((h) => h.st === k), all = (k) => halves.every((h) => h.st === k);
+    const kind = all('mine') ? 'mine' : all('free') ? 'free' : has('free') ? 'partly' : has('mine') ? 'mine' : has('taken') ? 'taken' : has('held') ? 'held' : 'ended';
+    return { n, wanted, halves, kind, bookable: halves.filter((h) => h.st === 'free' && !this.myAt(d, h.slot)).map((h) => h.slot), mineCount: halves.filter((h) => h.st === 'mine').length, takers: [...new Set(halves.filter((h) => h.st === 'taken').map((h) => h.user))] };
+  }
+  dayParts(i) { const L = this.L(); return { wd: L.wd[i % 7], wdl: L.wdl[i % 7], num: 2 + i, rel: i === 0 ? L.today : i === 1 ? L.tomorrow : null }; }
+  dayLong(i) { const p = this.dayParts(i), base = this.L().dateShort(p.wd, p.num); return p.rel ? `${p.rel}, ${base}` : base; }
+
+  toast(msg, tone = 'info', undo = null) {
+    clearTimeout(this.toastT);
+    this.setState({ toast: { msg, tone, undo }, toastOn: true });
+    this.toastT = setTimeout(() => this.setState({ toastOn: false }), tone === 'error' ? 4000 : undo ? 4500 : 2500);
+  }
+  openSheet(kind, extra) { this.setState({ sheet: kind, sheetOpen: true, ...(extra || {}) }); }
+  closeSheet() { this.setState({ sheetOpen: false }); }
+
+  doBook(n, d, opt) {
+    const L = this.L(), me = this.me();
+    const fail = (code) => { this.toast(L.errors[code], 'error'); return null; };
+    if (this.offline()) return fail('network');
+    const slots = slotsOf(opt);
+    for (const s of slots) {
+      if (this.ended(d, s)) return fail('slot_ended');
+      const b = this.activeAt(n, d, s);
+      if (b) return fail(b.user === me ? 'user_already_booked' : 'seat_taken');
+      if (this.myAt(d, s)) return fail('user_already_booked');
+      const o = this.ownerOf(n);
+      if (o && o !== me && !this.isReleased(n, d, s)) return fail('seat_held');
+    }
+    let id = this.state.nextId;
+    const now = this.nowMin();
+    const nb = slots.map((s) => {
+      const walkIn = d === 0 && now > dl(s);
+      return { id: id++, seat: n, day: d, slot: s, user: me, status: walkIn ? 'checked_in' : 'booked', at: walkIn ? fmtMin(now) : null };
+    });
+    this.setState((st) => ({ bookings: [...st.bookings, ...nb], nextId: id }));
+    return nb.map((b) => b.id);
+  }
+  checkIn(ids) {
+    const L = this.L();
+    if (this.offline()) return this.toast(L.errors.network, 'error');
+    const at = fmtMin(this.nowMin());
+    this.setState((st) => ({ bookings: st.bookings.map((b) => (ids.includes(b.id) ? { ...b, status: 'checked_in', at } : b)) }));
+    this.toast(`${L.mb.checkedInToast} · ${at}`);
+  }
+  cancel(id) {
+    const L = this.L();
+    if (this.offline()) return this.toast(L.errors.network, 'error');
+    this.setState((st) => ({ bookings: st.bookings.map((b) => (b.id === id ? { ...b, status: 'cancelled' } : b)), sheetOpen: false }));
+    this.toast(L.mb.cancelled);
+  }
+  release(d, s) {
+    const L = this.L();
+    if (this.offline()) return this.toast(L.errors.network, 'error');
+    const own = this.activeAt(1, d, s);
+    this.setState((st) => ({ bookings: st.bookings.map((b) => (own && b.id === own.id ? { ...b, status: 'cancelled' } : b)), releases: [...st.releases, { seat: 1, day: d, slot: s }] }));
+    this.toast(L.ms.releasedToast);
+  }
+  unrelease(d, s) {
+    const L = this.L();
+    if (this.offline()) return this.toast(L.errors.network, 'error');
+    const b = this.activeAt(1, d, s);
+    if (b && b.user !== this.me()) return this.toast(L.errors.seat_booked_by_other, 'error');
+    this.setState((st) => ({ releases: st.releases.filter((r) => !(r.seat === 1 && r.day === d && r.slot === s)) }));
+    this.toast(L.ms.takenBackToast);
+  }
+  tapSeat(n) {
+    const d = this.state.day, inf = this.info(n, d, this.state.choice);
+    if (inf.bookable.length) this.openSheet('book', { sheetSeat: n, sheetDay: d, sheetSlot: inf.bookable.length === 2 ? 'FULL' : inf.bookable[0] });
+    else if (inf.mineCount) this.openSheet('mine', { sheetSeat: n, sheetDay: d });
+  }
+
+  sendCode() {
+    const L = this.L();
+    if (this.state.busy) return;
+    const e = this.state.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return this.setState({ authError: L.auth.invalidEmail });
+    this.setState({ busy: true, authError: null });
+    setTimeout(() => {
+      if (e.split('@')[1] !== 'cetin.cz' && !DIRECTORY.includes(e)) return this.setState({ busy: false, authError: L.auth.addressNotAllowed });
+      this.setState({ busy: false, signStep: 'code', email: e, code: '' });
+      this.showMail();
+    }, 700);
+  }
+  showMail() {
+    clearTimeout(this.mailT); clearTimeout(this.mailHideT);
+    this.setState({ mail: false });
+    this.mailT = setTimeout(() => this.setState({ mail: true }), 1400);
+    this.mailHideT = setTimeout(() => this.setState({ mail: false }), 10000);
+  }
+  verify() {
+    if (this.state.code.length !== 6 || this.state.busy) return;
+    this.setState({ busy: true, authError: null });
+    setTimeout(() => {
+      if (this.state.code === SIGNIN_CODE) {
+        this.setState({ busy: false, screen: 'app', tab: 'book', day: 0, mail: false, signStep: 'email', code: '' });
+        this.armLive(); this.replay();
+      } else this.setState({ busy: false, authError: this.L().auth.invalidCode });
+    }, 600);
+  }
+
+  buildCard() {
+    const st = this.state, L = this.L(), d = st.day, now = this.nowMin(), me = this.me();
+    const stop = (e) => e && e.stopPropagation && e.stopPropagation();
+    const row = { isRow: true, isRing: false, badgeBg: 'rgba(48,0,145,0.06)', badgeFg: C.brand, badgeShadow: 'inset 0 0 0 1.5px rgba(48,0,145,0.14)', eyebrowFg: C.muted, dotDisp: 'none', btnBg: C.brand, btnFg: '#fff', btnBorder: '0', btnShadow: '0 8px 18px rgba(48,0,145,0.28)', cursor: 'default', hasBtn: true };
+    const mine = ['AM', 'PM'].map((s) => this.myAt(d, s)).filter(Boolean);
+    if (mine.length) {
+      const n = mine[0].seat, code = seatCode(n);
+      const slotLbl = mine.length === 2 ? L.slots.FULL : L.slots[mine[0].slot];
+      const openMine = () => this.openSheet('mine', { sheetSeat: n, sheetDay: d });
+      if (d === 0) {
+        const states = mine.map((b) => ({ b, s: this.ciState(b) }));
+        const open = states.filter((x) => x.s === 'open');
+        const ring = { isRing: true, isRow: false, onCard: openMine, eyebrow: `${L.today} · ${slotLbl}` };
+        if (open.length) {
+          const dead = Math.min(...open.map((x) => dl(x.b.slot)));
+          const left = dead - now, span = dead - (open[0].b.slot === 'AM' ? AM_START : PM_START);
+          return { ...ring, title: L.youreAt(code), sub: L.checkInBy(fmtMin(dead)), subFg: C.muted, ringColor: C.sky, ringPct: Math.max(4, Math.round((left / span) * 100)) + '%', ringText: true, ringCheck: false, ringMain: `${Math.floor(left / 60)}:${pad(left % 60)}`, ringSub: L.card.left, hasBtn: true, btn: L.card.imHere, onBtn: (e) => { stop(e); this.checkIn(open.map((x) => x.b.id)); } };
+        }
+        const done = states.filter((x) => x.s === 'done');
+        if (done.length === states.length) return { ...ring, title: code, sub: L.checkedInAt(done[0].b.at || fmtMin(now)), subFg: C.brand, ringColor: C.sky, ringPct: '100%', ringText: false, ringCheck: true, hasBtn: false };
+        if (states.some((x) => x.s === 'exempt')) return { ...ring, title: code, sub: L.card.exempt, subFg: C.muted, ringColor: C.lilac, ringPct: '100%', ringText: false, ringCheck: true, hasBtn: false };
+        return { ...ring, title: code, sub: L.card.missed, subFg: C.accent, ringColor: C.accent, ringPct: '100%', ringText: true, ringCheck: false, ringMain: '0:00', ringSub: L.card.left, hasBtn: false };
+      }
+      return { ...row, digits: pad(n), badgeBg: MINE_BG, badgeFg: '#fff', badgeShadow: '0 8px 18px rgba(48,0,145,0.3)', eyebrow: L.card.booked, title: `${code} · ${slotLbl}`, sub: this.dayLong(d), cursor: 'pointer', onCard: openMine, btn: L.card.manage, btnBg: 'transparent', btnFg: C.brand, btnBorder: '2px solid ' + C.brand, btnShadow: 'none', onBtn: (e) => { stop(e); openMine(); } };
+    }
+    if (this.p().dataState === 'New user') return { isRow: false, isRing: false };
+    const usual = this.p().isOwner ? 1 : 5;
+    const want = slotsOf(st.choice).filter((s) => !this.ended(d, s));
+    if (!want.length) return { isRow: false, isRing: false };
+    const choice = want.length === 2 ? 'FULL' : want[0];
+    const quick = (n, opt) => (e) => {
+      stop(e);
+      const ids = this.doBook(n, d, opt);
+      if (ids) this.toast(`${L.seats.booked} ${seatCode(n)} · ${L.slots[opt]}`, 'info', () => this.setState((s2) => ({ bookings: s2.bookings.filter((b) => !ids.includes(b.id)), toastOn: false })));
+    };
+    const u = this.info(usual, d, choice);
+    if (u.kind === 'free' || u.kind === 'partly') {
+      const opt = u.kind === 'free' ? choice : u.bookable[0];
+      return { ...row, digits: pad(usual), eyebrow: L.card.usual, title: `${seatCode(usual)} · ${L.slots[opt]}`, sub: this.dayLong(d), btn: L.seats.book, onBtn: quick(usual, opt) };
+    }
+    const rank = (n) => (n === partnerOf(usual) ? 0 : blockOf(n) === blockOf(usual) ? 1 : 2) * 100 + Math.abs(n - usual);
+    const alt = Array.from({ length: 12 }, (_, i) => i + 1).filter((n) => n !== usual).sort((a, b) => rank(a) - rank(b)).find((n) => this.info(n, d, choice).kind === 'free');
+    if (!alt) return { isRow: false, isRing: false };
+    const why = alt === partnerOf(usual) ? L.card.nextTo : blockOf(alt) === blockOf(usual) ? L.card.sameTable : L.card.closest;
+    return { ...row, digits: pad(alt), eyebrow: L.isTaken(seatCode(usual)), dotDisp: 'block', title: `${seatCode(alt)} · ${L.slots[choice]}`, sub: why, btn: L.seats.book, onBtn: quick(alt, choice) };
+  }
+
+  renderVals() {
+    const st = this.state, L = this.L(), pr = this.p(), now = this.nowMin(), me = this.me();
+    const isApp = st.screen === 'app', offline = this.offline(), loading = this.loading();
+    const ready = isApp && !offline && !loading;
+    const isOwner = pr.isOwner;
+    const myName = this.nameOf(me);
+
+    const langOpts = [['en', 'EN'], ['cs', 'CS']].map(([k, short]) => {
+      const on = st.lang === k;
+      return { short, label: S[k].langName, bg: on ? '#fff' : 'transparent', fg: on ? C.brand : C.ink7, shadow: on ? '0 2px 6px rgba(26,0,96,0.12)' : 'none', glassBg: on ? '#fff' : 'transparent', glassFg: on ? C.brand : 'rgba(255,255,255,0.85)', pick: () => this.setState({ lang: k, authError: null }) };
+    });
+    const codeBoxes = Array.from({ length: 6 }, (_, i) => {
+      const active = st.codeFocus && (i === st.code.length || (st.code.length === 6 && i === 5));
+      const filled = !!st.code[i];
+      return { ch: st.code[i] || '', bg: filled ? 'rgba(48,0,145,0.04)' : '#fff', border: active ? C.brand : st.authError && st.signStep === 'code' ? C.accent : filled ? 'rgba(48,0,145,0.35)' : C.lineStrong, ring: active ? '0 0 0 4px rgba(48,0,145,0.14)' : 'none' };
+    });
+
+    const days = WORK.map((i, k) => {
+      const sel = i === st.day, p = this.dayParts(i);
+      const mine = st.bookings.some((b) => b.user === me && b.day === i && this.isActive(b));
+      return { wd: p.wd, num: p.num, gap: k > 0 && i - WORK[k - 1] > 1 ? '8px' : '0', bg: sel ? '#fff' : 'transparent', fg: sel ? C.brand : '#fff', sub: sel ? 'rgba(48,0,145,0.55)' : 'rgba(255,255,255,0.6)', shadow: sel ? '0 10px 22px rgba(10,0,50,0.3)' : 'none', todayDisp: i === 0 ? 'block' : 'none', mineDisp: mine ? 'block' : 'none', mineColor: sel ? C.brand : C.sky, select: () => { if (i !== st.day) { this.setState({ day: i }); this.replay(); } } };
+    });
+    const slotOpts = ['AM', 'PM', 'FULL'].map((c) => {
+      const on = c === st.choice;
+      return { label: L.slots[c], glyph: GLYPH[c], bg: on ? '#fff' : 'transparent', fg: on ? C.brand : 'rgba(255,255,255,0.86)', shadow: on ? '0 6px 16px rgba(10,0,50,0.25)' : 'none', pick: () => this.setState({ choice: c }) };
+    });
+
+    const R0 = '0 0 0 0 rgba(65,182,230,0)';
+    const TS = {
+      free: { bg: '#fff', border: '1.5px solid rgba(48,0,145,0.16)', fg: C.brand, pre: 'rgba(48,0,145,0.5)', numColor: C.brand, capColor: C.brand, subColor: C.muted, sh: '0 0 0 0 rgba(0,0,0,0)' },
+      partly: { bg: '#fff', border: '1.5px dashed rgba(48,0,145,0.45)', fg: C.brand, pre: 'rgba(48,0,145,0.5)', numColor: C.brand, capColor: C.brand, subColor: C.muted, sh: '0 0 0 0 rgba(0,0,0,0)' },
+      mine: { bg: MINE_BG, border: '1.5px solid #300091', fg: '#fff', pre: 'rgba(255,255,255,0.65)', numColor: '#fff', capColor: '#fff', subColor: 'rgba(255,255,255,0.78)', sh: '0 10px 22px rgba(48,0,145,0.32)' },
+      taken: { bg: C.taken, border: '1.5px solid ' + C.taken, fg: C.ink7, pre: C.takenNum, numColor: C.takenNum, capColor: C.ink7, subColor: C.muted, sh: '0 0 0 0 rgba(0,0,0,0)' },
+      held: { bg: C.heldBg, border: '1.5px solid transparent', fg: C.deep, pre: C.lilac, numColor: C.lilac, capColor: C.deep, subColor: 'rgba(26,0,96,0.7)', sh: '0 0 0 0 rgba(0,0,0,0)' },
+      ended: { bg: 'transparent', border: '1.5px dashed ' + C.lineStrong, fg: C.muted, pre: C.muted, numColor: '#b4b6c6', capColor: C.muted, subColor: C.muted, sh: '0 0 0 0 rgba(0,0,0,0)' },
+    };
+    const halfColor = (h, kind) => (kind === 'mine' ? (h.st === 'mine' ? '#fff' : 'transparent') : { free: C.brand, mine: C.brand, taken: '#a6a8bf', held: C.lilac, ended: 'transparent' }[h.st]);
+    const isFull = st.choice === 'FULL';
+    let order = 0;
+    const seatVM = (n) => {
+      const inf = this.info(n, st.day, st.choice), ts = TS[inf.kind];
+      let caption = '', sub = '', av = null, star = false, check = false;
+      const otherHalf = (h) => h ? (h.st === 'taken' ? this.shortName(h.user) : h.st === 'held' ? L.seats.held : h.st === 'mine' ? L.you : '–') : '';
+      switch (inf.kind) {
+        case 'free': caption = L.seats.free; break;
+        case 'partly': {
+          const fs = inf.halves.find((h) => h.st === 'free').slot, oh = inf.halves.find((h) => h.slot !== fs);
+          caption = `${L.slots[fs]}`; sub = L.other(L.short[oh.slot], otherHalf(oh)); break;
+        }
+        case 'mine': {
+          caption = L.you;
+          const mb = inf.halves.filter((h) => h.st === 'mine').map((h) => h.b);
+          const ci = mb.every((b) => this.eff(b) === 'checked_in');
+          check = ci && st.day === 0;
+          sub = check ? (mb[0].at || '') : inf.mineCount === 1 && inf.wanted.length > 1 ? L.slots[mb[0].slot] : '';
+          break;
+        }
+        case 'taken': {
+          if (inf.takers.length === 1) {
+            const u = inf.takers[0]; av = u; caption = this.shortName(u);
+            const tb = inf.halves.filter((h) => h.st === 'taken').map((h) => h.b);
+            check = tb.some((b) => this.eff(b) === 'checked_in') && st.day === 0;
+            sub = check ? (tb[0].at || '') : tb.length < inf.wanted.length ? L.slots[tb[0].slot] : '';
+          } else { caption = L.seats.taken; sub = inf.halves.map((h) => `${L.short[h.slot]} ${otherHalf(h)}`).join(' · '); }
+          break;
+        }
+        case 'held': star = true; caption = L.seats.held; sub = this.shortName(this.ownerOf(n)); break;
+        default: caption = '–';
+      }
+      const tappable = inf.bookable.length > 0 || inf.mineCount > 0;
+      const selected = st.sheetOpen && (st.sheet === 'book' || st.sheet === 'mine') && st.sheetSeat === n && st.sheetDay === st.day;
+      const ring = st.flash === n && st.day === 0 ? '0 0 0 4px rgba(65,182,230,0.9)' : selected ? '0 0 0 4px rgba(48,0,145,0.22)' : R0;
+      return {
+        n, digits: pad(n), caption, sub, subDisp: sub ? 'flex' : 'none', aria: `${seatCode(n)}: ${caption} ${sub}`, ...ts, shadow: `${ring}, ${ts.sh}`,
+        disabled: !tappable, cursor: tappable ? 'pointer' : 'default', tap: () => this.tapSeat(n),
+        dim: (inf.kind === 'free' || inf.kind === 'partly') && !inf.bookable.length ? 0.5 : 1,
+        avDisp: av ? 'flex' : 'none', avText: av ? initialsOf(this.nameOf(av)) : '', avBg: av ? avBgOf(av) : 'transparent', avFg: C.deep,
+        starDisp: star ? 'block' : 'none', checkDisp: check ? 'block' : 'none',
+        glyphDisp: isFull && inf.kind !== 'ended' ? 'block' : 'none', glyphBorder: inf.kind === 'mine' ? '#fff' : inf.kind === 'taken' ? '#a6a8bf' : inf.kind === 'held' ? C.lilac : C.brand,
+        glyph: isFull ? `linear-gradient(90deg, ${halfColor(inf.halves[0], inf.kind)} 50%, ${halfColor(inf.halves[1], inf.kind)} 50%)` : 'transparent',
+        ...this.en(order++),
+      };
+    };
+    const blocks = ready && st.tab === 'book' ? ROOM.map((pairs, bi) => {
+      const free = pairs.flat().filter((n) => this.info(n, st.day, st.choice).kind === 'free').length;
+      return { label: L.table(bi + 1), free: L.freeShort(free), freeColor: free ? C.brand : C.muted, pairs: pairs.map((p, pi) => ({ mt: pi ? '6px' : '0', pt: pi ? '6px' : '0', divider: pi ? '1.5px dashed #e3e5ee' : '0', seats: p.map(seatVM) })) };
+    }) : [];
+    const freeCount = ready ? Array.from({ length: 12 }, (_, i) => i + 1).filter((n) => this.info(n, st.day, st.choice).kind === 'free').length : 0;
+    const legend = [
+      { label: L.seats.free, bg: '#fff', border: '1.5px solid rgba(48,0,145,0.35)' },
+      { label: L.seats.mine, bg: C.brand, border: '0' },
+      { label: L.seats.taken, bg: '#dcdee8', border: '0' },
+      { label: L.seats.held, bg: 'rgba(167,164,224,0.6)', border: '0' },
+    ];
+    const card = ready && st.tab === 'book' ? this.buildCard() : { isRow: false, isRing: false };
+
+    const myList = st.bookings.filter((b) => b.user === me && b.status !== 'cancelled').sort((a, b) => a.day - b.day || (a.slot === 'AM' ? -1 : 1));
+    const byDay = new Map();
+    myList.forEach((b) => byDay.set(b.day, [...(byDay.get(b.day) || []), b]));
+    const groups = [...byDay.entries()].map(([d, list], gi) => {
+      const open = list.filter((b) => this.ciState(b) === 'open');
+      const hero = d === 0 && open.length > 0;
+      const dead = hero ? Math.min(...open.map((b) => dl(b.slot))) : 0;
+      const dark = hero;
+      const p = this.dayParts(d);
+      const seats = [...new Set(list.map((b) => seatCode(b.seat)))];
+      const slotKey = list.length === 2 ? 'FULL' : list[0].slot;
+      const rows = list.map((b) => {
+        const ci = this.ciState(b);
+        const m = {
+          done: [L.checkedInAt(b.at || ''), dark ? '#fff' : C.brand, 'block'],
+          exempt: [L.mb.ownerNoCheckIn, dark ? 'rgba(255,255,255,0.74)' : C.muted, 'none'],
+          not_today: [L.checkInBy(fmtMin(dl(b.slot))), C.muted, 'none'],
+          closed: [L.mb.missed, dark ? '#ffb3bd' : C.accent, 'none'],
+          open: [L.checkInBy(fmtMin(dl(b.slot))), dark ? 'rgba(255,255,255,0.74)' : C.muted, 'none'],
+          released: [L.mb.released, dark ? '#ffb3bd' : C.accent, 'none'],
+        }[ci] || ['', C.muted, 'none'];
+        return { slot: L.slots[b.slot] + (seats.length > 1 ? ` · ${seatCode(b.seat)}` : ''), status: m[0], statusColor: m[1], checkDisp: m[2], canCancel: this.canCancel(b), cancelBorder: dark ? 'rgba(255,255,255,0.4)' : 'rgba(48,0,145,0.25)', cancelFg: dark ? '#fff' : C.brand, onCancel: () => this.openSheet('cancel', { cancelId: b.id }) };
+      });
+      return {
+        wd: p.wd, num: p.num, mon: L.mon, rel: p.rel || '', relDisp: p.rel ? 'block' : 'none', relBg: dark ? 'rgba(255,255,255,0.16)' : 'rgba(48,0,145,0.07)', relFg: dark ? '#fff' : C.brand,
+        bg: dark ? MINE_BG : '#fff', fg: dark ? '#fff' : C.ink, mutedFg: dark ? 'rgba(255,255,255,0.7)' : C.muted, perf: dark ? 'rgba(255,255,255,0.28)' : C.line,
+        shadow: dark ? '0 16px 34px rgba(48,0,145,0.32)' : '0 1px 2px rgba(26,0,96,0.05), 0 10px 24px rgba(26,0,96,0.06)',
+        seatTitle: seats.join(' · '), slotSummary: L.slots[slotKey], glyph: GLYPH[slotKey], rows,
+        hero, heroTitle: hero ? L.checkInBy(fmtMin(dead)) : '', heroSub: hero ? cap(L.left(Math.floor((dead - now) / 60), (dead - now) % 60)) : '', heroAction: () => this.checkIn(open.map((b) => b.id)),
+        ...this.en(gi),
+      };
+    });
+    const hasOpenCheckIn = myList.some((b) => b.day === 0 && this.ciState(b) === 'open');
+
+    const whoDay = st.bookings.filter((b) => b.day === st.day && this.isActive(b));
+    let wi = 0;
+    const sections = ['AM', 'PM'].map((s) => {
+      const rows = whoDay.filter((b) => b.slot === s).map((b) => ({ name: this.nameOf(b.user), b })).sort((a, b) => a.name.localeCompare(b.name)).map((x, i) => {
+        const ci = this.eff(x.b) === 'checked_in';
+        return { name: x.name, initials: initialsOf(x.name), seat: seatCode(x.b.seat), sub: ci ? L.checkedInAt(x.b.at || '') : this.exempt(x.b) ? L.seats.held : L.checkInBy(fmtMin(dl(s))), youDisp: x.b.user === me ? 'inline-block' : 'none', checkDisp: ci ? 'flex' : 'none', avBg: x.b.user === me ? C.brand : avBgOf(x.b.user), avFg: x.b.user === me ? '#fff' : C.deep, borderTop: i === 0 ? '0' : '1px solid #eef0f4', ...this.en(wi++) };
+      });
+      return { label: L.slots[s], glyph: GLYPH[s], count: L.people(rows.length), rows, none: rows.length === 0, some: rows.length > 0 };
+    });
+    const summary = ['AM', 'PM'].map((s, i) => {
+      const dots = Array.from({ length: 12 }, (_, k) => { const b = this.activeAt(k + 1, st.day, s); return { bg: b ? (b.user === me ? C.sky : C.brand) : '#e3e5ee' }; });
+      return { label: L.slots[s], glyph: GLYPH[s], n: whoDay.filter((b) => b.slot === s).length, of: L.ofSeats(12), dots, divider: i ? '1px solid #eef0f4' : '0' };
+    });
+
+    const CS = {
+      held: { bg: C.heldBg, border: '1.5px solid transparent', fg: C.deep, shadow: 'none' },
+      released: { bg: '#fff', border: '1.5px dashed rgba(48,0,145,0.5)', fg: C.brand, shadow: 'none' },
+      booked: { bg: C.taken, border: '1.5px solid ' + C.taken, fg: C.ink7, shadow: 'none' },
+      mine: { bg: MINE_BG, border: '1.5px solid #300091', fg: '#fff', shadow: '0 8px 18px rgba(48,0,145,0.28)' },
+      ended: { bg: 'transparent', border: '1.5px dashed ' + C.lineStrong, fg: C.muted, shadow: 'none' },
+    };
+    const msRows = isOwner ? WORK.map((d, ri) => {
+      const p = this.dayParts(d);
+      const cells = ['AM', 'PM'].map((s) => {
+        const b = this.activeAt(1, d, s), rel = this.isReleased(1, d, s);
+        let kind, label, av = '';
+        if (this.ended(d, s)) { kind = 'ended'; label = '–'; }
+        else if (b && b.user !== me) { kind = 'booked'; label = this.shortName(b.user); av = initialsOf(this.nameOf(b.user)); }
+        else if (b) { kind = 'mine'; label = L.ms.mine; }
+        else if (rel) { kind = 'released'; label = L.ms.released; }
+        else { kind = 'held'; label = L.ms.held; }
+        const act = kind === 'held' || kind === 'mine' || kind === 'released';
+        return { label, ...CS[kind], starDisp: kind === 'held' ? 'block' : 'none', avDisp: av ? 'flex' : 'none', avText: av, disabled: !act, cursor: act ? 'pointer' : 'default', tap: () => (kind === 'released' ? this.unrelease(d, s) : this.release(d, s)) };
+      });
+      return { main: p.rel || cap(p.wd), sub: p.rel ? L.dateShort(p.wd, p.num) : L.dateShort('', p.num).trim(), cells, ...this.en(ri) };
+    }) : [];
+
+    const sh = { isBook: st.sheet === 'book', isMine: st.sheet === 'mine', isCancel: st.sheet === 'cancel', isProfile: st.sheet === 'profile' };
+    sh.hasSeatHead = (sh.isBook || sh.isMine) && !!st.sheetSeat;
+    if (sh.hasSeatHead) {
+      const n = st.sheetSeat, d = st.sheetDay;
+      sh.digits = pad(n); sh.title = L.bookTitle(seatCode(n)); sh.sub = `${this.dayLong(d)} · ${L.table(blockOf(n) + 1)}`;
+      sh.mini = ROOM.map((pairs) => ({ pairs: pairs.map((pp) => ({ cells: pp.map((k) => { const h = this.half(k, d, sh.isBook ? (st.sheetSlot === 'PM' ? 'PM' : 'AM') : 'AM'); return { bg: k === n ? C.brand : h.st === 'mine' ? C.sky : h.st === 'taken' ? '#d7dae1' : h.st === 'held' ? 'rgba(167,164,224,0.7)' : '#fff', ring: k === n ? '0 0 0 2px rgba(48,0,145,0.25)' : 'inset 0 0 0 1px #d7dae1' }; }) })) }));
+    }
+    if (sh.isBook && st.sheetSeat) {
+      const n = st.sheetSeat, d = st.sheetDay;
+      const opts = ['AM', 'PM', 'FULL'].map((o) => {
+        const seatFree = slotsOf(o).every((s) => this.half(n, d, s).st === 'free');
+        const mineElse = slotsOf(o).some((s) => this.myAt(d, s));
+        return { o, ok: seatFree && !mineElse, why: !seatFree ? L.seats.taken : mineElse ? L.seats.youHave : '' };
+      });
+      let sel = st.sheetSlot;
+      if (!opts.find((x) => x.o === sel && x.ok)) { const f = opts.find((x) => x.ok); sel = f ? f.o : null; }
+      sh.slots = opts.map((x) => {
+        const on = x.o === sel;
+        return { label: L.slots[x.o], time: x.ok ? L.times[x.o] : x.why, glyph: GLYPH[x.o], border: on ? C.brand : C.line, bg: on ? 'rgba(48,0,145,0.05)' : '#fff', fg: on ? C.brand : C.ink7, op: x.ok ? 1 : 0.45, disabled: !x.ok, cursor: x.ok ? 'pointer' : 'default', pick: () => x.ok && this.setState({ sheetSlot: x.o }) };
+      });
+      const other = ['AM', 'PM'].map((s) => this.myAt(d, s)).filter((b) => b && b.seat !== n);
+      const freeHalves = ['AM', 'PM'].filter((s) => this.half(n, d, s).st === 'free');
+      sh.note = other.length ? L.alreadyHave(seatCode(other[0].seat)) : freeHalves.length === 1 ? L.onlyFree(L.slots[freeHalves[0]]) : '';
+      sh.hasNote = !!sh.note;
+      sh.rule = !sel ? '' : this.ownerOf(n) === me ? L.ownRule : d === 0 && slotsOf(sel).every((s) => now > dl(s)) ? L.walkIn : sel === 'FULL' ? L.ruleFull(fmtMin(AM_DL), fmtMin(PM_DL)) : L.ruleOne(fmtMin(dl(sel)));
+      sh.bookDisabled = !sel; sh.bookOpacity = sel ? 1 : 0.5; sh.bookLabel = sel ? L.bookBtn(L.slots[sel]) : L.seats.book;
+      sh.onBook = () => { if (!sel) return; const ids = this.doBook(n, d, sel); if (ids) { this.toast(`${L.seats.booked} ${seatCode(n)} · ${L.slots[sel]}`); this.closeSheet(); } };
+    }
+    if (sh.isMine && st.sheetSeat) {
+      const n = st.sheetSeat, d = st.sheetDay;
+      sh.rows = ['AM', 'PM'].map((s) => st.bookings.find((b) => b.user === me && b.seat === n && b.day === d && b.slot === s && this.isActive(b))).filter(Boolean).map((b) => {
+        const ci = this.ciState(b);
+        const m = { done: [L.checkedInAt(b.at || ''), C.brand], exempt: [L.mb.ownerNoCheckIn, C.muted], not_today: [L.checkInBy(fmtMin(dl(b.slot))), C.muted], closed: [L.mb.missed, C.accent], open: [L.checkInBy(fmtMin(dl(b.slot))), C.muted] }[ci] || ['', C.muted];
+        return { slot: L.slots[b.slot], glyph: GLYPH[b.slot], status: m[0], statusColor: m[1], showCheckIn: ci === 'open', showCancel: this.canCancel(b), onCheckIn: () => { this.checkIn([b.id]); this.closeSheet(); }, onCancel: () => this.cancel(b.id) };
+      });
+    }
+    if (sh.isCancel && st.cancelId) {
+      const b = st.bookings.find((x) => x.id === st.cancelId);
+      if (b) { sh.cancelText = `${seatCode(b.seat)} · ${this.dayLong(b.day)}, ${L.slots[b.slot].toLowerCase()}`; sh.onConfirmCancel = () => this.cancel(b.id); }
+    }
+
+    const tabs = [['book', L.nav.book, 'desk'], ['bookings', L.nav.myBookings, 'bookmark'], ['who', L.nav.whoIsIn, 'people']];
+    if (isOwner) tabs.push(['seat', L.nav.mySeat, 'star']);
+    const navItems = tabs.map(([k, label, icon]) => ({ label, icon: `icons/${icon}.svg`, color: st.tab === k ? C.brand : C.muted, pill: st.tab === k ? 'rgba(48,0,145,0.09)' : 'transparent', dotDisp: k === 'bookings' && hasOpenCheckIn && !offline ? 'block' : 'none', go: () => this.goTab(k) }));
+    const titles = { book: L.nav.book, bookings: L.nav.myBookings, who: L.nav.whoIsIn, seat: L.nav.mySeat };
+
+    const dp = this.dayParts(st.day);
+    const upcomingN = groups.length;
+    const band = {
+      book: { title: dp.rel || cap(dp.wdl), sub: dp.rel ? cap(L.dayLong(dp.wdl, dp.num)) : L.dateOnly(dp.num), showCount: ready, count: freeCount, countLabel: L.freeSeats(freeCount), showSeat: false },
+      bookings: { title: L.nav.myBookings === 'Moje' ? 'Moje rezervace' : L.nav.myBookings, sub: L.upcoming(upcomingN), showCount: false, showSeat: false },
+      who: { title: L.nav.whoIsIn, sub: cap(L.dayLong(dp.wdl, dp.num)), showCount: false, showSeat: false },
+      seat: { title: L.nav.mySeat, sub: '', showCount: false, showSeat: isOwner },
+    }[st.tab];
+
+    const toastOn = st.toastOn && st.toast;
+    const jumpTo = (screen, tab) => () => { this.setState({ screen, tab: tab || 'book', sheetOpen: false, signStep: 'email', code: '', authError: null, ...(screen === 'app' ? {} : { mail: false }) }, () => screen === 'app' && this.armLive()); if (this.scrollRef.current) this.scrollRef.current.scrollTop = 0; this.replay(); };
+
+    return {
+      t: L, clock: pr.clock, scrollRef: this.scrollRef,
+      isSignin: st.screen === 'signin', isApp, screenLabel: titles[st.tab],
+      langOpts,
+      isEmailStep: st.signStep === 'email', isCodeStep: st.signStep === 'code',
+      email: st.email, onEmail: (e) => this.setState({ email: e.target.value, authError: null }), onEmailKey: (e) => e.key === 'Enter' && this.sendCode(),
+      emailBorder: st.authError && st.signStep === 'email' ? C.accent : C.lineStrong,
+      hasAuthError: !!st.authError, authError: st.authError || '',
+      sendCode: () => this.sendCode(), sendLabel: st.busy ? L.auth.sending : L.auth.sendCode, busyOpacity: st.busy ? 0.6 : 1,
+      codeSentTo: L.codeSentTo(st.email), codeBoxes, code: st.code,
+      onCode: (e) => this.setState({ code: e.target.value.replace(/\D/g, '').slice(0, 6), authError: null }),
+      onCodeFocus: () => this.setState({ codeFocus: true }), onCodeBlur: () => this.setState({ codeFocus: false }), onCodeKey: (e) => e.key === 'Enter' && this.verify(),
+      verify: () => this.verify(), verifyDisabled: st.busy || st.code.length !== 6, verifyOpacity: st.busy || st.code.length !== 6 ? 0.5 : 1, verifyLabel: st.busy ? L.auth.verifying : L.auth.verify,
+      resend: () => { this.toast(L.auth.resent); this.showMail(); }, changeEmail: () => this.setState({ signStep: 'email', code: '', authError: null, mail: false }),
+      fillCode: () => this.setState({ code: SIGNIN_CODE, mail: false, authError: null }),
+      mailTransform: st.mail && st.screen === 'signin' ? 'translateY(0)' : 'translateY(-160%)', mailOpacity: st.mail && st.screen === 'signin' ? 1 : 0, mailPE: st.mail && st.screen === 'signin' ? 'auto' : 'none',
+
+      band, liveColor: offline ? C.accent : C.sky, liveHalo: offline ? 'rgba(241,46,73,0.25)' : 'rgba(65,182,230,0.25)', liveLabel: offline ? L.offline : L.live,
+      myInitials: initialsOf(myName), myName, openProfile: () => this.openSheet('profile', { nameDraft: null }),
+      showDays: st.tab === 'book' || st.tab === 'who', days, isBook: st.tab === 'book', slotOpts,
+      offline: isApp && offline, loading: isApp && loading && !offline, skeleton: [{ i: 0 }, { i: 1 }, { i: 2 }],
+      retryLabel: st.reconnecting ? L.reconnecting : L.retry,
+      reconnect: () => { this.setState({ reconnecting: true }); setTimeout(() => { this.setState({ reconnecting: false, reconnected: true }); this.replay(); }, 900); },
+      bookReady: ready && st.tab === 'book', card, blocks, legend,
+      bookingsReady: ready && st.tab === 'bookings', mb: { empty: groups.length === 0, groups }, goBook: () => this.goTab('book'),
+      whoReady: ready && st.tab === 'who', who: { empty: whoDay.length === 0, has: whoDay.length > 0, sections, summary },
+      seatReady: ready && st.tab === 'seat', ms: { notOwner: !isOwner, owner: isOwner, intro: L.intro('B21101'), rows: msRows },
+      navItems,
+
+      sh, closeSheet: () => this.closeSheet(),
+      sheetPE: st.sheetOpen ? 'auto' : 'none', sheetOpacity: st.sheetOpen ? 1 : 0, sheetTransform: st.sheetOpen ? 'translateY(0)' : 'translateY(110%)',
+      signedInAs: L.signedInAs(st.email), nameValue: st.nameDraft ?? myName, onName: (e) => this.setState({ nameDraft: e.target.value }),
+      showSave: st.nameDraft !== null && st.nameDraft.trim() !== '' && st.nameDraft.trim() !== myName,
+      saveName: () => { this.setState({ nameOverride: st.nameDraft.trim(), nameDraft: null }); this.toast(L.profile.saved); },
+      signOut: () => { clearTimeout(this.liveT); this.setState({ screen: 'signin', signStep: 'email', code: '', authError: null, sheetOpen: false, tab: 'book', day: 0 }); },
+
+      toastBg: st.toast && st.toast.tone === 'error' ? C.accent : C.deep, toastMsg: st.toast ? st.toast.msg : '',
+      toastCheckDisp: st.toast && st.toast.tone === 'error' ? 'none' : 'block', toastBangDisp: st.toast && st.toast.tone === 'error' ? 'block' : 'none',
+      toastOpacity: toastOn ? 1 : 0, toastTransform: toastOn ? 'translateY(0) scale(1)' : 'translateY(-14px) scale(0.98)', toastPE: toastOn ? 'auto' : 'none',
+      toastHasUndo: !!(st.toast && st.toast.undo), toastUndo: () => st.toast && st.toast.undo && st.toast.undo(),
+
+      jumps: [
+        { label: 'Sign in', go: jumpTo('signin') },
+        { label: 'Book', go: jumpTo('app', 'book') },
+        { label: 'My bookings', go: jumpTo('app', 'bookings') },
+        { label: "Who's in", go: jumpTo('app', 'who') },
+        { label: 'My seat', go: jumpTo('app', 'seat') },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

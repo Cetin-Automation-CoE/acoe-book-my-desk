@@ -1,32 +1,34 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../components/Button'
-import { CheckIcon } from '../components/icons'
-import { ProgressCard } from '../components/ProgressCard'
-import { Sheet } from '../components/Sheet'
+import { PageBand, Panel } from '../components/PageBand'
+import { CancelSheet } from '../components/SeatSheets'
+import { ErrorCard, Skeleton } from '../components/States'
+import { Ticket } from '../components/Ticket'
 import { useToast } from '../components/Toast'
 import { useAuth } from '../hooks/useAuth'
-import { keys, useMyBookings, useNow, useProfiles, useSeats } from '../hooks/useData'
+import { useMyBookings, useNow, useSeats, useStats } from '../hooks/useData'
+import { useT } from '../hooks/useLang'
 import { api } from '../lib/api'
-import { canCancel, checkInState, formatDayLong, formatTime, todayIn } from '../lib/dates'
+import { todayIn } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
-import type { Booking, Seat, Settings } from '../lib/types'
-import { strings } from '../strings'
+import { ACTIVE_STATUSES, type Booking, type Settings } from '../lib/types'
 
 export function MyBookings({ settings }: { settings: Settings }) {
-  const { user, signOut } = useAuth()
+  const t = useT()
+  const { user } = useAuth()
   const userId = user!.id
   const now = useNow()
   const today = todayIn(settings.timezone, now)
   const bookings = useMyBookings(userId, today)
   const seats = useSeats()
-  const profiles = useProfiles()
+  const stats = useStats(userId)
   const toast = useToast()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [toCancel, setToCancel] = useState<Booking | null>(null)
 
-  const seatOf = (id: string): Seat | undefined => seats.data?.find((s) => s.id === id)
-  const seatCode = (id: string) => seatOf(id)?.code ?? '…'
   const refresh = () => {
     for (const key of ['my-bookings', 'bookings', 'progress']) queryClient.invalidateQueries({ queryKey: [key] })
   }
@@ -34,164 +36,83 @@ export function MyBookings({ settings }: { settings: Settings }) {
   const cancel = useMutation({
     mutationFn: (id: string) => api.cancelBooking(id),
     onSuccess: () => {
-      toast(strings.myBookings.cancelled)
+      toast(t.myBookings.cancelled)
       setToCancel(null)
+      refresh()
     },
-    onError: (err) => toast(errorMessage(err), 'error'),
-    onSettled: refresh,
-  })
-
-  const checkIn = useMutation({
-    mutationFn: (id: string) => api.checkIn(id),
-    onSuccess: () => toast(strings.myBookings.checkedIn),
-    onError: (err) => toast(errorMessage(err), 'error'),
-    onSettled: refresh,
+    onError: (err) => {
+      toast(errorMessage(err), 'error')
+      refresh()
+    },
   })
 
   const byDate = new Map<string, Booking[]>()
-  for (const b of bookings.data ?? []) byDate.set(b.date, [...(byDate.get(b.date) ?? []), b])
-
-  const renderStatus = (b: Booking) => {
-    if (b.status === 'released') return <span className="text-sm text-accent">{strings.myBookings.released}</span>
-    if (b.status === 'cancelled') return <span className="text-sm text-muted">{strings.myBookings.cancelled}</span>
-    const ownerOfSeat = seatOf(b.seat_id)?.owner_id === userId
-    const deadline = formatTime(b.slot === 'AM' ? settings.am_checkin_deadline : settings.pm_checkin_deadline)
-    switch (checkInState(b, settings, ownerOfSeat, now)) {
-      case 'done':
-        return (
-          <span className="flex items-center gap-1 text-sm text-brand">
-            <CheckIcon width={16} height={16} /> {strings.myBookings.checkedIn}
-          </span>
-        )
-      case 'exempt':
-        return <span className="text-sm text-muted">{strings.myBookings.ownerNoCheckIn}</span>
-      case 'not_today':
-        return <span className="text-sm text-muted">{strings.myBookings.checkInBy(deadline)}</span>
-      case 'closed':
-        return <span className="text-sm text-accent">{strings.myBookings.checkInMissed}</span>
-      case 'open':
-        return (
-          <Button className="min-h-10 px-3 text-sm" onClick={() => checkIn.mutate(b.id)} disabled={checkIn.isPending}>
-            {checkIn.isPending ? strings.myBookings.checkingIn : strings.myBookings.checkIn}
-          </Button>
-        )
-    }
+  for (const b of bookings.data ?? []) {
+    if (!ACTIVE_STATUSES.includes(b.status)) continue
+    byDate.set(b.date, [...(byDate.get(b.date) ?? []), b])
   }
+  const loading = bookings.isPending || seats.isPending
+  const failed = bookings.error ?? seats.error
+  const streak = stats.data?.current_streak ?? 0
 
   return (
     <>
-      <h1 className="mb-4 text-2xl font-bold text-brand">{strings.myBookings.title}</h1>
+      <PageBand
+        title={t.myBookings.title}
+        sub={loading || failed ? undefined : t.myBookings.upcoming(byDate.size)}
+        figure={stats.isPending || stats.error ? undefined : { value: streak, label: t.progress.streak }}
+      />
 
-      <ProgressCard userId={userId} />
-
-      {bookings.error ? (
-        <p className="text-sm font-semibold text-accent">{errorMessage(bookings.error)}</p>
-      ) : bookings.isPending ? (
-        <p className="text-muted">{strings.loading}</p>
-      ) : byDate.size === 0 ? (
-        <p className="rounded-xl bg-white p-4 text-neutral-700">{strings.myBookings.empty}</p>
-      ) : (
-        <ul className="flex flex-col gap-4">
-          {[...byDate.entries()].map(([date, list]) => (
-            <li key={date}>
-              <h2 className="mb-2 font-semibold">{formatDayLong(date, today)}</h2>
-              <ul className="flex flex-col gap-2">
-                {list.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                      <div className="font-semibold tabular-nums">
-                        {seatCode(b.seat_id)} <span className="font-normal text-muted">· {strings.slots[b.slot]}</span>
-                      </div>
-                      {renderStatus(b)}
-                    </div>
-                    {canCancel(b, settings, now) && (
-                      <Button variant="secondary" className="min-h-10 px-3 text-sm" onClick={() => setToCancel(b)}>
-                        {strings.myBookings.cancel}
-                      </Button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <ProfileCard userId={userId} email={user?.email ?? ''} name={profiles.data?.get(userId) ?? ''} onSignOut={signOut} />
-
-      <Sheet open={toCancel !== null} title={strings.myBookings.confirmCancel} onClose={() => setToCancel(null)}>
-        {toCancel && (
-          <div className="flex flex-col gap-2">
-            <p className="mb-1 text-neutral-700">
-              {seatCode(toCancel.seat_id)} · {formatDayLong(toCancel.date, today)}, {strings.slots[toCancel.slot].toLowerCase()}
-            </p>
-            <Button variant="danger" onClick={() => cancel.mutate(toCancel.id)} disabled={cancel.isPending}>
-              {cancel.isPending ? strings.myBookings.cancelling : strings.myBookings.yesCancel}
-            </Button>
-            <Button variant="ghost" onClick={() => setToCancel(null)} disabled={cancel.isPending}>
-              {strings.myBookings.keep}
+      <Panel>
+        {failed ? (
+          <ErrorCard
+            error={failed}
+            onRetry={() => {
+              bookings.refetch()
+              seats.refetch()
+            }}
+          />
+        ) : loading ? (
+          <Skeleton cards={2} />
+        ) : byDate.size === 0 ? (
+          <div className="flex flex-col items-start gap-4 rounded-3xl bg-white px-5 py-[22px] shadow-card">
+            <div aria-hidden className="flex gap-1.5">
+              <span className="h-[30px] w-11 rounded-[9px] border-[1.5px] border-dashed border-brand/35" />
+              <span className="h-[30px] w-11 rounded-[9px] border-[1.5px] border-dashed border-brand/35" />
+            </div>
+            <p className="text-base leading-6 text-ink-soft">{t.myBookings.empty}</p>
+            <Button className="min-h-[52px] self-stretch text-base font-extrabold" onClick={() => navigate('/')}>
+              {t.myBookings.findSeat}
             </Button>
           </div>
+        ) : (
+          <div className="flex flex-col gap-3.5">
+            {[...byDate.entries()].map(([date, list], i) => (
+              <Ticket
+                key={date}
+                date={date}
+                bookings={list}
+                seats={seats.data ?? []}
+                settings={settings}
+                today={today}
+                now={now}
+                index={i}
+                busy={cancel.isPending}
+                onCancel={setToCancel}
+              />
+            ))}
+          </div>
         )}
-      </Sheet>
+      </Panel>
+
+      <CancelSheet
+        booking={toCancel}
+        seatCode={toCancel ? (seats.data?.find((s) => s.id === toCancel.seat_id)?.code ?? '') : ''}
+        today={today}
+        busy={cancel.isPending}
+        onConfirm={() => toCancel && cancel.mutate(toCancel.id)}
+        onClose={() => setToCancel(null)}
+      />
     </>
-  )
-}
-
-function ProfileCard({
-  userId,
-  email,
-  name,
-  onSignOut,
-}: {
-  userId: string
-  email: string
-  name: string
-  onSignOut: () => Promise<unknown>
-}) {
-  const [value, setValue] = useState<string | null>(null)
-  const toast = useToast()
-  const queryClient = useQueryClient()
-  const current = value ?? name
-
-  const save = useMutation({
-    mutationFn: (displayName: string) => api.updateDisplayName(userId, displayName),
-    onSuccess: () => {
-      toast(strings.profile.saved)
-      setValue(null)
-      queryClient.invalidateQueries({ queryKey: keys.profiles })
-    },
-    onError: (err) => toast(errorMessage(err), 'error'),
-  })
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    const trimmed = current.trim()
-    if (trimmed && trimmed !== name) save.mutate(trimmed)
-  }
-
-  return (
-    <form onSubmit={submit} className="mt-10 flex flex-col gap-3 rounded-xl bg-white p-4">
-      <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold">{strings.profile.nameLabel}</span>
-        <input
-          type="text"
-          maxLength={80}
-          value={current}
-          onChange={(e) => setValue(e.target.value)}
-          className="min-h-11 rounded-lg border border-line-strong px-3 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/30"
-        />
-        <span className="text-xs text-muted">{strings.profile.nameHint}</span>
-      </label>
-      {value !== null && value.trim() !== name && (
-        <Button type="submit" disabled={save.isPending || !value.trim()}>
-          {strings.profile.save}
-        </Button>
-      )}
-      <p className="text-sm text-muted">{strings.profile.signedInAs(email)}</p>
-      <Button variant="secondary" onClick={() => onSignOut()}>
-        {strings.auth.signOut}
-      </Button>
-    </form>
   )
 }
