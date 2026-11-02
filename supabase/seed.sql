@@ -10,8 +10,11 @@ insert into public.floors (id, office_id, name, sort_order)
 values ('f1000000-0000-4000-8000-000000000001', '0f000000-0000-4000-8000-000000000001', 'Floor 2', 1)
 on conflict (id) do nothing;
 
+-- sort_order is the room order the app draws: desks come in side-by-side pairs with the
+-- even-numbered seat on the left (B21102 | B21101, then B21104 | B21103, ...).
 insert into public.seats (floor_id, code, zone, sort_order)
-select 'f1000000-0000-4000-8000-000000000001', 'B211' || lpad(n::text, 2, '0'), 'Open space', n
+select 'f1000000-0000-4000-8000-000000000001', 'B211' || lpad(n::text, 2, '0'), 'Open space',
+       case when n % 2 = 0 then n - 1 else n + 1 end
 from generate_series(1, 12) as n
 on conflict (code) do nothing;
 

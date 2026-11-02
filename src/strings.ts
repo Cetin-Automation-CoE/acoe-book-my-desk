@@ -57,6 +57,7 @@ export const strings = {
     mine: 'Mine',
     taken: 'Taken',
     held: 'Held',
+    inactive: 'Unavailable',
     partlyFree: 'Half free',
     heldBy: (name: string) => `Held by ${name}`,
     bookPrompt: (code: string, when: string) => `Book seat ${code} for ${when}?`,

@@ -125,6 +125,8 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
   The name is applied at the person's first sign-in; for existing accounts update `profiles.display_name`.
 - **Disable / enable a seat:** `update public.seats set active = false where code = 'B21112';`
 - **Add seats, floors or offices:** insert rows into `seats`, `floors`, `offices`.
+- **Room order:** the Book screen draws seats in `seats.sort_order` as side-by-side pairs (two pairs
+  per table block, then a gap). Change `sort_order` to rearrange; keep partners on consecutive numbers.
 - **Change rules:** edit the single row in `settings` (booking window, check-in deadlines, slot
   times, owner check-in exemption, weekly limit, data retention).
 - **Fix a display name:** `update public.profiles set display_name = 'Jane Doe' where email = '...';`
