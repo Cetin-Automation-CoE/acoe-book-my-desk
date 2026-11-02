@@ -43,6 +43,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"directory": {
+                  Row: {
+                    "created_at": string,"display_name": string,"email": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"display_name": string,"email": string
+                  }
+                  Update: {
+                    "created_at"?: string,"display_name"?: string,"email"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"floors": {
                   Row: {
                     "created_at": string,"id": string,"name": string,"office_id": string,"sort_order": number
@@ -113,14 +127,14 @@ isOneToOne: false
                   ]
                 },"seats": {
                   Row: {
-                    "active": boolean,"code": string,"created_at": string,"floor_id": string,"id": string,"owner_id": string | null,"sort_order": number,"zone": string | null
+                    "active": boolean,"code": string,"created_at": string,"floor_id": string,"id": string,"owner_emails": (string)[],"owner_id": string | null,"owner_name": string | null,"sort_order": number,"zone": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"code": string,"created_at"?: string,"floor_id": string,"id"?: string,"owner_id"?: string | null,"sort_order"?: number,"zone"?: string | null
+                    "active"?: boolean,"code": string,"created_at"?: string,"floor_id": string,"id"?: string,"owner_emails"?: (string)[],"owner_id"?: string | null,"owner_name"?: string | null,"sort_order"?: number,"zone"?: string | null
                   }
                   Update: {
-                    "active"?: boolean,"code"?: string,"created_at"?: string,"floor_id"?: string,"id"?: string,"owner_id"?: string | null,"sort_order"?: number,"zone"?: string | null
+                    "active"?: boolean,"code"?: string,"created_at"?: string,"floor_id"?: string,"id"?: string,"owner_emails"?: (string)[],"owner_id"?: string | null,"owner_name"?: string | null,"sort_order"?: number,"zone"?: string | null
                   }
                   Relationships: [
                     {

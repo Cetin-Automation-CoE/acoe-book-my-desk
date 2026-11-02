@@ -11,6 +11,8 @@ function seat(over: Partial<Seat> = {}): Seat {
     code: 'B21101',
     zone: null,
     owner_id: null,
+    owner_emails: [],
+    owner_name: null,
     active: true,
     sort_order: 1,
     created_at: '',
@@ -148,6 +150,13 @@ describe('seatView for owner-held seats', () => {
   it('shows a released slot as taken once someone books it', () => {
     const v = view({ seat: owned, releases: [release()], bookings: [booking({ user_id: 'bob' })] })
     expect(v.kind).toBe('taken')
+  })
+
+  it('is held when the seat is assigned by email but the owner has not signed in yet', () => {
+    const unclaimed = seat({ owner_id: null, owner_emails: ['owner@cetin.cz'], owner_name: 'Owner One' })
+    const v = view({ seat: unclaimed })
+    expect(v.kind).toBe('held')
+    expect(v.bookableSlots).toEqual([])
   })
 })
 

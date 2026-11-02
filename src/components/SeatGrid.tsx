@@ -34,8 +34,10 @@ function caption(view: SeatView, names: Map<string, string>): string {
       const distinct = [...new Set(view.takenBy)]
       return distinct.length === 1 ? nameOf(names, distinct[0]) : strings.seats.taken
     }
-    case 'held':
-      return view.seat.owner_id ? strings.seats.heldBy(nameOf(names, view.seat.owner_id)) : strings.seats.held
+    case 'held': {
+      const ownerName = (view.seat.owner_id && names.get(view.seat.owner_id)) || view.seat.owner_name
+      return ownerName ? strings.seats.heldBy(ownerName) : strings.seats.held
+    }
     default:
       return ''
   }

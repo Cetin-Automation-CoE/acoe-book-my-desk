@@ -96,7 +96,10 @@ Useful scripts:
    `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. (The anon key is public by design; the
    `service_role` key must never be added anywhere in GitHub or the repo.) Add `BASE_PATH=/`
    only if you serve the app from a custom domain.
-8. **Push to `main`** — the deploy workflow builds and publishes the app. The keep-alive
+8. **Seat owners and names** — `seed.sql` already assigns B21101 to Jiří Forman and B21102 to
+   Martin Minarovič (both of their addresses) and lists them in `directory`. Add the rest of the team
+   to `directory` the same way (see "Admin tasks").
+9. **Push to `main`** — the deploy workflow builds and publishes the app. The keep-alive
    workflow pings the project twice a week so the free tier does not pause.
 
 ### Making someone an admin
@@ -111,8 +114,15 @@ update public.profiles set role = 'admin' where email = 'name@cetin.cz';
 
 Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
 
-- **Assign a seat owner:** `update public.seats set owner_id = (select user_id from public.profiles where email = 'name@cetin.cz') where code = 'B21101';`
-- **Remove an owner:** `update public.seats set owner_id = null where code = 'B21101';`
+- **Assign a seat owner (before or after they sign in):**
+  `update public.seats set owner_emails = '{ma077535@cetin.cz,minarovic.martin@cetin.cz}', owner_name = 'Martin Minarovič' where code = 'B21102';`
+  List every address the person might sign in with. The seat is held from that moment; `owner_id`
+  links itself when the person signs in (or immediately if they already have an account). The first
+  account that matches keeps the seat, so ask owners to always use the same address.
+- **Remove an owner:** `update public.seats set owner_emails = '{}', owner_id = null where code = 'B21102';`
+- **Add colleagues' names** (so ID-style addresses do not show as "Ma077535"):
+  `insert into public.directory (email, display_name) values ('ma077535@cetin.cz', 'Martin Minarovič') on conflict (email) do update set display_name = excluded.display_name;`
+  The name is applied at the person's first sign-in; for existing accounts update `profiles.display_name`.
 - **Disable / enable a seat:** `update public.seats set active = false where code = 'B21112';`
 - **Add seats, floors or offices:** insert rows into `seats`, `floors`, `offices`.
 - **Change rules:** edit the single row in `settings` (booking window, check-in deadlines, slot

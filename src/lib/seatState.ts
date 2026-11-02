@@ -53,7 +53,9 @@ export function seatView({ seat, date, bookings, releases, choice, userId }: Sea
       continue
     }
     const released = releases.some((r) => r.seat_id === seat.id && r.date === date && r.slot === slot)
-    const heldByOwner = seat.owner_id !== null && seat.owner_id !== userId && !released
+    // A seat assigned by email is held even before its owner has signed in (owner_id still null).
+    const semiFixed = seat.owner_id !== null || seat.owner_emails.length > 0
+    const heldByOwner = semiFixed && seat.owner_id !== userId && !released
     if (heldByOwner) view.heldSlots.push(slot)
     else view.bookableSlots.push(slot)
   }
