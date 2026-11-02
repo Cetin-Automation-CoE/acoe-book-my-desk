@@ -87,10 +87,16 @@ Useful scripts:
      "Your BookMyDesk sign-in code".
    - URL Configuration → Site URL: `https://<org>.github.io/<repo>/`.
 4. **Custom SMTP** — the built-in Supabase mailer only reaches project team members at 2 emails
-   per hour. Create a free Brevo or Resend account, verify a sender domain (or at least a sender
-   address), then in Project Settings → Authentication → SMTP Settings enter host, port, user,
-   password and sender. Raise Authentication → Rate Limits → "emails per hour" to e.g. 60.
-   Test that a code reaches a `@cetin.cz` inbox and is not filtered as spam.
+   per hour. The project uses Mailjet (free tier): validate a sender address under Senders & Domains,
+   copy the API key and secret key, then in Authentication → Emails → SMTP Settings enter host
+   `in-v3.mailjet.com`, port 587, username = API key, password = secret key, sender = the validated
+   address. Rate limits (Authentication → Rate Limits) default to 30 emails/hour once custom SMTP
+   is on, which is enough.
+   Deliverability caveat: the sender must be on a domain that is DNS-authenticated (SPF/DKIM) for the
+   provider, otherwise Microsoft 365 quarantines the codes sent to `@cetin.cz` mailboxes as spoofing.
+   `cetin.cz` itself cannot be authenticated without IT, so either authenticate a domain you own in
+   Mailjet, or (interim) let people sign in with a personal mailbox listed in `directory` (see Admin
+   tasks). Brevo works the same way but refuses senders on DMARC-protected domains outright.
 5. **Email domain allow-list** — defaults to `cetin.cz`; change in the SQL editor if needed:
    `update public.settings set allowed_email_domains = '{cetin.cz}';`
 6. **GitHub Pages** — repository Settings → Pages → Source: *GitHub Actions*.
@@ -143,9 +149,10 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
 - **Change rules:** edit the single row in `settings` (booking window, check-in deadlines, slot
   times, owner check-in exemption, weekly limit, data retention).
 - **Fix a display name:** `update public.profiles set display_name = 'Jane Doe' where email = '...';`
-- **Sign-in codes stop arriving:** the Brevo SMTP key expires on its set date and after 90 days with no
-  email sent. Generate a new key in Brevo → SMTP & API and paste it into Supabase → Authentication →
-  Emails → SMTP Settings. Also check Brevo's daily quota (300/day on the free plan).
+- **Sign-in codes stop arriving:** check Mailjet → Statistics (Delivered / Blocked / Bounced), then
+  the recipient's Junk folder and the Microsoft 365 quarantine (https://security.microsoft.com/quarantine).
+  Mailjet's free tier allows 200 emails/day; the API key and secret in Supabase → Authentication →
+  Emails → SMTP Settings must match Mailjet → Account → API Key Management.
 
 ## Booking rules (as implemented)
 
