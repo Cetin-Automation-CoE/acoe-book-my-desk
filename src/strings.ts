@@ -21,13 +21,13 @@ export const strings = {
 
   auth: {
     title: 'Sign in',
-    intro: 'Use your work email, or the personal address an admin registered for you. We will send you a 6-digit code.',
+    intro: 'Use your work email, or the personal address an admin registered for you. We will email you a one-time code.',
     emailLabel: 'Email',
     emailPlaceholder: 'name@cetin.cz',
     sendCode: 'Send code',
     sending: 'Sending…',
-    codeSentTo: (email: string) => `We sent a 6-digit code to ${email}. It can take a minute to arrive.`,
-    codeLabel: '6-digit code',
+    codeSentTo: (email: string) => `We sent a code to ${email}. It can take a minute to arrive.`,
+    codeLabel: 'Code from the email',
     verify: 'Sign in',
     verifying: 'Checking…',
     resend: 'Send a new code',

@@ -79,7 +79,8 @@ Useful scripts:
    Later schema changes: add a migration and run `npx supabase db push --remote`. The migrations enable
    `pg_cron` and schedule the auto-release and purge jobs; check Integrations → Cron afterwards.
 3. **Auth settings** (Authentication in the dashboard):
-   - Providers → Email: enabled. Leave "Confirm email" on.
+   - Providers → Email: enabled. Leave "Confirm email" on. Set *Email OTP Length* to 6 (new projects
+     default to 8; the app accepts 6–10 digits either way).
    - Email Templates → *Confirm signup* **and** *Magic Link*: replace the body with the contents of
      `supabase/templates/magic_link.html` (it shows `{{ .Token }}`, the 6-digit code, instead of a
      link, because corporate mail scanners consume links). Set the subject to

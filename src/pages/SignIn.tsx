@@ -79,8 +79,8 @@ export function SignIn() {
               type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
-              pattern="[0-9]{6}"
-              maxLength={6}
+              pattern="[0-9]{6,10}"
+              maxLength={10}
               autoFocus
               required
               value={code}
@@ -89,7 +89,7 @@ export function SignIn() {
             />
           </label>
           {error && <p className="text-sm font-semibold text-accent">{error}</p>}
-          <Button type="submit" disabled={busy || code.length !== 6}>
+          <Button type="submit" disabled={busy || code.length < 6}>
             {busy ? strings.auth.verifying : strings.auth.verify}
           </Button>
           <div className="flex justify-between text-sm">
