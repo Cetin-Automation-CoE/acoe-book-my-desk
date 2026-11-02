@@ -45,14 +45,14 @@ isOneToOne: false
                   ]
                 },"directory": {
                   Row: {
-                    "created_at": string,"display_name": string,"email": string
+                    "created_at": string,"display_name": string,"email": string,"role": Database["public"]['Enums']["user_role"]
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"display_name": string,"email": string
+                    "created_at"?: string,"display_name": string,"email": string,"role"?: Database["public"]['Enums']["user_role"]
                   }
                   Update: {
-                    "created_at"?: string,"display_name"?: string,"email"?: string
+                    "created_at"?: string,"display_name"?: string,"email"?: string,"role"?: Database["public"]['Enums']["user_role"]
                   }
                   Relationships: [
                     

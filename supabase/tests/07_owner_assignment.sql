@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(16);
 
 create schema tests_tmp;
 create function tests_tmp.create_user(p_email text, p_id uuid default gen_random_uuid()) returns uuid
@@ -28,6 +28,7 @@ insert into public.seats (id, floor_id, code, owner_emails, owner_name) values
   ('51000000-0000-4000-8000-000000000002', 'f1000000-0000-4000-8000-00000000aaaa', 'T02', '{}', null),
   ('51000000-0000-4000-8000-000000000003', 'f1000000-0000-4000-8000-00000000aaaa', 'T03', '{}', null);
 insert into public.directory (email, display_name) values ('colleague.two@cetin.cz', 'Colleague Two');
+insert into public.directory (email, display_name, role) values ('boss@cetin.cz', 'The Boss', 'admin');
 select tests_tmp.create_user('alice@cetin.cz', 'a1000000-0000-4000-8000-000000000001');
 
 -- A seat assigned by email is held even before its owner has ever signed in
@@ -61,6 +62,11 @@ select is((select owner_id from public.seats where code = 'T01'), 'a1000000-0000
 select tests_tmp.create_user('colleague.two@cetin.cz', 'a1000000-0000-4000-8000-000000000002');
 select is((select display_name from public.profiles where user_id = 'a1000000-0000-4000-8000-000000000002'), 'Colleague Two',
   'display name comes from the directory');
+select is((select role::text from public.profiles where user_id = 'a1000000-0000-4000-8000-000000000002'), 'user',
+  'directory entries default to the user role');
+select tests_tmp.create_user('boss@cetin.cz', 'a1000000-0000-4000-8000-000000000bb5');
+select is((select role::text from public.profiles where user_id = 'a1000000-0000-4000-8000-000000000bb5'), 'admin',
+  'the directory can pre-assign the admin role');
 
 -- Assigning a seat to someone who already signed in links immediately
 update public.seats set owner_emails = '{colleague.two@cetin.cz}' where code = 'T02';

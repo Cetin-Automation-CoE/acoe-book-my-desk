@@ -26,10 +26,31 @@ update public.seats
 set owner_emails = '{ji076400@cetin.cz,forman.jiri@cetin.cz}', owner_name = 'Jiří Forman'
 where code = 'B21101';
 
--- Known colleagues: sets the display name at first sign-in (add the rest of the team here).
-insert into public.directory (email, display_name) values
-  ('ma077535@cetin.cz', 'Martin Minarovič'),
-  ('minarovic.martin@cetin.cz', 'Martin Minarovič'),
-  ('ji076400@cetin.cz', 'Jiří Forman'),
-  ('forman.jiri@cetin.cz', 'Jiří Forman')
-on conflict (email) do update set display_name = excluded.display_name;
+-- Known colleagues: display name and role applied at first sign-in. Everyone has a name-style and an
+-- ID-style address; both are listed so it does not matter which one they type.
+insert into public.directory (email, display_name, role) values
+  ('dominik.celuch@cetin.cz',    'Dominik Celuch',    'user'),
+  ('x0567169@cetin.cz',          'Dominik Celuch',    'user'),
+  ('forman.jiri@cetin.cz',       'Jiří Forman',       'user'),
+  ('ji076400@cetin.cz',          'Jiří Forman',       'user'),
+  ('barbora.markova@cetin.cz',   'Barbora Haase',     'user'),
+  ('x0567080@cetin.cz',          'Barbora Haase',     'user'),
+  ('dominik.horak@cetin.cz',     'Dominik Horák',     'user'),
+  ('do079060@cetin.cz',          'Dominik Horák',     'user'),
+  ('ondrej.hvorecky@cetin.cz',   'Ondrej Hvorecký',   'user'),
+  ('on077794@cetin.cz',          'Ondrej Hvorecký',   'user'),
+  ('simon.machac@cetin.cz',      'Šimon Machač',      'user'),
+  ('x0569389@cetin.cz',          'Šimon Machač',      'user'),
+  ('minarovic.martin@cetin.cz',  'Martin Minarovič',  'user'),
+  ('ma077535@cetin.cz',          'Martin Minarovič',  'user'),
+  ('penka.krystof@cetin.cz',     'Kryštof Pěnka',     'admin'),
+  ('kr078468@cetin.cz',          'Kryštof Pěnka',     'admin'),
+  ('bohdana.semiusova@cetin.cz', 'Bohdana Semiusova', 'user'),
+  ('bo079046@cetin.cz',          'Bohdana Semiusova', 'user'),
+  ('ondrej.tomecek@cetin.cz',    'Ondřej Tomeček',    'user'),
+  ('x0567363@cetin.cz',          'Ondřej Tomeček',    'user'),
+  ('martin.kloucek@cetin.cz',    'Martin Klouček',    'user'),
+  ('ma077182@cetin.cz',          'Martin Klouček',    'user'),
+  ('petr.funk@cetin.cz',         'Petr Funk',         'user'),
+  ('pe078542@cetin.cz',          'Petr Funk',         'user')
+on conflict (email) do update set display_name = excluded.display_name, role = excluded.role;

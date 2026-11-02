@@ -11,10 +11,11 @@ comment on column public.seats.owner_name is 'Shown as "Held by …" until the o
 create table public.directory (
   email text primary key,
   display_name text not null check (length(display_name) between 1 and 80),
+  role public.user_role not null default 'user',
   created_at timestamptz not null default now()
 );
 comment on table public.directory is
-  'Known colleagues. display_name is applied when that email signs in for the first time. Managed in the dashboard.';
+  'Known colleagues. display_name and role are applied when that email signs in for the first time. Managed in the dashboard.';
 alter table public.directory enable row level security;
 revoke all on public.directory from anon, authenticated;
 
@@ -52,19 +53,21 @@ language plpgsql security definer set search_path = '' as $$
 declare
   v_email text := lower(new.email);
   v_name text;
+  v_role public.user_role;
 begin
-  select d.display_name into v_name from public.directory d where d.email = v_email;
+  select d.display_name, d.role into v_name, v_role from public.directory d where d.email = v_email;
   if v_name is null then
     select s.owner_name into v_name from public.seats s
     where v_email = any (s.owner_emails) and s.owner_name is not null
     limit 1;
   end if;
 
-  insert into public.profiles (user_id, display_name, email)
+  insert into public.profiles (user_id, display_name, email, role)
   values (
     new.id,
     coalesce(nullif(new.raw_user_meta_data ->> 'display_name', ''), v_name, public.display_name_from_email(new.email)),
-    v_email
+    v_email,
+    coalesce(v_role, 'user')
   )
   on conflict (user_id) do nothing;
 

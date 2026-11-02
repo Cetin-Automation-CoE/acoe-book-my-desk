@@ -96,15 +96,21 @@ Useful scripts:
    `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. (The anon key is public by design; the
    `service_role` key must never be added anywhere in GitHub or the repo.) Add `BASE_PATH=/`
    only if you serve the app from a custom domain.
-8. **Seat owners and names** — `seed.sql` already assigns B21101 to Jiří Forman and B21102 to
-   Martin Minarovič (both of their addresses) and lists them in `directory`. Add the rest of the team
-   to `directory` the same way (see "Admin tasks").
+8. **Seat owners and names** — `seed.sql` assigns B21101 to Jiří Forman and B21102 to Martin
+   Minarovič, lists all twelve colleagues (both addresses each) in `directory`, and marks Kryštof as
+   admin. New colleagues go into `directory` the same way (see "Admin tasks").
 9. **Push to `main`** — the deploy workflow builds and publishes the app. The keep-alive
    workflow pings the project twice a week so the free tier does not pause.
 
 ### Making someone an admin
 
-In the SQL editor (after the person has signed in once):
+Before their first sign-in, set it in the directory (the seed already does this for Kryštof):
+
+```sql
+update public.directory set role = 'admin' where email in ('penka.krystof@cetin.cz', 'kr078468@cetin.cz');
+```
+
+For an account that already exists:
 
 ```sql
 update public.profiles set role = 'admin' where email = 'name@cetin.cz';
