@@ -1,8 +1,10 @@
+import type { SubscriptionKeys } from './push'
 import { supabase } from './supabase'
 import {
   ACTIVE_STATUSES,
   type Achievement,
   type Booking,
+  type NotifyPrefs,
   type PresenceRow,
   type Profile,
   type Release,
@@ -39,6 +41,35 @@ export const api = {
     const { error: saveError } = await supabase.from('profiles').update({ avatar_url: url }).eq('user_id', userId)
     if (saveError) throw saveError
     return url
+  },
+
+  // Notification switches of the signed-in person.
+  async myNotifyPrefs(userId: string): Promise<NotifyPrefs> {
+    return unwrap(
+      await supabase.from('profiles').select('notify_tomorrow, notify_monday, notify_team_day').eq('user_id', userId).single(),
+    )
+  },
+
+  async updateNotifyPrefs(userId: string, patch: Partial<NotifyPrefs>): Promise<void> {
+    const { error } = await supabase.from('profiles').update(patch).eq('user_id', userId)
+    if (error) throw error
+  },
+
+  async savePushSubscription(userId: string, sub: SubscriptionKeys): Promise<void> {
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .upsert({ user_id: userId, endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth, user_agent: navigator.userAgent }, { onConflict: 'endpoint' })
+    if (error) throw error
+  },
+
+  async removePushSubscription(endpoint: string): Promise<void> {
+    const { error } = await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint)
+    if (error) throw error
+  },
+
+  async hasPushSubscription(endpoint: string): Promise<boolean> {
+    const rows = unwrap(await supabase.from('push_subscriptions').select('id').eq('endpoint', endpoint))
+    return rows.length > 0
   },
 
   async removeAvatar(userId: string): Promise<void> {

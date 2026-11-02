@@ -111,6 +111,36 @@ Useful scripts:
 9. **Push to `main`** — the deploy workflow builds and publishes the app. The keep-alive
    workflow pings the project twice a week so the free tier does not pause.
 
+### Push notifications (optional, manual)
+
+Web Push with VAPID: works in the installed PWA on iOS 16.4+, and in Chrome/Firefox/Edge. Everything is
+opt-in per person (profile sheet → Notifications). Three kinds exist: the evening reminder before a
+booked day, a Monday nudge for people with nothing booked that week, and a team-day alert when a day
+reaches `team_day_threshold`.
+
+1. **Keys** — once: `npx web-push generate-vapid-keys`. Public key → GitHub Actions *Variables* as
+   `VITE_VAPID_PUBLIC_KEY`. Both keys → Supabase secrets (never the repo):
+   ```bash
+   npx supabase secrets set VAPID_PUBLIC_KEY=<public> VAPID_PRIVATE_KEY=<private> VAPID_SUBJECT=mailto:<your address> PUSH_SHARED_SECRET=<long random string>
+   ```
+2. **Deploy the sender** (called by Postgres, so without JWT verification):
+   ```bash
+   npx supabase functions deploy send-push --no-verify-jwt
+   ```
+3. **Tell the database** (SQL editor): the same shared secret into Vault, and the function URL:
+   ```sql
+   select vault.create_secret('<long random string>', 'push_shared_secret');
+   update public.settings set push_function_url = 'https://<project-ref>.supabase.co/functions/v1/send-push';
+   ```
+   Push stays silent while either is missing. `push_evening_hour` (17) and `push_monday_hour` (7) are
+   office-time hours; the hourly `bookmydesk-push-scheduled` job checks them, so DST needs no attention.
+4. **Push `main`** so the build carries the public key, then colleagues add the app to their Home Screen
+   and switch notifications on in the profile sheet.
+
+Troubleshooting: `select * from net._http_response order by created desc limit 5;` shows the sender's
+answers; the function logs are under Edge Functions → send-push → Logs. Dead subscriptions are removed
+automatically; `public.push_log` records what was sent to whom.
+
 ### Making someone an admin
 
 Before their first sign-in, set it in the directory (the seed already does this for Kryštof):
@@ -224,6 +254,7 @@ Integrations → Cron, or `select * from cron.job;`):
 
 - `bookmydesk-purge-old-bookings` — daily 03:30 UTC, `public.purge_old_bookings()`
 - `bookmydesk-count-office-days` — every 15 minutes, `public.count_office_days()` (progress and badges)
+- `bookmydesk-push-scheduled` — hourly, `public.push_scheduled()` (evening reminders, Monday nudges; no-op until push is set up)
 
 pg_cron schedules are in UTC; the functions convert to the office time zone themselves, so DST
 changes need no attention. Run `select public.count_office_days();` in the SQL editor to count

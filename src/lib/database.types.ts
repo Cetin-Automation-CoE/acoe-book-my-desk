@@ -107,14 +107,42 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"display_name": string,"email": string,"role": Database["public"]['Enums']["user_role"],"user_id": string
+                    "avatar_url": string | null,"created_at": string,"display_name": string,"email": string,"notify_monday": boolean,"notify_team_day": boolean,"notify_tomorrow": boolean,"role": Database["public"]['Enums']["user_role"],"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name": string,"email": string,"role"?: Database["public"]['Enums']["user_role"],"user_id": string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name": string,"email": string,"notify_monday"?: boolean,"notify_team_day"?: boolean,"notify_tomorrow"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"user_id": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string,"email"?: string,"role"?: Database["public"]['Enums']["user_role"],"user_id"?: string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string,"email"?: string,"notify_monday"?: boolean,"notify_team_day"?: boolean,"notify_tomorrow"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"push_log": {
+                  Row: {
+                    "key": string,"kind": string,"sent_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "key": string,"kind": string,"sent_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "key"?: string,"kind"?: string,"sent_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"push_subscriptions": {
+                  Row: {
+                    "auth": string,"created_at": string,"endpoint": string,"id": string,"p256dh": string,"user_agent": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "auth": string,"created_at"?: string,"endpoint": string,"id"?: string,"p256dh": string,"user_agent"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "auth"?: string,"created_at"?: string,"endpoint"?: string,"id"?: string,"p256dh"?: string,"user_agent"?: string | null,"user_id"?: string
                   }
                   Relationships: [
                     
@@ -161,14 +189,14 @@ isOneToOne: false
                   ]
                 },"settings": {
                   Row: {
-                    "allowed_email_domains": (string)[],"am_start": string,"booking_retention_days": number,"id": boolean,"max_days_per_week": number | null,"pm_start": string,"team_day_threshold": number,"timezone": string,"updated_at": string,"working_days": (number)[]
+                    "allowed_email_domains": (string)[],"am_start": string,"booking_retention_days": number,"id": boolean,"max_days_per_week": number | null,"pm_start": string,"push_evening_hour": number,"push_function_url": string | null,"push_monday_hour": number,"team_day_threshold": number,"timezone": string,"updated_at": string,"working_days": (number)[]
                   }
                   ComputedFields: never
                   Insert: {
-                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
+                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Update: {
-                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
+                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Relationships: [
                     
@@ -201,6 +229,9 @@ isOneToOne: false
                            },
 "bmd_award":
 { Args: { "p_badge": string,"p_user": string }; Returns: (string)[]
+                           },
+"bmd_candidates_json":
+{ Args: { "p_rows": unknown }; Returns: Json
                            },
 "bmd_count_office_day":
 { Args: { "p_booking_id": string }; Returns: (string)[]
@@ -272,6 +303,27 @@ isOneToOne: false
                            },
 "purge_old_bookings":
 { Args: Record<PropertyKey, never>; Returns: number
+                           },
+"push_monday_candidates":
+{ Args: { "p_today": string }; Returns: {
+              "body": string,"key": string,"tag": string,"title": string,"url": string,"user_id": string
+            }[]
+                           },
+"push_scheduled":
+{ Args: Record<PropertyKey, never>; Returns: number
+                           },
+"push_send":
+{ Args: { "p_messages": Json }; Returns: number
+                           },
+"push_team_day_candidates":
+{ Args: { "p_date": string }; Returns: {
+              "body": string,"key": string,"tag": string,"title": string,"url": string,"user_id": string
+            }[]
+                           },
+"push_tomorrow_candidates":
+{ Args: { "p_today": string }; Returns: {
+              "body": string,"key": string,"tag": string,"title": string,"url": string,"user_id": string
+            }[]
                            },
 "release_my_seat":
 { Args: { "p_date": string,"p_seat_id": string,"p_slot": string }; Returns: undefined

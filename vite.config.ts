@@ -14,6 +14,14 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Custom worker (src/sw.ts): the precache manifest is injected, push handlers are ours.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
+      injectManifest: {
+        // Only the static app shell is precached; Supabase traffic is cross-origin and never cached.
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+      },
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'BookMyDesk',
@@ -30,10 +38,6 @@ export default defineConfig({
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
           { src: 'pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
-      },
-      workbox: {
-        // Only the static app shell is precached; Supabase traffic is cross-origin and never cached.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
       },
     }),
   ],

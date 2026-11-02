@@ -16,6 +16,7 @@ export const keys = {
   stats: (userId: string) => ['progress', 'stats', userId] as const,
   badges: (userId: string) => ['progress', 'badges', userId] as const,
   myRecent: (userId: string, from: string, to: string) => ['my-bookings', 'recent', userId, from, to] as const,
+  notifyPrefs: (userId: string) => ['notify-prefs', userId] as const,
 }
 
 export function useSettings() {
@@ -66,6 +67,10 @@ export function useMyRecentBookings(userId: string, fromDate: string, toDate: st
     queryFn: () => api.myRecentBookings(userId, fromDate, toDate),
     staleTime: 5 * 60_000,
   })
+}
+
+export function useNotifyPrefs(userId: string, enabled: boolean) {
+  return useQuery({ queryKey: keys.notifyPrefs(userId), queryFn: () => api.myNotifyPrefs(userId), enabled })
 }
 
 export const useData = { badges: useBadges }

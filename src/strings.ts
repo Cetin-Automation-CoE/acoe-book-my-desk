@@ -158,6 +158,23 @@ export const en = {
     photoFailed: 'That photo could not be used. Try a JPEG or PNG.',
   },
 
+  notifications: {
+    title: 'Notifications',
+    device: 'On this device',
+    deviceHint: 'Allow once; you can switch each kind below.',
+    tomorrow: 'Evening reminder',
+    tomorrowHint: 'The day before a booking, around 17:00.',
+    monday: 'Monday nudge',
+    mondayHint: 'When you have nothing booked for the week yet.',
+    teamDay: 'Team day alerts',
+    teamDayHint: 'When a day fills up and you are not in yet.',
+    unsupported: 'This browser cannot show notifications.',
+    install: 'Add BookMyDesk to your Home Screen first — iPhones only deliver notifications to installed apps.',
+    denied: 'Notifications are blocked for this site in your browser settings.',
+    enabled: 'Notifications on.',
+    disabled: 'Notifications off on this device.',
+  },
+
   progress: {
     title: 'Your office days',
     streak: 'week streak',
@@ -361,6 +378,23 @@ export const cs: Strings = {
     photoSaved: 'Fotka uložena.',
     photoRemoved: 'Fotka odebrána.',
     photoFailed: 'Tuto fotku nelze použít. Zkuste JPEG nebo PNG.',
+  },
+
+  notifications: {
+    title: 'Oznámení',
+    device: 'Na tomto zařízení',
+    deviceHint: 'Povolte jednou; jednotlivé druhy nastavíte níže.',
+    tomorrow: 'Večerní připomínka',
+    tomorrowHint: 'Den před rezervací, kolem 17:00.',
+    monday: 'Pondělní pošťouchnutí',
+    mondayHint: 'Když na tento týden ještě nic nemáte.',
+    teamDay: 'Týmové dny',
+    teamDayHint: 'Když se nějaký den zaplní a vy tam ještě nejste.',
+    unsupported: 'Tento prohlížeč neumí zobrazit oznámení.',
+    install: 'Nejdřív přidejte BookMyDesk na plochu – iPhone doručuje oznámení jen nainstalovaným aplikacím.',
+    denied: 'Oznámení pro tento web jsou v nastavení prohlížeče zablokovaná.',
+    enabled: 'Oznámení zapnuta.',
+    disabled: 'Oznámení na tomto zařízení vypnuta.',
   },
 
   progress: {

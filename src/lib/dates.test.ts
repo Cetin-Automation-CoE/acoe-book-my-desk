@@ -14,6 +14,9 @@ const settings: Settings = {
   booking_retention_days: 90,
   working_days: [1, 2, 3, 4, 5],
   team_day_threshold: 8,
+  push_function_url: null,
+  push_evening_hour: 17,
+  push_monday_hour: 7,
   updated_at: '',
 }
 
