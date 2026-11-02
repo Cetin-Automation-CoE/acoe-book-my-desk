@@ -98,9 +98,10 @@ export function Notifications({ userId }: { userId: string }) {
 
   if (!configured) return null
 
+  // iOS Safari exposes no push API at all in the browser; the Home Screen app does.
   let note: string | null = null
-  if (!pushSupported()) note = t.notifications.unsupported
-  else if (needsHomeScreen()) note = t.notifications.install
+  if (needsHomeScreen()) note = t.notifications.install
+  else if (!pushSupported()) note = t.notifications.unsupported
   else if (permissionState() === 'denied') note = t.notifications.denied
 
   const kinds: { key: keyof NotifyPrefs; label: string; hint: string }[] = [
