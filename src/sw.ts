@@ -38,7 +38,8 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const target = new URL((event.notification.data as { url?: string })?.url ?? './', self.location.href).href
+  // Relative to the app's scope (…/acoe-book-my-desk/), not to this worker file.
+  const target = new URL((event.notification.data as { url?: string })?.url ?? './', self.registration.scope).href
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       const open = clients.find((c) => 'focus' in c)
