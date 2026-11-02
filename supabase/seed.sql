@@ -1,5 +1,5 @@
 -- First-run data: one office, one floor and seats B21101–B21112.
--- Applied by `supabase db reset` / `supabase start` locally and by `supabase db push --include-seed`
+-- Applied by `supabase db reset` / `supabase start` locally and by `supabase db push --remote --include-seed`
 -- for the hosted project. Idempotent, so running it twice is harmless. Rename things freely.
 
 insert into public.offices (id, name)

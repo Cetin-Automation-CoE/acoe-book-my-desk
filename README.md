@@ -73,9 +73,10 @@ Useful scripts:
    npx supabase link --project-ref <project-ref>
    ```
    ```bash
-   npx supabase db push --include-seed
+   npx supabase db push --remote --include-seed
    ```
-   Later schema changes: add a migration and run `npx supabase db push`. The migrations enable
+   (`--remote` targets the linked project; without it the CLI pushes to the local stack.)
+   Later schema changes: add a migration and run `npx supabase db push --remote`. The migrations enable
    `pg_cron` and schedule the auto-release and purge jobs; check Integrations → Cron afterwards.
 3. **Auth settings** (Authentication in the dashboard):
    - Providers → Email: enabled. Leave "Confirm email" on.
