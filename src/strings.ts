@@ -123,6 +123,8 @@ export const en = {
     empty: 'Nobody has booked this day yet.',
     people: (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`,
     ofSeats: (n: number) => `of ${n} seats`,
+    held: 'Held',
+    ownSeat: 'Semi-fixed seat',
   },
 
   mySeat: {
@@ -346,6 +348,8 @@ export const cs: Strings = {
     empty: 'Na tento den zatím nikdo nemá rezervaci.',
     people: (n: number) => `${n} ${czPlural(n, 'osoba', 'osoby', 'osob')}`,
     ofSeats: (n: number) => `z ${n} míst`,
+    held: 'Drženo',
+    ownSeat: 'Polofixní místo',
   },
 
   mySeat: {

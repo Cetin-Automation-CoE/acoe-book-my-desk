@@ -9,9 +9,9 @@ import { useAuth } from '../hooks/useAuth'
 import { useDayBookings, useDayReleases, useMyBookings, usePresence, useProfiles, useSeats, useToday } from '../hooks/useData'
 import { useT } from '../hooks/useLang'
 import { bookableDays, formatBandDate } from '../lib/dates'
-import { occupiedCount, seatOccupancy } from '../lib/occupancy'
+import { occupiedCount, presenceFor, seatOccupancy } from '../lib/occupancy'
 import { presenceByDay } from '../lib/progress'
-import { ACTIVE_STATUSES, SLOTS, type Booking, type Settings, type Slot } from '../lib/types'
+import { ACTIVE_STATUSES, SLOTS, type Settings, type Slot } from '../lib/types'
 
 interface Row {
   id: string
@@ -19,6 +19,7 @@ interface Row {
   name: string
   seat: string
   sub: string
+  held: boolean
 }
 
 export function WhoIsIn({ settings }: { settings: Settings }) {
@@ -53,19 +54,34 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   const activeSeats = (seats.data ?? []).filter((s) => s.active).sort((a, b) => a.code.localeCompare(b.code))
   const nameOf = (id: string) => (id === userId ? myName : (profiles.data?.get(id)?.name ?? '…'))
 
+  // Bookings plus the owners of seats still held for them (a hold is their default reservation).
   const rowsFor = (slot: Slot): Row[] =>
-    (bookings.data ?? [])
-      .filter((b: Booking) => b.slot === slot)
-      .map((b) => {
-        const seat = seats.data?.find((s) => s.id === b.seat_id)
-        const sub = seat?.owner_id === b.user_id ? t.mySeat.semiFixed : ''
-        return { id: b.id, userId: b.user_id, name: nameOf(b.user_id), seat: seat?.code ?? '', sub }
-      })
+    presenceFor(seats.data ?? [], bookings.data ?? [], releases.data ?? [], selected, slot)
+      .map((p): Row =>
+        p.kind === 'booked'
+          ? {
+              id: p.booking.id,
+              userId: p.booking.user_id,
+              name: nameOf(p.booking.user_id),
+              seat: p.seat.code,
+              sub: p.seat.owner_id === p.booking.user_id ? t.whoIsIn.ownSeat : '',
+              held: false,
+            }
+          : {
+              id: `held:${p.seat.id}`,
+              userId: p.seat.owner_id ?? `seat:${p.seat.id}`,
+              name: p.seat.owner_id ? nameOf(p.seat.owner_id) : (p.seat.owner_name ?? '…'),
+              seat: p.seat.code,
+              sub: t.whoIsIn.held,
+              held: true,
+            },
+      )
       .sort((a, b) => a.name.localeCompare(b.name))
+  const rowsBySlot = new Map(SLOTS.map((slot) => [slot, rowsFor(slot)] as const))
+  const anyone = SLOTS.some((slot) => (rowsBySlot.get(slot)?.length ?? 0) > 0)
 
   const failed = bookings.error ?? seats.error ?? profiles.error ?? releases.error
   const loading = bookings.isPending || seats.isPending || profiles.isPending || releases.isPending
-  const total = bookings.data?.length ?? 0
   const people = new Set((bookings.data ?? []).map((b) => b.user_id)).size
 
   return (
@@ -86,7 +102,7 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
           />
         ) : loading ? (
           <Skeleton cards={2} />
-        ) : total === 0 ? (
+        ) : !anyone ? (
           <p className="rounded-3xl bg-white p-5 text-base leading-6 text-ink-soft shadow-card">{t.whoIsIn.empty}</p>
         ) : (
           <>
@@ -124,7 +140,7 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
 
             <div className="flex flex-col gap-[22px]">
               {SLOTS.map((slot) => {
-                const rows = rowsFor(slot)
+                const rows = rowsBySlot.get(slot) ?? []
                 return (
                   <section key={slot}>
                     <h2 className="mx-1 mb-2 flex items-center justify-between">
@@ -160,7 +176,9 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
                               </span>
                               {row.sub && <span className="text-[12.5px] leading-[17px] text-muted">{row.sub}</span>}
                             </span>
-                            <span className="shrink-0 rounded-[9px] bg-surface px-[9px] py-1 text-[13px] font-extrabold tabular-nums text-brand">
+                            <span
+                              className={`shrink-0 rounded-[9px] px-[9px] py-1 text-[13px] font-extrabold tabular-nums text-brand ${row.held ? 'bg-lilac-soft/35' : 'bg-surface'}`}
+                            >
                               {row.seat}
                             </span>
                           </li>
