@@ -2,7 +2,7 @@
 
 Mobile-first web app for booking seats in the office. Colleagues sign in with their
 work email (6-digit code), pick a day and tap a free seat. Seat owners can
-release their semi-fixed seats. The UI is in English and Czech (switch in the profile sheet).
+release their semi-fixed seats. Everyone in can say whether they bring a lunchbox or go out for lunch. The UI is in English and Czech (switch in the profile sheet).
 
 Plan and decisions: [Project plan](https://claude.ai/artifact/95CmY1gzyEdUJVkzhLnKLh) ·
 [docs/decisions.md](docs/decisions.md)
@@ -207,6 +207,7 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | No check-in | A reservation is the commitment: there is no "I'm here", no deadline and no auto-release (removed 2026-11-02; the `checked_in` / `released` statuses only remain for rows written before). |
 | Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
 | Team day | A day with `team_day_threshold` (8) or more people booked is marked on the day strip; the Book tab nudges towards it and Who's in shows a banner. |
+| Lunch | Anyone in on a day (booked, or a seat owner on a held day) can say whether they bring a lunchbox or go out, from the Book tab card or Who's in. Colleagues see a mark on each row and the counts; `lunch_plans` rows are the person's own (RLS) and are purged with old bookings. |
 
 ### Progress and badges (private to each person)
 

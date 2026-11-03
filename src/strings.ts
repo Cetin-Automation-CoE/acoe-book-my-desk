@@ -120,6 +120,17 @@ export const en = {
     ownSeat: 'Semi-fixed seat',
   },
 
+  lunch: {
+    label: 'Lunch',
+    box: 'Lunchbox',
+    out: 'Going out',
+    mine: 'Your lunch',
+    hint: 'Let colleagues know whether you bring a lunchbox or go out for lunch.',
+    hasBox: 'Has a lunchbox',
+    goesOut: 'Going out for lunch',
+    counts: (out: number, box: number) => `${out} going out, ${box} with a lunchbox`,
+  },
+
   mySeat: {
     title: 'My seat',
     semiFixed: 'Semi-fixed seat · held for you',
@@ -333,6 +344,17 @@ export const cs: Strings = {
     ofSeats: (n: number) => `z ${n} míst`,
     held: 'Drženo',
     ownSeat: 'Polofixní místo',
+  },
+
+  lunch: {
+    label: 'Oběd',
+    box: 'Krabička',
+    out: 'Jdu ven',
+    mine: 'Váš oběd',
+    hint: 'Dejte kolegům vědět, jestli máte krabičku, nebo jdete na oběd ven.',
+    hasBox: 'Má krabičku',
+    goesOut: 'Jde na oběd ven',
+    counts: (out: number, box: number) => `${out} ${czPlural(out, 'jde', 'jdou', 'jde')} ven, ${box} s krabičkou`,
   },
 
   mySeat: {

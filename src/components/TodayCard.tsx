@@ -1,8 +1,9 @@
 import { useT } from '../hooks/useLang'
 import { formatDayLong } from '../lib/dates'
 import type { CardVariant } from '../lib/smart'
-import type { Seat } from '../lib/types'
+import type { LunchChoice, Seat } from '../lib/types'
 import { Button } from './Button'
+import { LunchPicker } from './LunchPicker'
 
 interface TodayCardProps {
   variant: CardVariant
@@ -12,29 +13,36 @@ interface TodayCardProps {
   busy: boolean
   onManage: () => void
   onQuickBook: (seatId: string) => void
+  // My lunch plan for the day, shown under a booking.
+  lunch: { value: LunchChoice | null; busy: boolean; onChange: (next: LunchChoice | null) => void }
 }
 
 const codeOf = (seats: Seat[], id: string) => seats.find((s) => s.id === id)?.code ?? ''
 
 // The card above the seat grid: my booking for the day, or a one-tap suggestion.
-export function TodayCard({ variant, seats, selected, today, busy, onManage, onQuickBook }: TodayCardProps) {
+export function TodayCard({ variant, seats, selected, today, busy, onManage, onQuickBook, lunch }: TodayCardProps) {
   const t = useT()
 
   if (variant.kind === 'booked') {
     const codes = [...new Set(variant.bookings.map((b) => codeOf(seats, b.seat_id)))]
     return (
-      <section className="mb-[22px] flex items-center gap-3 rounded-3xl bg-white p-3.5 shadow-card-raised">
-        <div className="bg-mine flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] text-white shadow-brand">
-          <span className="text-[11px] font-extrabold tracking-[-0.01em] tabular-nums">{codes[0]}</span>
+      <section className="mb-[22px] rounded-3xl bg-white p-3.5 shadow-card-raised">
+        <div className="flex items-center gap-3">
+          <div className="bg-mine flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] text-white shadow-brand">
+            <span className="text-[11px] font-extrabold tracking-[-0.01em] tabular-nums">{codes[0]}</span>
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-px">
+            <span className="text-[11px] font-bold uppercase leading-4 tracking-[0.02em] text-muted">{t.card.booked}</span>
+            <span className="truncate text-base font-extrabold leading-[22px] tabular-nums text-ink">{codes.join(' · ')}</span>
+            <span className="text-[13.5px] leading-[18px] text-muted">{formatDayLong(selected, today)}</span>
+          </div>
+          <Button variant="secondary" className="min-h-11 rounded-[14px] px-3 text-[14px] font-extrabold" onClick={onManage}>
+            {t.card.manage}
+          </Button>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-px">
-          <span className="text-[11px] font-bold uppercase leading-4 tracking-[0.02em] text-muted">{t.card.booked}</span>
-          <span className="truncate text-base font-extrabold leading-[22px] tabular-nums text-ink">{codes.join(' · ')}</span>
-          <span className="text-[13.5px] leading-[18px] text-muted">{formatDayLong(selected, today)}</span>
+        <div className="mt-3 border-t border-rule pt-3">
+          <LunchPicker label={t.lunch.label} value={lunch.value} busy={lunch.busy} onChange={lunch.onChange} />
         </div>
-        <Button variant="secondary" className="min-h-11 rounded-[14px] px-3 text-[14px] font-extrabold" onClick={onManage}>
-          {t.card.manage}
-        </Button>
       </section>
     )
   }

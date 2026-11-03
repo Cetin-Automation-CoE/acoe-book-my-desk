@@ -10,6 +10,7 @@ export const keys = {
   profiles: ['profiles'] as const,
   bookings: (date: string) => ['bookings', date] as const,
   releases: (date: string) => ['releases', date] as const,
+  lunch: (date: string) => ['lunch', date] as const,
   seatSchedule: (seatId: string, from: string) => ['seat-schedule', seatId, from] as const,
   myBookings: (userId: string, from: string) => ['my-bookings', userId, from] as const,
   presence: (from: string, to: string) => ['bookings', 'range', from, to] as const,
@@ -42,6 +43,10 @@ export function useDayBookings(date: string) {
 
 export function useDayReleases(date: string) {
   return useQuery({ queryKey: keys.releases(date), queryFn: () => api.releasesForDate(date) })
+}
+
+export function useDayLunch(date: string) {
+  return useQuery({ queryKey: keys.lunch(date), queryFn: () => api.lunchPlansForDate(date) })
 }
 
 export function useMyBookings(userId: string, fromDate: string) {

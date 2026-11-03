@@ -12,6 +12,7 @@ import { TodayCard } from '../components/TodayCard'
 import { useAuth } from '../hooks/useAuth'
 import {
   useDayBookings,
+  useDayLunch,
   useDayReleases,
   useMyBookings,
   useMyRecentBookings,
@@ -21,6 +22,7 @@ import {
   useSeats,
 } from '../hooks/useData'
 import { useT } from '../hooks/useLang'
+import { useSetLunch } from '../hooks/useLunch'
 import { useSeatChange } from '../hooks/useRealtime'
 import { api } from '../lib/api'
 import {
@@ -36,6 +38,7 @@ import {
   todayIn,
 } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
+import { lunchOf } from '../lib/lunch'
 import { presenceByDay, teamDayNudge } from '../lib/progress'
 import { seatView, type SeatView } from '../lib/seatState'
 import { cardVariant, usualSeat } from '../lib/smart'
@@ -70,6 +73,7 @@ export function DayView({ settings }: { settings: Settings }) {
   const seats = useSeats()
   const bookings = useDayBookings(selected)
   const releases = useDayReleases(selected)
+  const lunchPlans = useDayLunch(selected)
   const profiles = useProfiles()
   const presenceRows = usePresence(days[0], days[days.length - 1])
   const myUpcoming = useMyBookings(userId, today)
@@ -159,6 +163,9 @@ export function DayView({ settings }: { settings: Settings }) {
     onError: fail,
   })
 
+  const setLunch = useSetLunch(userId, selected)
+  const myLunch = lunchOf(lunchPlans.data ?? [], userId, selected)
+
   const cancel = useMutation({
     mutationFn: (list: Booking[]) => Promise.all(list.map((b) => api.cancelBooking(b.id))),
     onSuccess: () => {
@@ -225,6 +232,7 @@ export function DayView({ settings }: { settings: Settings }) {
                 busy={busy}
                 onManage={() => variant.kind === 'booked' && setPending({ kind: 'mine', seatId: variant.bookings[0].seat_id })}
                 onQuickBook={(seatId) => quickBook.mutate(seatId)}
+                lunch={{ value: myLunch, busy: setLunch.isPending, onChange: (next) => setLunch.mutate(next) }}
               />
             )}
             {nudge && <TeamDayNudge nudge={nudge} today={today} onShow={setSelected} />}

@@ -22,6 +22,7 @@ Odkaz: https://cetin-automation-coe.github.io/acoe-book-my-desk/
 – Kód může dorazit s minutovým zpožděním. Když nepřijde, mrkni do spamu nebo klepni na „Poslat nový kód“.
 
 3) Profil (klepni na svůj avatar nahoře)
+– Panel zavřeš stažením dolů prstem nebo klepnutím mimo něj.
 – Zkontroluj své jméno, případně si přidej fotku – kolegové ji uvidí u tvého místa.
 – Můžeš přepnout jazyk (čeština / English).
 – Oznámení: zapni „Na tomto zařízení“ a vyber, co chceš dostávat (večerní připomínka, pondělní pošťouchnutí, týmové dny). Na iPhonu fungují jen z appky přidané na plochu.
@@ -38,6 +39,7 @@ Odkaz: https://cetin-automation-coe.github.io/acoe-book-my-desk/
 
 6) Kdo je tu
 – Přehled, kdo má na daný den rezervaci a kolik míst je obsazených. Držená místa se počítají jako obsazená.
+– Oběd: pod svou rezervací (nebo tady v Kdo je tu) můžeš zvolit „Krabička“ nebo „Jdu ven“, ať se domluvíte na oběd. Ostatní uvidí značku u tvého jména a počty.
 
 7) Moje místo – jen pro majitele držených míst
 – Vaše místa jsou pro vás držená. V záložce Moje místo klepnutím uvolníte dny, kdy nepřijdete, aby si je mohli zarezervovat ostatní. Dalším klepnutím je vezmete zpět.

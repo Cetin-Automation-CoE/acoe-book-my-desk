@@ -4,6 +4,8 @@ import {
   ACTIVE_STATUSES,
   type Achievement,
   type Booking,
+  type LunchChoice,
+  type LunchPlan,
   type NotifyPrefs,
   type PresenceRow,
   type Profile,
@@ -115,6 +117,20 @@ export const api = {
     return unwrap(
       await supabase.from('bookings').select('date, user_id').gte('date', from).lte('date', to).in('status', ACTIVE_STATUSES),
     )
+  },
+
+  async lunchPlansForDate(date: string): Promise<LunchPlan[]> {
+    return unwrap(await supabase.from('lunch_plans').select('*').eq('date', date))
+  },
+
+  // What I plan for lunch that day; null clears it.
+  async setLunch(userId: string, date: string, lunch: LunchChoice | null): Promise<void> {
+    const { error } = lunch
+      ? await supabase
+          .from('lunch_plans')
+          .upsert({ user_id: userId, date, lunch, updated_at: new Date().toISOString() }, { onConflict: 'user_id,date' })
+      : await supabase.from('lunch_plans').delete().eq('user_id', userId).eq('date', date)
+    if (error) throw error
   },
 
   async myStats(userId: string): Promise<UserStats | null> {

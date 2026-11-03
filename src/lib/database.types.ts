@@ -91,6 +91,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"lunch_plans": {
+                  Row: {
+                    "date": string,"lunch": Database["public"]['Enums']["lunch"],"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "date": string,"lunch": Database["public"]['Enums']["lunch"],"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "date"?: string,"lunch"?: Database["public"]['Enums']["lunch"],"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"offices": {
                   Row: {
                     "created_at": string,"id": string,"name": string
@@ -333,7 +347,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "booking_status": "booked"|"checked_in"|"released"|"cancelled","slot": "AM"|"PM","user_role": "user"|"admin"
+            "booking_status": "booked"|"checked_in"|"released"|"cancelled","lunch": "box"|"out","slot": "AM"|"PM","user_role": "user"|"admin"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -453,7 +467,7 @@ export const Constants = {
           }
         },"public": {
           Enums: {
-            "booking_status": ["booked", "checked_in", "released", "cancelled"],"slot": ["AM", "PM"],"user_role": ["user", "admin"]
+            "booking_status": ["booked", "checked_in", "released", "cancelled"],"lunch": ["box", "out"],"slot": ["AM", "PM"],"user_role": ["user", "admin"]
           }
         }
 } as const
