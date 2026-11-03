@@ -69,11 +69,14 @@ html {
     min-height: 100dvh;
     padding: 24px;
   }
+  /* The phone is laid out at one fixed size (a 390px-wide screen) and the whole thing is zoomed to fit
+     the window (--phone-zoom, set in main.tsx), so the app never reflows into a narrower column. */
   .phone {
     display: block;
     position: relative;
-    height: min(100dvh - 48px, 980px);
-    aspect-ratio: 654 / 1302;
+    width: 472px;
+    height: 940px;
+    zoom: var(--phone-zoom, 1);
     filter: drop-shadow(0 30px 60px rgba(26, 0, 96, 0.28));
   }
   .phone::after {
