@@ -13,6 +13,7 @@ interface SheetProps {
 
 const CLOSE_MS = 220
 const SNAP_MS = 200
+const STILL_MS = 100
 
 interface DragState {
   startX: number
@@ -74,7 +75,9 @@ export function Sheet({ open, title, heading = false, onClose, children }: Sheet
       },
       begin(x, y) {
         if (closing) return
-        const zoom = Number(getComputedStyle(document.documentElement).getPropertyValue('--phone-zoom')) || 1
+        // The frame (and its zoom) exists on wide screens only; see index.css.
+        const framed = window.matchMedia('(min-width: 640px)').matches
+        const zoom = (framed && Number(getComputedStyle(document.documentElement).getPropertyValue('--phone-zoom'))) || 1
         drag = { startX: x, startY: y, lastY: y, lastT: performance.now(), velocity: 0, active: false, zoom }
       },
       follow(y) {
@@ -92,7 +95,9 @@ export function Sheet({ open, title, heading = false, onClose, children }: Sheet
         drag = null
         if (!d?.active) return
         const offset = (d.lastY - d.startY) / d.zoom
-        if (dragOutcome({ offset, velocity: d.velocity, height: el.offsetHeight }) === 'close') c.dismiss()
+        // A finger that paused before letting go is not flicking.
+        const velocity = performance.now() - d.lastT > STILL_MS ? 0 : d.velocity
+        if (dragOutcome({ offset, velocity, height: el.offsetHeight }) === 'close') c.dismiss()
         else style('', '', SNAP_MS)
       },
     }
