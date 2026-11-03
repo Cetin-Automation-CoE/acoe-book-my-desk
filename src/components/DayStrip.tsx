@@ -17,7 +17,7 @@ export function DayStrip({ days, selected, today, onSelect, mine, marks }: DaySt
   const t = useT()
   const gaps = gapsBefore(days)
   return (
-    <div className="mt-5 flex gap-1.5" role="tablist" aria-label="Day">
+    <div className="mt-5 flex gap-1.5" role="tablist" aria-label={t.days.pick}>
       {days.map((date) => {
         const label = dayLabel(date, today)
         const isSelected = date === selected

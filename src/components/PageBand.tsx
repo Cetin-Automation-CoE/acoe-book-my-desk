@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useT } from '../hooks/useLang'
 import { useShell } from './AppShell'
 
 interface PageBandProps {
@@ -13,6 +14,7 @@ interface PageBandProps {
 // page puts on the band (day strip, slot toggle). The content panel overlaps its bottom by 24px.
 // Band and panel run edge to edge; only their content is kept to phone width.
 export function PageBand({ title, sub, figure, children }: PageBandProps) {
+  const t = useT()
   const { openProfile, initials, avatar } = useShell()
   return (
     <header className="band px-4 pb-11 pt-[calc(env(safe-area-inset-top)+0.875rem)]">
@@ -21,7 +23,7 @@ export function PageBand({ title, sub, figure, children }: PageBandProps) {
         <button
           type="button"
           onClick={openProfile}
-          aria-label="Profile"
+          aria-label={t.profile.title}
           className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-white/28 bg-white/12 text-sm font-extrabold tracking-[0.02em] text-white transition active:scale-[0.94]"
         >
           {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : initials}

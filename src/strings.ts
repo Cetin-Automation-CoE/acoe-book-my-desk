@@ -15,7 +15,6 @@ export const en = {
   loading: 'Loading…',
   retry: 'Try again',
   close: 'Close',
-  back: 'Back',
   undo: 'Undo',
   you: 'You',
 
@@ -24,6 +23,7 @@ export const en = {
     myBookings: 'My bookings',
     whoIsIn: "Who's in",
     mySeat: 'My seat',
+    label: 'Main navigation',
   },
 
   config: {
@@ -61,6 +61,7 @@ export const en = {
   days: {
     today: 'Today',
     tomorrow: 'Tomorrow',
+    pick: 'Day',
   },
 
   seats: {
@@ -70,7 +71,6 @@ export const en = {
     taken: 'Taken',
     held: 'Held',
     inactive: 'Unavailable',
-    heldBy: (name: string) => `Held by ${name}`,
     bookTitle: (code: string) => `Seat ${code}`,
     book: 'Book',
     restOfDay: 'Rest of today',
@@ -126,10 +126,7 @@ export const en = {
     notOwner: 'You do not hold a seat. Seat owners are assigned by an admin.',
     held: 'Held',
     released: 'Released',
-    bookedBy: (name: string) => `Booked by ${name}`,
     release: 'Release',
-    takeBack: 'Take back',
-    working: 'Saving…',
     hint: 'Tap a held day to release it, or a released one to take it back. Releasing cancels your own booking for that day.',
   },
 
@@ -203,7 +200,7 @@ export const en = {
     invalid_slot: 'Pick a morning or afternoon slot.',
     outside_window: 'That date is outside the booking window.',
     not_working_day: 'Seats can only be booked on working days.',
-    slot_ended: 'That half day is already over.',
+    slot_ended: 'The day has moved on. Pick the seat again.',
     seat_not_found: 'That seat does not exist.',
     seat_inactive: 'That seat is not available.',
     seat_held: 'That seat is held by its owner.',
@@ -231,7 +228,6 @@ export const cs: Strings = {
   loading: 'Načítám…',
   retry: 'Zkusit znovu',
   close: 'Zavřít',
-  back: 'Zpět',
   undo: 'Zpět',
   you: 'Vy',
 
@@ -240,6 +236,7 @@ export const cs: Strings = {
     myBookings: 'Moje',
     whoIsIn: 'Kdo je tu',
     mySeat: 'Moje místo',
+    label: 'Hlavní navigace',
   },
 
   config: {
@@ -277,6 +274,7 @@ export const cs: Strings = {
   days: {
     today: 'Dnes',
     tomorrow: 'Zítra',
+    pick: 'Den',
   },
 
   seats: {
@@ -286,7 +284,6 @@ export const cs: Strings = {
     taken: 'Obsazeno',
     held: 'Drženo',
     inactive: 'Nedostupné',
-    heldBy: (name: string) => `Drží ${name}`,
     bookTitle: (code: string) => `Místo ${code}`,
     book: 'Rezervovat',
     restOfDay: 'Zbytek dne',
@@ -342,10 +339,7 @@ export const cs: Strings = {
     notOwner: 'Nedržíte žádné místo. Majitele míst přiřazuje administrátor.',
     held: 'Drženo',
     released: 'Uvolněno',
-    bookedBy: (name: string) => `Rezervoval ${name}`,
     release: 'Uvolnit',
-    takeBack: 'Vzít zpět',
-    working: 'Ukládám…',
     hint: 'Klepnutím na držený den ho uvolníte, na uvolněný ho vezmete zpět. Uvolněním zrušíte svou rezervaci na ten den.',
   },
 
@@ -419,7 +413,7 @@ export const cs: Strings = {
     invalid_slot: 'Vyberte dopoledne nebo odpoledne.',
     outside_window: 'Toto datum je mimo rezervační okno.',
     not_working_day: 'Místa lze rezervovat jen na pracovní dny.',
-    slot_ended: 'Tento půlden už skončil.',
+    slot_ended: 'Den už pokročil. Vyberte místo znovu.',
     seat_not_found: 'Toto místo neexistuje.',
     seat_inactive: 'Toto místo není dostupné.',
     seat_held: 'Místo drží jeho majitel.',

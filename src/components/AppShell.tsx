@@ -53,7 +53,7 @@ export function AppShell({ showMySeat }: { showMySeat: boolean }) {
       </div>
       <nav
         className="fixed inset-x-3.5 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-md gap-0.5 rounded-[26px] border border-white/70 bg-white/86 p-1.5 shadow-nav backdrop-blur-[20px] backdrop-saturate-[1.8]"
-        aria-label="Main"
+        aria-label={t.nav.label}
       >
         {items.map(({ to, label, icon: Icon }) => (
           <NavLink
