@@ -26,7 +26,7 @@ export default defineConfig({
       manifest: {
         name: 'BookMyDesk',
         short_name: 'BookMyDesk',
-        description: 'Book a seat in the office open space.',
+        description: 'Book a seat in the office.',
         lang: 'en',
         theme_color: '#300091',
         background_color: '#300091',

@@ -11,7 +11,7 @@ const czPlural = (n: number, one: string, few: string, many: string) => (n === 1
 
 export const en = {
   appName: 'BookMyDesk',
-  tagline: 'Book a seat in the open space',
+  tagline: 'Book a seat in the office',
   loading: 'Loading…',
   retry: 'Try again',
   close: 'Close',

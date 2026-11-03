@@ -1,6 +1,6 @@
 # BookMyDesk
 
-Mobile-first web app for booking seats in the office open space. Colleagues sign in with their
+Mobile-first web app for booking seats in the office. Colleagues sign in with their
 work email (6-digit code), pick a day and tap a free seat. Seat owners can
 release their semi-fixed seats. The UI is in English and Czech (switch in the profile sheet).
 
