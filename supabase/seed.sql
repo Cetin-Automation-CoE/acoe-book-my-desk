@@ -52,5 +52,6 @@ insert into public.directory (email, display_name, role) values
   ('martin.kloucek@cetin.cz',    'Martin Klouček',    'user'),
   ('ma077182@cetin.cz',          'Martin Klouček',    'user'),
   ('petr.funk@cetin.cz',         'Petr Funk',         'user'),
-  ('pe078542@cetin.cz',          'Petr Funk',         'user')
+  ('pe078542@cetin.cz',          'Petr Funk',         'user'),
+  ('x0570195@cetin.cz',          'Tadeáš Fabiánek',   'user')
 on conflict (email) do update set display_name = excluded.display_name, role = excluded.role;
