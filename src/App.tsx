@@ -31,7 +31,7 @@ function SignedInApp() {
 
   if (settings.error) {
     return (
-      <main className="band flex min-h-dvh items-end">
+      <main className="app-scroll band flex min-h-dvh items-end">
         <div className="w-full rounded-t-[28px] bg-surface p-4 pb-10">
           <div className="mx-auto max-w-md">
             <ErrorCard error={settings.error} onRetry={() => settings.refetch()} />
@@ -42,7 +42,7 @@ function SignedInApp() {
   }
   if (!settings.data) {
     return (
-      <main className="band min-h-dvh">
+      <main className="app-scroll band min-h-dvh">
         <p className="sr-only">{t.loading}</p>
       </main>
     )
@@ -67,7 +67,7 @@ function SignedInApp() {
 
 function Gate() {
   const { session, loading } = useAuth()
-  if (loading) return <main className="band min-h-dvh" />
+  if (loading) return <main className="app-scroll band min-h-dvh" />
   return session ? <SignedInApp /> : <SignIn />
 }
 

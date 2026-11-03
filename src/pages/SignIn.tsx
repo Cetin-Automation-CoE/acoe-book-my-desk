@@ -65,7 +65,7 @@ export function SignIn() {
     'min-h-14 rounded-[14px] border-[1.5px] border-line-strong bg-white px-4 text-[17px] text-ink outline-none focus:border-brand focus:shadow-focus'
 
   return (
-    <main className="band flex min-h-dvh flex-col">
+    <main className="app-scroll band flex min-h-dvh flex-col">
       <div className="mx-auto flex w-full min-h-0 max-w-md flex-1 flex-col px-6 pb-9 pt-[calc(env(safe-area-inset-top)+2rem)] text-white">
         <div className="flex justify-end">
           <div className="flex rounded-xl border border-white/16 bg-white/10 p-[3px]" role="radiogroup" aria-label={t.profile.language}>

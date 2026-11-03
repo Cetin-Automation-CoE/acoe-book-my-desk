@@ -83,20 +83,26 @@ html {
     background: url('./assets/phone-frame.png') center / 100% 100% no-repeat;
     pointer-events: none;
   }
+  /* The screen does not scroll itself: inside a transformed box, position:fixed behaves like
+     absolute, so a scrolling #root would carry the tab bar along. The page scrolls in .app-scroll. */
   #root {
     position: absolute;
     left: 8.716%;
     top: 3.994%;
     width: 82.569%;
     height: 92.012%;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow: hidden;
     border-radius: 12.593% / 5.676%;
     background: var(--color-surface);
     transform: translateZ(0);
+  }
+  #root .app-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     scrollbar-width: none;
   }
-  #root::-webkit-scrollbar {
+  #root .app-scroll::-webkit-scrollbar {
     display: none;
   }
   #root .min-h-dvh {

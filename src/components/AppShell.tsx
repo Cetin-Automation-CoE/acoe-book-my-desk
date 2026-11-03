@@ -33,7 +33,7 @@ export function AppShell({ showMySeat }: { showMySeat: boolean }) {
   // Tab switch: start at the top.
   useEffect(() => {
     window.scrollTo({ top: 0 })
-    document.getElementById('root')?.scrollTo({ top: 0 }) // the phone frame scrolls on wide screens
+    document.querySelector('.app-scroll')?.scrollTo({ top: 0 }) // the phone frame's screen on wide screens
   }, [location.pathname])
 
   const me = profiles.data?.get(userId)
@@ -48,7 +48,7 @@ export function AppShell({ showMySeat }: { showMySeat: boolean }) {
 
   return (
     <ShellContext.Provider value={{ openProfile: () => setProfileOpen(true), initials: initialsOf(name), name, avatar }}>
-      <div className="min-h-dvh">
+      <div className="app-scroll min-h-dvh">
         <Outlet />
       </div>
       <nav
