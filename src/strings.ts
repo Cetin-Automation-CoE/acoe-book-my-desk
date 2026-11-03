@@ -227,7 +227,7 @@ export type ErrorCode = keyof Strings['errors']
 // Draft Czech copy from the design hand-off, completed for the newer screens. Needs a native review.
 export const cs: Strings = {
   appName: 'BookMyDesk',
-  tagline: 'Rezervace místa v open space',
+  tagline: 'Rezervace místa v kanceláři',
   loading: 'Načítám…',
   retry: 'Zkusit znovu',
   close: 'Zavřít',
