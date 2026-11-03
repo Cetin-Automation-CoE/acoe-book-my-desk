@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(15);
 
 create schema tests_tmp;
 create function tests_tmp.create_user(p_email text, p_id uuid default gen_random_uuid()) returns uuid
@@ -66,12 +66,6 @@ select is((select body from public.push_monday_candidates('2026-11-02')),
   (select count(*) from public.seats s where s.active and s.owner_id is null and cardinality(s.owner_emails) = 0)
     || ' free seats today. Where will you sit this week?',
   'with the free-seat count');
-
--- Team day (threshold lowered to 2): alice and carol booked Thursday, bob is told
-update public.settings set team_day_threshold = 2;
-select is((select array_agg(user_id) from public.push_team_day_candidates('2026-11-05')),
-  array['a1000000-0000-4000-8000-000000000002']::uuid[], 'the colleague not yet in is alerted');
-select is((select count(*) from public.push_team_day_candidates('2026-11-04')), 0::bigint, 'a quiet day is no team day');
 
 -- Sending is a no-op until the function URL and secret exist; the log still dedupes
 select is(public.push_send('[{"user_id":"a1000000-0000-4000-8000-000000000002","tag":"monday","key":"2026-11-02"}]'::jsonb), 0,

@@ -1,5 +1,5 @@
 begin;
-select plan(48);
+select plan(46);
 
 create schema tests_tmp;
 create function tests_tmp.create_user(p_email text, p_id uuid default gen_random_uuid()) returns uuid
@@ -43,11 +43,10 @@ insert into public.seats (id, floor_id, code, owner_id) values
   ('51000000-0000-4000-8000-000000000006', 'f1000000-0000-4000-8000-00000000aaaa', 'T06', null),
   ('51000000-0000-4000-8000-000000000007', 'f1000000-0000-4000-8000-00000000aaaa', 'T07', null);
 
--- Day-wide counts (team day, full house) and the job's return values must not depend on dev data.
+-- Day-wide counts (full house) and the job's return values must not depend on dev data.
 delete from public.seat_releases;
 delete from public.bookings;
 
-select is((select team_day_threshold from public.settings), 8, 'a team day needs 8 people by default');
 select is((select count(*) from cron.job where jobname = 'bookmydesk-count-office-days'), 1::bigint,
   'the counting job is scheduled');
 
@@ -145,15 +144,13 @@ select is(tests_tmp.stat('a1000000-0000-4000-8000-000000000001', 'current_streak
 select ok(tests_tmp.has_badge('a1000000-0000-4000-8000-000000000001', 'on_a_roll'), 'a four-week streak earns on a roll');
 select ok(tests_tmp.has_badge('a1000000-0000-4000-8000-000000000001', 'full_week'), 'every working day of a week earns full week');
 
--- Team day (threshold lowered to 3): Monday 2026-12-14
-update public.settings set team_day_threshold = 3;
+-- Three people on Monday 2026-12-14
 insert into public.bookings (seat_id, user_id, date, slot) values
   ('51000000-0000-4000-8000-000000000002', 'a1000000-0000-4000-8000-000000000001', '2026-12-14', 'AM'),
   ('51000000-0000-4000-8000-000000000003', 'a1000000-0000-4000-8000-000000000002', '2026-12-14', 'AM'),
   ('51000000-0000-4000-8000-000000000004', 'a1000000-0000-4000-8000-000000000003', '2026-12-14', 'PM');
 select tests_tmp.freeze('2026-12-14 14:00:00+01');
 select is(public.count_office_days(), 3, 'three people are counted');
-select ok(tests_tmp.has_badge('a1000000-0000-4000-8000-000000000001', 'team_day'), 'three people booked make a team day');
 select is(tests_tmp.stat('a1000000-0000-4000-8000-000000000002', 'office_days'), 1, 'bob gets his first office day');
 
 -- Full house: Tuesday 2026-12-15 with only two active seats, both booked
@@ -171,7 +168,7 @@ set local role authenticated;
 select is((select count(*) from public.user_stats), 1::bigint, 'bob sees only his own stats');
 select is((select count(*) from public.user_stats where user_id = 'a1000000-0000-4000-8000-000000000001'), 0::bigint,
   'alice''s stats are hidden from bob');
-select is((select count(*) from public.achievements), 2::bigint, 'bob sees only his own badges');
+select is((select count(*) from public.achievements), 1::bigint, 'bob sees only his own badges');
 
 select * from finish();
 rollback;

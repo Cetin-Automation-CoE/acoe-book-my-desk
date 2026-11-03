@@ -107,7 +107,6 @@ export function Notifications({ userId }: { userId: string }) {
   const kinds: { key: keyof NotifyPrefs; label: string; hint: string }[] = [
     { key: 'notify_tomorrow', label: t.notifications.tomorrow, hint: t.notifications.tomorrowHint },
     { key: 'notify_monday', label: t.notifications.monday, hint: t.notifications.mondayHint },
-    { key: 'notify_team_day', label: t.notifications.teamDay, hint: t.notifications.teamDayHint },
   ]
 
   return (

@@ -121,14 +121,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"display_name": string,"email": string,"notify_monday": boolean,"notify_team_day": boolean,"notify_tomorrow": boolean,"role": Database["public"]['Enums']["user_role"],"user_id": string
+                    "avatar_url": string | null,"created_at": string,"display_name": string,"email": string,"notify_monday": boolean,"notify_tomorrow": boolean,"role": Database["public"]['Enums']["user_role"],"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name": string,"email": string,"notify_monday"?: boolean,"notify_team_day"?: boolean,"notify_tomorrow"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"user_id": string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name": string,"email": string,"notify_monday"?: boolean,"notify_tomorrow"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"user_id": string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string,"email"?: string,"notify_monday"?: boolean,"notify_team_day"?: boolean,"notify_tomorrow"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"user_id"?: string
+                    "avatar_url"?: string | null,"created_at"?: string,"display_name"?: string,"email"?: string,"notify_monday"?: boolean,"notify_tomorrow"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"user_id"?: string
                   }
                   Relationships: [
                     
@@ -203,14 +203,14 @@ isOneToOne: false
                   ]
                 },"settings": {
                   Row: {
-                    "allowed_email_domains": (string)[],"am_start": string,"booking_retention_days": number,"id": boolean,"max_days_per_week": number | null,"pm_start": string,"push_evening_hour": number,"push_function_url": string | null,"push_monday_hour": number,"team_day_threshold": number,"timezone": string,"updated_at": string,"working_days": (number)[]
+                    "allowed_email_domains": (string)[],"am_start": string,"booking_retention_days": number,"id": boolean,"max_days_per_week": number | null,"pm_start": string,"push_evening_hour": number,"push_function_url": string | null,"push_monday_hour": number,"timezone": string,"updated_at": string,"working_days": (number)[]
                   }
                   ComputedFields: never
                   Insert: {
-                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
+                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Update: {
-                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"team_day_threshold"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
+                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Relationships: [
                     
@@ -328,11 +328,6 @@ isOneToOne: false
                            },
 "push_send":
 { Args: { "p_messages": Json }; Returns: number
-                           },
-"push_team_day_candidates":
-{ Args: { "p_date": string }; Returns: {
-              "body": string,"key": string,"tag": string,"title": string,"url": string,"user_id": string
-            }[]
                            },
 "push_tomorrow_candidates":
 { Args: { "p_today": string }; Returns: {

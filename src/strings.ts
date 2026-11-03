@@ -78,6 +78,7 @@ export const en = {
     booked: 'Booked.',
     legend: 'Tap a free seat to book it. Seats sit in pairs, two pairs per table.',
     ownerLegend: 'Your seat is held for you; as its owner you book that seat only.',
+    colleaguesIn: (n: number, when: string) => `${colleagues(n)} in ${when}.`,
     noSeats: 'No seats are set up yet.',
     table: (n: number) => `Table ${n}`,
     freeShort: (n: number) => `${n} free`,
@@ -168,8 +169,6 @@ export const en = {
     tomorrowHint: 'The day before a booking, around 17:00.',
     monday: 'Monday nudge',
     mondayHint: 'When you have nothing booked for the week yet.',
-    teamDay: 'Team day alerts',
-    teamDayHint: 'When a day fills up and you are not in yet.',
     unsupported: 'This browser cannot show notifications.',
     install: 'Add BookMyDesk to your Home Screen first — iPhones only deliver notifications to installed apps.',
     denied: 'Notifications are blocked for this site in your browser settings.',
@@ -193,19 +192,10 @@ export const en = {
     resident: { name: 'Resident', rule: '50 office days' },
     explorer: { name: 'Explorer', rule: 'Sit in 6 different seats' },
     full_house: { name: 'Full house', rule: 'Be in when every seat is taken' },
-    team_day: { name: 'Team day', rule: 'Be in on a team day' },
     on_a_roll: { name: 'On a roll', rule: 'Office days 4 weeks in a row' },
     full_week: { name: 'Full week', rule: 'In the office every working day of a week' },
   } satisfies Record<BadgeKey, { name: string; rule: string }>,
 
-  teamDay: {
-    here: (n: number) => (n === 0 ? 'Team day.' : `Team day – ${colleagues(n)} are in.`),
-    join: (when: string, n: number) => `${when} is a team day – ${colleagues(n)} in.`,
-    show: 'Show',
-    some: (n: number, when: string) => `${colleagues(n)} in ${when}.`,
-    whoIsIn: (n: number) => `Team day – ${n} people in the office.`,
-    legend: 'A white dot marks a team day.',
-  },
 
   errors: {
     not_authenticated: 'You are signed out. Sign in again.',
@@ -304,6 +294,7 @@ export const cs: Strings = {
     booked: 'Zarezervováno.',
     legend: 'Klepnutím na volné místo ho zarezervujete. Místa jsou v párech, dva páry u stolu.',
     ownerLegend: 'Vaše místo je pro vás držené; jako majitel rezervujete jen to.',
+    colleaguesIn: (n: number, when: string) => `${kolegove(n)} ${when}.`,
     noSeats: 'Zatím nejsou nastavená žádná místa.',
     table: (n: number) => `Stůl ${n}`,
     freeShort: (n: number) => `${n} volno`,
@@ -394,8 +385,6 @@ export const cs: Strings = {
     tomorrowHint: 'Den před rezervací, kolem 17:00.',
     monday: 'Pondělní pošťouchnutí',
     mondayHint: 'Když na tento týden ještě nic nemáte.',
-    teamDay: 'Týmové dny',
-    teamDayHint: 'Když se nějaký den zaplní a vy tam ještě nejste.',
     unsupported: 'Tento prohlížeč neumí zobrazit oznámení.',
     install: 'Nejdřív přidejte BookMyDesk na plochu – iPhone doručuje oznámení jen nainstalovaným aplikacím.',
     denied: 'Oznámení pro tento web jsou v nastavení prohlížeče zablokovaná.',
@@ -419,19 +408,10 @@ export const cs: Strings = {
     resident: { name: 'Rezident', rule: '50 dní v kanceláři' },
     explorer: { name: 'Průzkumník', rule: 'Seďte na 6 různých místech' },
     full_house: { name: 'Plný dům', rule: 'Buďte tu, když jsou všechna místa obsazená' },
-    team_day: { name: 'Týmový den', rule: 'Buďte tu v týmový den' },
     on_a_roll: { name: 'V tempu', rule: 'V kanceláři 4 týdny v řadě' },
     full_week: { name: 'Celý týden', rule: 'V kanceláři každý pracovní den týdne' },
   },
 
-  teamDay: {
-    here: (n: number) => (n === 0 ? 'Týmový den.' : `Týmový den – ${kolegove(n)} tu ${n === 1 ? 'je' : 'jsou'}.`),
-    join: (when: string, n: number) => `${when} je týmový den – ${kolegove(n)}.`,
-    show: 'Zobrazit',
-    some: (n: number, when: string) => `${kolegove(n)} ${when}.`,
-    whoIsIn: (n: number) => `Týmový den – ${n} lidí v kanceláři.`,
-    legend: 'Bílá tečka označuje týmový den.',
-  },
 
   errors: {
     not_authenticated: 'Jste odhlášeni. Přihlaste se znovu.',

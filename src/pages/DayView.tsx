@@ -6,7 +6,6 @@ import { PageBand, Panel } from '../components/PageBand'
 import { SeatGrid } from '../components/SeatGrid'
 import { BookSheet, CancelSheet, MineSheet } from '../components/SeatSheets'
 import { ErrorCard, Skeleton } from '../components/States'
-import { TeamDayNudge } from '../components/TeamDayNudge'
 import { useToast } from '../components/Toast'
 import { TodayCard } from '../components/TodayCard'
 import { useAuth } from '../hooks/useAuth'
@@ -39,7 +38,7 @@ import {
 } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
 import { lunchOf } from '../lib/lunch'
-import { presenceByDay, teamDayNudge } from '../lib/progress'
+import { presenceByDay } from '../lib/progress'
 import { seatView, type SeatView } from '../lib/seatState'
 import { cardVariant, usualSeat } from '../lib/smart'
 import { ACTIVE_STATUSES, slotsFor, type Booking, type Settings } from '../lib/types'
@@ -114,12 +113,9 @@ export function DayView({ settings }: { settings: Settings }) {
     [mineOnDay, usualId, views, choice, ownerSeat],
   )
 
+  // Colleagues with a booking on the selected day, for the line under the card.
   const presence = useMemo(() => presenceByDay(presenceRows.data ?? [], userId), [presenceRows.data, userId])
-  const teamDays = useMemo(
-    () => new Set(days.filter((d) => (presence.get(d)?.people ?? 0) >= settings.team_day_threshold)),
-    [days, presence, settings.team_day_threshold],
-  )
-  const nudge = teamDayNudge({ days, selected, presence, threshold: settings.team_day_threshold })
+  const othersIn = presence.get(selected)?.others ?? 0
   const freeCount = views.filter((v) => v.kind === 'free').length
   const codeOf = (id: string) => seats.data?.find((s) => s.id === id)?.code ?? ''
 
@@ -204,7 +200,9 @@ export function DayView({ settings }: { settings: Settings }) {
     releases.refetch()
     profiles.refetch()
   }
-  const isRelative = Boolean(dayLabel(selected, today).relative)
+  const label = dayLabel(selected, today)
+  const isRelative = Boolean(label.relative)
+  const when = label.relative ? label.relative.toLowerCase() : `${label.weekday} ${label.day} ${label.month}`
 
   return (
     <>
@@ -213,7 +211,7 @@ export function DayView({ settings }: { settings: Settings }) {
         sub={formatBandDate(selected, isRelative)}
         figure={loading || failed ? undefined : { value: freeCount, label: t.seats.freeSeats(freeCount) }}
       >
-        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} mine={myDays} marks={teamDays} />
+        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} mine={myDays} />
       </PageBand>
 
       <Panel>
@@ -235,7 +233,7 @@ export function DayView({ settings }: { settings: Settings }) {
                 lunch={{ value: myLunch, busy: setLunch.isPending, onChange: (next) => setLunch.mutate(next) }}
               />
             )}
-            {nudge && <TeamDayNudge nudge={nudge} today={today} onShow={setSelected} />}
+            {othersIn > 0 && <p className="mb-3.5 px-1 text-[13px] text-muted">{t.seats.colleaguesIn(othersIn, when)}</p>}
             <div key={selected}>
               <SeatGrid
                 views={views}
@@ -250,7 +248,6 @@ export function DayView({ settings }: { settings: Settings }) {
             </div>
             <p className="mx-1 mt-3.5 text-[13px] leading-[18px] text-muted">
               {ownerSeat ? t.seats.ownerLegend : t.seats.legend}
-              {teamDays.size > 0 && ` ${t.teamDay.legend}`}
             </p>
           </>
         )}

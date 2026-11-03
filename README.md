@@ -118,9 +118,8 @@ Useful scripts:
 ### Push notifications (optional, manual)
 
 Web Push with VAPID: works in the installed PWA on iOS 16.4+, and in Chrome/Firefox/Edge. Everything is
-opt-in per person (profile sheet → Notifications). Three kinds exist: the evening reminder before a
-booked day, a Monday nudge for people with nothing booked that week, and a team-day alert when a day
-reaches `team_day_threshold`.
+opt-in per person (profile sheet → Notifications). Two kinds exist: the evening reminder before a
+booked day and a Monday nudge for people with nothing booked that week.
 
 1. **Keys** — once: `npx web-push generate-vapid-keys`. Public key → GitHub Actions *Variables* as
    `VITE_VAPID_PUBLIC_KEY`. Both keys → Supabase secrets (never the repo):
@@ -182,7 +181,7 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
 - **Room order:** the Book screen draws seats in `seats.sort_order` as side-by-side pairs (two pairs
   per table block, then a gap). Change `sort_order` to rearrange; keep partners on consecutive numbers.
 - **Change rules:** edit the single row in `settings` (working days, slot times, weekly limit, data
-  retention, team-day threshold).
+  retention).
 - **Fix a display name:** `update public.profiles set display_name = 'Jane Doe' where email = '...';`
 - **Profile photos** live in the public `avatars` storage bucket (created by migration `20261104120000`, 2 MB
   limit, JPEG/PNG/WebP) as `<user_id>/avatar.jpg`; the app shrinks them to 256 px before upload. To remove
@@ -206,7 +205,6 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | Semi-fixed seats | `seats.owner_id` holds the seat; others can book it only after the owner releases the day (My seat tab). Releasing cancels the owner's own booking for that day; a released day cannot be taken back once a colleague booked it. An owner books their own seat only (`owner_own_seat_only`), even on a day they released it; the app dims every other seat for them. |
 | No check-in | A reservation is the commitment: there is no "I'm here", no deadline and no auto-release (removed 2026-11-02; the `checked_in` / `released` statuses only remain for rows written before). |
 | Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
-| Team day | A day with `team_day_threshold` (8) or more people booked is marked on the day strip; the Book tab nudges towards it and Who's in shows a banner. |
 | Lunch | Anyone in on a day (booked, or a seat owner on a held day) can say whether they bring a lunchbox or go out, from the Book tab card or Who's in. Colleagues see a mark on each row and the counts; `lunch_plans` rows are the person's own (RLS) and are purged with old bookings. |
 
 ### Progress and badges (private to each person)
@@ -231,7 +229,6 @@ never see each other's numbers.
 | Regular / Resident | 10 / 50 office days |
 | Explorer | Sat in 6 different seats |
 | Full house | Every active seat booked at the same time |
-| Team day | A day with `team_day_threshold` people booked |
 | On a roll | 4-week streak |
 | Full week | An office day on every working day of one week |
 
@@ -250,7 +247,6 @@ check constraint, a rule in that function and a name in `src/strings.ts`. To res
 | `am_start`, `pm_start` | `06:00`, `13:00` | When each half day starts (PM start is also the AM/PM split) |
 | `max_days_per_week` | `null` | Optional limit of distinct booked days per ISO week |
 | `booking_retention_days` | `90` | Nightly purge threshold |
-| `team_day_threshold` | `8` | People booked on one day for it to count as a team day |
 
 ### Scheduled jobs
 

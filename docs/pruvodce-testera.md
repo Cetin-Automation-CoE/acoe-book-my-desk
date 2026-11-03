@@ -25,7 +25,7 @@ Odkaz: https://cetin-automation-coe.github.io/acoe-book-my-desk/
 – Panel zavřeš stažením dolů prstem nebo klepnutím mimo něj.
 – Zkontroluj své jméno, případně si přidej fotku – kolegové ji uvidí u tvého místa.
 – Můžeš přepnout jazyk (čeština / English).
-– Oznámení: zapni „Na tomto zařízení“ a vyber, co chceš dostávat (večerní připomínka, pondělní pošťouchnutí, týmové dny). Na iPhonu fungují jen z appky přidané na plochu.
+– Oznámení: zapni „Na tomto zařízení“ a vyber, co chceš dostávat (večerní připomínka, pondělní pošťouchnutí). Na iPhonu fungují jen z appky přidané na plochu.
 
 4) Rezervace (záložka Rezervace)
 – Rezervovat jde jen aktuální pracovní týden, pondělí až pátek. O víkendu se už zobrazí příští týden.

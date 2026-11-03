@@ -7,13 +7,12 @@ import { LunchPicker } from '../components/LunchPicker'
 import { PageBand, Panel } from '../components/PageBand'
 import { ErrorCard, Skeleton } from '../components/States'
 import { useAuth } from '../hooks/useAuth'
-import { useDayBookings, useDayLunch, useDayReleases, useMyBookings, usePresence, useProfiles, useSeats, useToday } from '../hooks/useData'
+import { useDayBookings, useDayLunch, useDayReleases, useMyBookings, useProfiles, useSeats, useToday } from '../hooks/useData'
 import { useT } from '../hooks/useLang'
 import { useSetLunch } from '../hooks/useLunch'
 import { bookableDays, formatBandDate } from '../lib/dates'
 import { lunchCounts, lunchOf } from '../lib/lunch'
 import { dayOccupancy, occupiedCount, presenceForDay } from '../lib/occupancy'
-import { presenceByDay } from '../lib/progress'
 import { ACTIVE_STATUSES, type LunchChoice, type Settings } from '../lib/types'
 
 interface Row {
@@ -46,12 +45,6 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   const seats = useSeats()
   const profiles = useProfiles()
   const myUpcoming = useMyBookings(userId, today)
-  const presenceRows = usePresence(days[0], days[days.length - 1])
-  const presence = useMemo(() => presenceByDay(presenceRows.data ?? [], userId), [presenceRows.data, userId])
-  const teamDays = useMemo(
-    () => new Set(days.filter((d) => (presence.get(d)?.people ?? 0) >= settings.team_day_threshold)),
-    [days, presence, settings.team_day_threshold],
-  )
   const myDays = useMemo(
     () => new Set((myUpcoming.data ?? []).filter((b) => ACTIVE_STATUSES.includes(b.status)).map((b) => b.date)),
     [myUpcoming.data],
@@ -89,7 +82,6 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
 
   const failed = bookings.error ?? seats.error ?? profiles.error ?? releases.error
   const loading = bookings.isPending || seats.isPending || profiles.isPending || releases.isPending
-  const people = new Set((bookings.data ?? []).map((b) => b.user_id)).size
   const iAmIn = rows.some((r) => r.userId === userId)
   const myLunch = lunchOf(lunchPlans.data ?? [], userId, selected)
   const lunch = lunchCounts(lunchPlans.data ?? [], selected, rows.map((r) => r.userId))
@@ -99,7 +91,7 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   return (
     <>
       <PageBand title={t.whoIsIn.title} sub={formatBandDate(selected, true)}>
-        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} mine={myDays} marks={teamDays} />
+        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} mine={myDays} />
       </PageBand>
 
       <Panel>
@@ -118,9 +110,6 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
           <p className="rounded-3xl bg-white p-5 text-base leading-6 text-ink-soft shadow-card">{t.whoIsIn.empty}</p>
         ) : (
           <>
-            {people >= settings.team_day_threshold && (
-              <p className="mb-3.5 rounded-2xl bg-brand px-4 py-3 text-sm font-bold text-white shadow-brand">{t.teamDay.whoIsIn(people)}</p>
-            )}
             <div className="mb-[22px] flex items-center justify-between gap-4 rounded-3xl bg-white p-4 shadow-card-raised">
               <span className="flex items-baseline gap-1.5">
                 <span className="text-[38px] font-extrabold leading-[42px] tracking-[-0.03em] tabular-nums text-brand">

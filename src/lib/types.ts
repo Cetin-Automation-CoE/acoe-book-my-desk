@@ -10,7 +10,7 @@ export interface Person {
   avatar: string | null
 }
 export type PeopleMap = Map<string, Person>
-export type NotifyPrefs = Pick<Tables<'profiles'>, 'notify_tomorrow' | 'notify_monday' | 'notify_team_day'>
+export type NotifyPrefs = Pick<Tables<'profiles'>, 'notify_tomorrow' | 'notify_monday'>
 export type UserStats = Tables<'user_stats'>
 export type Achievement = Tables<'achievements'>
 export type PresenceRow = Pick<Booking, 'date' | 'user_id'>

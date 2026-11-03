@@ -48,7 +48,7 @@ export const api = {
   // Notification switches of the signed-in person.
   async myNotifyPrefs(userId: string): Promise<NotifyPrefs> {
     return unwrap(
-      await supabase.from('profiles').select('notify_tomorrow, notify_monday, notify_team_day').eq('user_id', userId).single(),
+      await supabase.from('profiles').select('notify_tomorrow, notify_monday').eq('user_id', userId).single(),
     )
   },
 
@@ -112,7 +112,7 @@ export const api = {
     )
   },
 
-  // Who is booked on each day of the window (team-day marks and nudges).
+  // Who is booked on each day of the window (the colleagues line on the Book tab).
   async bookingsForRange(from: string, to: string): Promise<PresenceRow[]> {
     return unwrap(
       await supabase.from('bookings').select('date, user_id').gte('date', from).lte('date', to).in('status', ACTIVE_STATUSES),
