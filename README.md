@@ -14,7 +14,7 @@ Plan and decisions: [Project plan](https://claude.ai/artifact/95CmY1gzyEdUJVkzhL
 | Frontend | Vite + React + TypeScript + Tailwind, installable PWA (`vite-plugin-pwa`), `HashRouter`; visual design from `docs/design/` |
 | Hosting | GitHub Pages, deployed by GitHub Actions on every push to `main` |
 | Backend | Supabase (Postgres, Auth, Realtime, pg_cron), EU region; schema in `supabase/migrations` |
-| Email | Custom SMTP (Mailjet) for sign-in codes; Web Push (VAPID) for notifications |
+| Email | Custom SMTP (Brevo) for sign-in codes; Web Push (VAPID) for notifications |
 
 All booking rules are enforced in Postgres functions behind RLS; the frontend only calls them.
 
@@ -88,16 +88,20 @@ Useful scripts:
      in the phone's notification). Set the subject to "Your BookMyDesk sign-in code".
    - URL Configuration → Site URL: `https://<org>.github.io/<repo>/`.
 4. **Custom SMTP** — the built-in Supabase mailer only reaches project team members at 2 emails
-   per hour. The project uses Mailjet (free tier): validate a sender address under Senders & Domains,
-   copy the API key and secret key, then in Authentication → Emails → SMTP Settings enter host
-   `in-v3.mailjet.com`, port 587, username = API key, password = secret key, sender = the validated
-   address. Rate limits (Authentication → Rate Limits) default to 30 emails/hour once custom SMTP
-   is on, which is enough.
+   per hour. The project uses Brevo (free plan, 300 emails/day): verify a sender address under
+   Senders, Domains & Dedicated IPs → Senders, then under SMTP & API → SMTP generate an SMTP key and
+   note the login shown there (`<id>@smtp-brevo.com`). In Authentication → Emails → SMTP Settings
+   enter host `smtp-relay.brevo.com`, port 587, username = that login, password = the SMTP key,
+   sender = the verified address. Rate limits (Authentication → Rate Limits) default to 30 emails/hour
+   once custom SMTP is on, which is enough.
    Deliverability caveat: the sender must be on a domain that is DNS-authenticated (SPF/DKIM) for the
    provider, otherwise Microsoft 365 quarantines the codes sent to `@cetin.cz` mailboxes as spoofing.
    `cetin.cz` itself cannot be authenticated without IT, so either authenticate a domain you own in
-   Mailjet, or (interim) let people sign in with a personal mailbox listed in `directory` (see Admin
-   tasks). Brevo works the same way but refuses senders on DMARC-protected domains outright.
+   Brevo, or (interim) let people sign in with a personal mailbox listed in `directory` (see Admin
+   tasks). Brevo refuses senders on DMARC-protected domains outright, so the sender stays a freemail
+   address until a domain is authenticated. Mailjet (`in-v3.mailjet.com`, username = API key,
+   password = secret key) was used before and remains a fallback; it held Gmail deliveries in
+   "Queued" on its shared free-tier address.
 5. **Email domain allow-list** — defaults to `cetin.cz`; change in the SQL editor if needed:
    `update public.settings set allowed_email_domains = '{cetin.cz}';`
 6. **GitHub Pages** — repository Settings → Pages → Source: *GitHub Actions*.
@@ -183,10 +187,10 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
 - **Profile photos** live in the public `avatars` storage bucket (created by migration `20261104120000`, 2 MB
   limit, JPEG/PNG/WebP) as `<user_id>/avatar.jpg`; the app shrinks them to 256 px before upload. To remove
   someone's photo: delete the object in Storage and `update public.profiles set avatar_url = null where ...`.
-- **Sign-in codes stop arriving:** check Mailjet → Statistics (Delivered / Blocked / Bounced), then
-  the recipient's Junk folder and the Microsoft 365 quarantine (https://security.microsoft.com/quarantine).
-  Mailjet's free tier allows 200 emails/day; the API key and secret in Supabase → Authentication →
-  Emails → SMTP Settings must match Mailjet → Account → API Key Management.
+- **Sign-in codes stop arriving:** check Brevo → Transactional → Logs (Delivered / Blocked / Soft bounce),
+  then the recipient's Junk folder and the Microsoft 365 quarantine (https://security.microsoft.com/quarantine).
+  Brevo's free plan allows 300 emails/day; the login and SMTP key in Supabase → Authentication →
+  Emails → SMTP Settings must match Brevo → SMTP & API → SMTP.
 
 ## Booking rules (as implemented)
 
