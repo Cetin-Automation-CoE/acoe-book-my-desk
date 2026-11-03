@@ -157,7 +157,11 @@ body {
     opacity: 1;
   }
 }
+/* A sheet never fills its screen: a strip of shade stays above it to tap, below the status bar (and
+   the notch or Dynamic Island) on phones that have one. Its height is a share of the dialog box,
+   not of the window: inside the desktop phone frame the screen is smaller than the window. */
 .sheet-panel {
+  max-height: calc(100% - max(2.5rem, env(safe-area-inset-top) + 1rem));
   animation: sheet-in 320ms var(--ease-out-soft);
 }
 .sheet-overlay {
