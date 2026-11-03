@@ -40,7 +40,9 @@ interface Controller {
 // closes it; every close slides the sheet out unless motion is reduced.
 // The sheet never fills its screen: its height is a share of the dialog box, not of the window,
 // because inside the desktop phone frame the screen is smaller than the window. A strip of shade
-// stays above it to tap, and the handle sticks to the top while long content scrolls.
+// stays above it to tap, and the handle sticks to the top while long content scrolls (content
+// fades out under it). The handle carries the sheet's top padding itself: a sticky box cannot
+// start above its parent's content box, so a negative top margin would push it over the content.
 export function Sheet({ open, title, heading = false, onClose, children }: SheetProps) {
   const t = useT()
   const panel = useRef<HTMLDivElement>(null)
@@ -173,12 +175,12 @@ export function Sheet({ open, title, heading = false, onClose, children }: Sheet
       />
       <div
         ref={panel}
-        className="sheet-panel relative max-h-[calc(100%-2.5rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[32px] bg-white px-5 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-2 shadow-sheet [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="sheet-panel relative max-h-[calc(100%-2.5rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-[32px] bg-white px-5 pb-[calc(2.5rem+env(safe-area-inset-bottom))] shadow-sheet [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         <div
           aria-hidden
           onPointerDown={onHandlePointerDown}
-          className="sticky top-0 z-10 -mx-5 -mt-2 cursor-grab bg-white px-5 pb-4 pt-2 active:cursor-grabbing"
+          className="sticky top-0 z-10 -mx-5 cursor-grab bg-[linear-gradient(to_bottom,white_60%,rgba(255,255,255,0))] px-5 pb-4 pt-2 active:cursor-grabbing"
         >
           <div className="mx-auto h-[5px] w-[38px] rounded-full bg-line" />
         </div>
