@@ -41,6 +41,7 @@ Odkaz: https://cetin-automation-coe.github.io/acoe-book-my-desk/
 
 7) Moje místo – jen pro majitele držených míst
 – Vaše místa jsou pro vás držená. V záložce Moje místo klepnutím uvolníte dny, kdy nepřijdete, aby si je mohli zarezervovat ostatní. Dalším klepnutím je vezmete zpět.
+– Rezervujete jen svoje místo; ostatní místa jsou pro vás v appce ztlumená.
 
 8) Dny v kanceláři a odznaky
 – V profilu se ti počítají dny v kanceláři (každý den s rezervací, jakmile začne), týdny v řadě a odznaky. Je to jen pro zábavu.

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { gapsBefore } from './dates'
-import { alternativeSeat, usualSeat } from './smart'
+import type { SeatView } from './seatState'
+import { alternativeSeat, cardVariant, usualSeat } from './smart'
+import type { Seat } from './types'
 
 const seats = Array.from({ length: 12 }, (_, i) => {
   const n = i + 1
@@ -61,5 +63,33 @@ describe('gapsBefore', () => {
 
   it('has no gaps in a plain run of days', () => {
     expect(gapsBefore(['2026-11-03', '2026-11-04'])).toEqual(new Set())
+  })
+})
+
+// A seat view with only what cardVariant looks at.
+const view = (n: number, kind: SeatView['kind']): SeatView =>
+  ({ seat: { ...seats[n - 1] } as Seat, kind }) as SeatView
+
+describe('cardVariant', () => {
+  const roomViews = (taken: number[]) => [2, 1, 4, 3].map((n) => view(n, taken.includes(n) ? 'taken' : 'free'))
+
+  it('offers the usual seat while it is free', () => {
+    expect(cardVariant({ mine: [], usualId: 's1', views: roomViews([]), choice: 'FULL' })).toEqual({
+      kind: 'usual',
+      seatId: 's1',
+      slot: 'FULL',
+    })
+  })
+
+  it('offers the nearest free seat when the usual one is taken', () => {
+    expect(cardVariant({ mine: [], usualId: 's1', views: roomViews([1]), choice: 'FULL' })).toMatchObject({
+      kind: 'alternative',
+      seatId: 's2',
+      nearness: 'pair',
+    })
+  })
+
+  it('offers nothing else to a seat owner whose own seat is taken', () => {
+    expect(cardVariant({ mine: [], usualId: 's1', views: roomViews([1]), choice: 'FULL', lockedToUsual: true })).toBeNull()
   })
 })

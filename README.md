@@ -203,7 +203,7 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | Same day | Today can be booked until the afternoon ends; after 13:00 a booking covers the rest of the day. |
 | Limits | One active booking per seat per half day; one per person per half day (partial unique indexes), which in the app means one seat per person per day. Optional `max_days_per_week`. |
 | Cancel | In the app, until the day starts at 06:00; the database itself still allows a half that has not started to be cancelled on its own. |
-| Semi-fixed seats | `seats.owner_id` holds the seat; others can book it only after the owner releases the day (My seat tab). Releasing cancels the owner's own booking for that day; a released day cannot be taken back once a colleague booked it. |
+| Semi-fixed seats | `seats.owner_id` holds the seat; others can book it only after the owner releases the day (My seat tab). Releasing cancels the owner's own booking for that day; a released day cannot be taken back once a colleague booked it. An owner books their own seat only (`owner_own_seat_only`), even on a day they released it; the app dims every other seat for them. |
 | No check-in | A reservation is the commitment: there is no "I'm here", no deadline and no auto-release (removed 2026-11-02; the `checked_in` / `released` statuses only remain for rows written before). |
 | Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
 | Team day | A day with `team_day_threshold` (8) or more people booked is marked on the day strip; the Book tab nudges towards it and Who's in shows a banner. |

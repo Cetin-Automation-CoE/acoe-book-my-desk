@@ -95,15 +95,20 @@ export function DayView({ settings }: { settings: Settings }) {
     () => (bookings.data ?? []).filter((b) => b.user_id === userId && ACTIVE_STATUSES.includes(b.status)),
     [bookings.data, userId],
   )
+  const ownerSeat = seats.data?.find((s) => s.owner_id === userId && s.active) ?? null
   // One seat per person per day: with a booking, the other free seats are shown but not tappable.
+  // A seat owner books their own seat only, so every other seat is blocked for them.
   const blocked = mineOnDay.length > 0
+  const blockedFor = (v: SeatView) => blocked || (ownerSeat !== null && v.seat.id !== ownerSeat.id)
   const myDays = useMemo(
     () => new Set((myUpcoming.data ?? []).filter((b) => ACTIVE_STATUSES.includes(b.status)).map((b) => b.date)),
     [myUpcoming.data],
   )
-  const ownerSeat = seats.data?.find((s) => s.owner_id === userId && s.active) ?? null
   const usualId = useMemo(() => usualSeat(recent.data ?? [], ownerSeat?.id ?? null), [recent.data, ownerSeat?.id])
-  const variant = useMemo(() => cardVariant({ mine: mineOnDay, usualId, views, choice }), [mineOnDay, usualId, views, choice])
+  const variant = useMemo(
+    () => cardVariant({ mine: mineOnDay, usualId, views, choice, lockedToUsual: ownerSeat !== null }),
+    [mineOnDay, usualId, views, choice, ownerSeat],
+  )
 
   const presence = useMemo(() => presenceByDay(presenceRows.data ?? [], userId), [presenceRows.data, userId])
   const teamDays = useMemo(
@@ -168,7 +173,7 @@ export function DayView({ settings }: { settings: Settings }) {
   // Realtime: flash the tile that just changed; drop the book sheet if its seat was taken meanwhile.
   const change = useSeatChange()
   const flashId = change && change.date === selected ? change.seatId : null
-  const sheetStillBookable = pending?.kind !== 'book' || !bookView || (bookView.kind === 'free' && !blocked)
+  const sheetStillBookable = pending?.kind !== 'book' || !bookView || (bookView.kind === 'free' && !blockedFor(bookView))
   useEffect(() => {
     if (sheetStillBookable) return
     const id = window.setTimeout(() => {
@@ -179,7 +184,7 @@ export function DayView({ settings }: { settings: Settings }) {
   }, [sheetStillBookable, toast, t])
 
   const onTap = (view: SeatView) => {
-    if (view.kind === 'free' && !blocked) setPending({ kind: 'book', seatId: view.seat.id })
+    if (view.kind === 'free' && !blockedFor(view)) setPending({ kind: 'book', seatId: view.seat.id })
     else if (view.kind === 'mine') setPending({ kind: 'mine', seatId: view.seat.id })
   }
 
@@ -229,14 +234,14 @@ export function DayView({ settings }: { settings: Settings }) {
                 people={profiles.data ?? new Map()}
                 userId={userId}
                 myName={myName}
-                blocked={blocked}
+                isBlocked={blockedFor}
                 flashId={flashId}
                 selectedId={pending?.kind === 'book' ? pending.seatId : null}
                 onTap={onTap}
               />
             </div>
             <p className="mx-1 mt-3.5 text-[13px] leading-[18px] text-muted">
-              {t.seats.legend}
+              {ownerSeat ? t.seats.ownerLegend : t.seats.legend}
               {teamDays.size > 0 && ` ${t.teamDay.legend}`}
             </p>
           </>

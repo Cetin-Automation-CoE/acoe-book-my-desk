@@ -70,14 +70,17 @@ interface CardArgs {
   views: SeatView[]
   // What a booking covers: the whole day, or what is left of today.
   choice: SlotChoice
+  // A seat owner books their own seat only, so no alternative is offered.
+  lockedToUsual?: boolean
 }
 
 // Which card the Book tab shows for the selected day: my booking, my usual seat, or the nearest free seat.
-export function cardVariant({ mine, usualId, views, choice }: CardArgs): CardVariant | null {
+export function cardVariant({ mine, usualId, views, choice, lockedToUsual = false }: CardArgs): CardVariant | null {
   if (mine.length > 0) return { kind: 'booked', bookings: mine }
   if (!usualId) return null
   const usual = views.find((v) => v.seat.id === usualId)
   if (usual && usual.kind === 'free') return { kind: 'usual', seatId: usualId, slot: choice }
+  if (lockedToUsual) return null
   const candidates = views.filter((v) => v.kind === 'free').map((v) => v.seat.id)
   const alt = alternativeSeat(usualId, candidates, views.map((v) => v.seat))
   return alt ? { kind: 'alternative', seatId: alt.seatId, nearness: alt.nearness, slot: choice, usualId } : null

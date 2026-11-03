@@ -9,8 +9,8 @@ interface SeatGridProps {
   people: PeopleMap
   userId: string
   myName: string
-  // I already have a seat that day: free seats are shown but not tappable.
-  blocked: boolean
+  // Free seats I may not book (I already have one that day, or I own another): shown, not tappable.
+  isBlocked: (view: SeatView) => boolean
   flashId: string | null
   selectedId: string | null
   onTap: (view: SeatView) => void
@@ -20,7 +20,7 @@ interface SeatGridProps {
 // Seats arrive in room order (seats.sort_order), so the grid mirrors the floor without a map.
 export const PAIRS_PER_BLOCK = 2
 
-export function SeatGrid({ views, people, userId, myName, blocked, flashId, selectedId, onTap }: SeatGridProps) {
+export function SeatGrid({ views, people, userId, myName, isBlocked, flashId, selectedId, onTap }: SeatGridProps) {
   const t = useT()
   if (views.length === 0) return <p className="text-muted">{t.seats.noSeats}</p>
 
@@ -68,7 +68,7 @@ export function SeatGrid({ views, people, userId, myName, blocked, flashId, sele
                         people={people}
                         userId={userId}
                         myName={myName}
-                        blocked={blocked}
+                        blocked={isBlocked(view)}
                         flash={flashId === view.seat.id}
                         selected={selectedId === view.seat.id}
                         index={index++}
