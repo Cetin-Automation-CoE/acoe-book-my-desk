@@ -1,7 +1,7 @@
 import { useT } from '../hooks/useLang'
 import { formatDayLong } from '../lib/dates'
 import type { CardVariant } from '../lib/smart'
-import type { Seat, SlotChoice } from '../lib/types'
+import type { Seat } from '../lib/types'
 import { Button } from './Button'
 
 interface TodayCardProps {
@@ -11,7 +11,7 @@ interface TodayCardProps {
   today: string
   busy: boolean
   onManage: () => void
-  onQuickBook: (seatId: string, slot: SlotChoice) => void
+  onQuickBook: (seatId: string) => void
 }
 
 const codeOf = (seats: Seat[], id: string) => seats.find((s) => s.id === id)?.code ?? ''
@@ -30,9 +30,7 @@ export function TodayCard({ variant, seats, selected, today, busy, onManage, onQ
         <div className="flex min-w-0 flex-1 flex-col gap-px">
           <span className="truncate text-xs font-bold uppercase leading-4 tracking-[0.04em] text-muted">{t.card.booked}</span>
           <span className="truncate text-base font-extrabold leading-[22px] tabular-nums text-ink">{codes.join(' · ')}</span>
-          <span className="text-[13.5px] leading-[18px] text-muted">
-            {t.slots[variant.slotLabel]} · {formatDayLong(selected, today)}
-          </span>
+          <span className="text-[13.5px] leading-[18px] text-muted">{formatDayLong(selected, today)}</span>
         </div>
         <Button variant="secondary" className="min-h-11 rounded-[14px] px-3.5 text-[15px] font-extrabold" onClick={onManage}>
           {t.card.manage}
@@ -62,13 +60,11 @@ export function TodayCard({ variant, seats, selected, today, busy, onManage, onQ
           <span className="truncate">{eyebrow}</span>
         </span>
         <span className="truncate text-base font-extrabold leading-[22px] tabular-nums text-ink">{code}</span>
-        <span className="text-[13.5px] leading-[18px] text-muted">
-          {t.slots[variant.slot]} · {sub}
-        </span>
+        <span className="text-[13.5px] leading-[18px] text-muted">{sub}</span>
       </div>
       <Button
         className="min-h-11 rounded-[14px] px-3.5 text-[15px] font-extrabold"
-        onClick={() => onQuickBook(variant.seatId, variant.slot)}
+        onClick={() => onQuickBook(variant.seatId)}
         disabled={busy}
       >
         {busy ? t.seats.booking : t.seats.book}

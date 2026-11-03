@@ -1,7 +1,6 @@
 import { useT } from '../hooks/useLang'
-import { canCancel, dayLabel } from '../lib/dates'
-import type { Booking, Seat, Settings, SlotChoice } from '../lib/types'
-import { HalfGlyph } from './HalfGlyph'
+import { canCancelAll, dayLabel } from '../lib/dates'
+import type { Booking, Seat, Settings } from '../lib/types'
 
 interface TicketProps {
   date: string
@@ -12,19 +11,18 @@ interface TicketProps {
   now: Date
   index: number
   busy: boolean
-  onCancel: (b: Booking) => void
+  onCancel: (bookings: Booking[]) => void
 }
 
-// One ticket per day with bookings: a date stub, a perforation, then one row per half day.
+// One ticket per day with a booking: a date stub, a perforation, then the seat and its state.
 // Today's ticket is blue.
 export function Ticket({ date, bookings, seats, settings, today, now, index, busy, onCancel }: TicketProps) {
   const t = useT()
   const label = dayLabel(date, today)
   const codeOf = (id: string) => seats.find((s) => s.id === id)?.code ?? '…'
-  const sorted = [...bookings].sort((a, b) => (a.slot === 'AM' ? -1 : 1) - (b.slot === 'AM' ? -1 : 1))
   const hero = date === today
-  const codes = [...new Set(sorted.map((b) => codeOf(b.seat_id)))]
-  const slotLabel: SlotChoice = sorted.length > 1 ? 'FULL' : sorted[0].slot
+  const codes = [...new Set(bookings.map((b) => codeOf(b.seat_id)))]
+  const cancellable = canCancelAll(bookings, settings, now)
   const muted = hero ? 'text-white/70' : 'text-muted'
 
   return (
@@ -50,39 +48,23 @@ export function Ticket({ date, bookings, seats, settings, today, now, index, bus
       <span aria-hidden className="absolute -top-2.5 left-[68px] h-5 w-5 rounded-full bg-surface" />
       <span aria-hidden className="absolute -bottom-2.5 left-[68px] h-5 w-5 rounded-full bg-surface" />
       <div className={`my-4 shrink-0 border-l-2 border-dashed ${hero ? 'border-white/28' : 'border-line'}`} />
-      <div className="flex min-w-0 flex-1 flex-col gap-2.5 py-4 pl-4 pr-3.5">
-        <div className="flex items-center justify-between gap-2">
+      <div className="flex min-w-0 flex-1 items-center justify-between gap-2.5 py-4 pl-4 pr-3.5">
+        <div className="flex min-w-0 flex-col gap-1">
           <span className="text-xl font-extrabold leading-6 tracking-[-0.01em] tabular-nums">{codes.join(' · ')}</span>
-          <span className={`flex items-center gap-1.5 text-[12.5px] font-bold ${muted}`}>
-            <HalfGlyph slot={slotLabel} size={12} />
-            {t.slots[slotLabel]}
-          </span>
+          <span className={`text-[12.5px] leading-4 ${muted}`}>{cancellable ? t.myBookings.cancelUntilStart : t.myBookings.underway}</span>
         </div>
-        {sorted.map((b) => (
-          <div key={b.id} className="flex min-h-8 items-center justify-between gap-2.5">
-            <div className="flex min-w-0 flex-col gap-px">
-              <span className="text-sm font-bold leading-[18px]">
-                {t.slots[b.slot]}
-                {codes.length > 1 && ` · ${codeOf(b.seat_id)}`}
-              </span>
-              <span className={`text-[12.5px] leading-4 ${muted}`}>
-                {b.status === 'cancelled' ? t.myBookings.cancelled : canCancel(b, settings, now) ? t.myBookings.cancelUntilStart : t.myBookings.underway}
-              </span>
-            </div>
-            {canCancel(b, settings, now) && (
-              <button
-                type="button"
-                onClick={() => onCancel(b)}
-                disabled={busy}
-                className={`min-h-[34px] shrink-0 rounded-[10px] border-[1.5px] px-3 text-[13px] font-bold ${
-                  hero ? 'border-white/40 text-white' : 'border-brand/25 text-brand'
-                }`}
-              >
-                {t.myBookings.cancel}
-              </button>
-            )}
-          </div>
-        ))}
+        {cancellable && (
+          <button
+            type="button"
+            onClick={() => onCancel(bookings)}
+            disabled={busy}
+            className={`min-h-[34px] shrink-0 rounded-[10px] border-[1.5px] px-3 text-[13px] font-bold ${
+              hero ? 'border-white/40 text-white' : 'border-brand/25 text-brand'
+            }`}
+          >
+            {t.myBookings.cancel}
+          </button>
+        )}
       </div>
     </article>
   )

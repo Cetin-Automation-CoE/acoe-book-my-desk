@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, bookableDays, canCancel, dayLabel, isoWeekday, minutesSinceMidnightIn, todayIn } from './dates'
+import { addDays, bookableDays, canCancel, canCancelAll, dayChoice, dayLabel, isoWeekday, minutesSinceMidnightIn, todayIn } from './dates'
 import type { Booking, Settings } from './types'
 
 const TZ = 'Europe/Prague'
@@ -143,5 +143,28 @@ describe('dayLabel', () => {
     expect(label.weekday).toBe('Thu')
     expect(label.day).toBe('5')
     expect(label.month).toBe('Nov')
+  })
+})
+
+describe('dayChoice', () => {
+  const today = '2026-11-04'
+  it('is the full day for a later day', () => {
+    expect(dayChoice('2026-11-05', today, 23 * 60, settings)).toBe('FULL')
+  })
+  it('is the full day for today before the afternoon starts', () => {
+    expect(dayChoice(today, today, 12 * 60 + 59, settings)).toBe('FULL')
+  })
+  it('is the rest of the day once the afternoon has started', () => {
+    expect(dayChoice(today, today, 13 * 60, settings)).toBe('PM')
+  })
+})
+
+describe('canCancelAll', () => {
+  it('needs every booking of the day to be cancellable', () => {
+    expect(canCancelAll([booking(), booking({ id: 'b2', slot: 'PM' })], settings, at('05:00'))).toBe(true)
+    expect(canCancelAll([booking(), booking({ id: 'b2', slot: 'PM' })], settings, at('09:00'))).toBe(false)
+  })
+  it('is false for no bookings', () => {
+    expect(canCancelAll([], settings, at('05:00'))).toBe(false)
   })
 })

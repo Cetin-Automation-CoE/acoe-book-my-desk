@@ -1,7 +1,7 @@
 # BookMyDesk
 
 Mobile-first web app for booking seats in the office open space. Colleagues sign in with their
-work email (6-digit code), pick a day and a half-day slot, and tap a free seat. Seat owners can
+work email (6-digit code), pick a day and tap a free seat. Seat owners can
 release their semi-fixed seats. The UI is in English and Czech (switch in the profile sheet).
 
 Plan and decisions: [Project plan](https://claude.ai/artifact/95CmY1gzyEdUJVkzhLnKLh) ·
@@ -198,12 +198,12 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 
 | Rule | Behaviour |
 |------|-----------|
-| Slots | `AM` 06:00–13:00, `PM` 13:00–24:00 (`am_start`, `pm_start`). "Full day" books both halves atomically. |
+| Whole days | The app books whole days: both halves (`AM` 06:00–13:00, `PM` 13:00–24:00, from `am_start` / `pm_start`) in one atomic call, or only the afternoon once today's afternoon has started. The database still stores and validates halves (decision 61). |
 | Window | The current working week: today through the week's last working day (`working_days`, default Mon–Fri). On a weekend the coming week opens. Other dates are rejected (`outside_window`, `not_working_day`). |
-| Same day | A half day can be booked until it ends. |
-| Limits | One active booking per seat per half day; one per person per half day (partial unique indexes). Optional `max_days_per_week`. |
-| Cancel | Any time before the half day starts. Checked-in bookings cannot be cancelled. |
-| Semi-fixed seats | `seats.owner_id` holds the seat; others can book a half day only after the owner releases it (My seat tab). Releasing cancels the owner's own booking for that half day; a released half day cannot be taken back once a colleague booked it. |
+| Same day | Today can be booked until the afternoon ends; after 13:00 a booking covers the rest of the day. |
+| Limits | One active booking per seat per half day; one per person per half day (partial unique indexes), which in the app means one seat per person per day. Optional `max_days_per_week`. |
+| Cancel | In the app, until the day starts at 06:00; the database itself still allows a half that has not started to be cancelled on its own. |
+| Semi-fixed seats | `seats.owner_id` holds the seat; others can book it only after the owner releases the day (My seat tab). Releasing cancels the owner's own booking for that day; a released day cannot be taken back once a colleague booked it. |
 | No check-in | A reservation is the commitment: there is no "I'm here", no deadline and no auto-release (removed 2026-11-02; the `checked_in` / `released` statuses only remain for rows written before). |
 | Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
 | Team day | A day with `team_day_threshold` (8) or more people booked is marked on the day strip; the Book tab nudges towards it and Who's in shows a banner. |
@@ -229,7 +229,7 @@ never see each other's numbers.
 | First day in | First office day |
 | Regular / Resident | 10 / 50 office days |
 | Explorer | Sat in 6 different seats |
-| Full house | A half day when every active seat was booked |
+| Full house | Every active seat booked at the same time |
 | Team day | A day with `team_day_threshold` people booked |
 | On a roll | 4-week streak |
 | Full week | An office day on every working day of one week |

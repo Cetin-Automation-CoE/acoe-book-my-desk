@@ -94,9 +94,9 @@ describe('seatView for a full day', () => {
     expect(v.bookableSlots).toEqual(['AM', 'PM'])
   })
 
-  it('is partly free when only the afternoon is free', () => {
+  it('is taken for the whole day when a colleague has one half', () => {
     const v = view({ choice: 'FULL', bookings: [booking({ user_id: 'bob' })] })
-    expect(v.kind).toBe('partly')
+    expect(v.kind).toBe('taken')
     expect(v.bookableSlots).toEqual(['PM'])
     expect(v.takenBy).toEqual(['bob'])
   })
@@ -141,9 +141,9 @@ describe('seatView for owner-held seats', () => {
     expect(v.kind).toBe('free')
   })
 
-  it('is partly free for a full day when only the morning is released', () => {
+  it('is still held for the whole day when only the morning is released', () => {
     const v = view({ seat: owned, choice: 'FULL', releases: [release()] })
-    expect(v.kind).toBe('partly')
+    expect(v.kind).toBe('held')
     expect(v.bookableSlots).toEqual(['AM'])
     expect(v.heldSlots).toEqual(['PM'])
   })

@@ -1,7 +1,7 @@
 import { useT } from '../hooks/useLang'
 import { roomBlocks } from '../lib/layout'
 import type { SeatView } from '../lib/seatState'
-import type { PeopleMap, Slot } from '../lib/types'
+import type { PeopleMap } from '../lib/types'
 import { SeatTile } from './SeatTile'
 
 interface SeatGridProps {
@@ -9,8 +9,8 @@ interface SeatGridProps {
   people: PeopleMap
   userId: string
   myName: string
-  myHeldSlots: ReadonlySet<Slot>
-  endedSlots: ReadonlySet<Slot>
+  // I already have a seat that day: free seats are shown but not tappable.
+  blocked: boolean
   flashId: string | null
   selectedId: string | null
   onTap: (view: SeatView) => void
@@ -20,7 +20,7 @@ interface SeatGridProps {
 // Seats arrive in room order (seats.sort_order), so the grid mirrors the floor without a map.
 export const PAIRS_PER_BLOCK = 2
 
-export function SeatGrid({ views, people, userId, myName, myHeldSlots, endedSlots, flashId, selectedId, onTap }: SeatGridProps) {
+export function SeatGrid({ views, people, userId, myName, blocked, flashId, selectedId, onTap }: SeatGridProps) {
   const t = useT()
   if (views.length === 0) return <p className="text-muted">{t.seats.noSeats}</p>
 
@@ -68,8 +68,7 @@ export function SeatGrid({ views, people, userId, myName, myHeldSlots, endedSlot
                         people={people}
                         userId={userId}
                         myName={myName}
-                        myHeldSlots={myHeldSlots}
-                        endedSlots={endedSlots}
+                        blocked={blocked}
                         flash={flashId === view.seat.id}
                         selected={selectedId === view.seat.id}
                         index={index++}

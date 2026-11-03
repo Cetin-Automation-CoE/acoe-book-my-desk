@@ -1,11 +1,9 @@
-import { useEffect, useState } from 'react'
 import { useT } from '../hooks/useLang'
-import { canCancel, formatDayLong, formatTime, slotRange } from '../lib/dates'
+import { canCancelAll, formatDayLong, formatTime, slotRange } from '../lib/dates'
 import { roomBlocks } from '../lib/layout'
 import type { SeatView } from '../lib/seatState'
-import { SLOTS, slotsFor, type Booking, type Settings, type Slot, type SlotChoice } from '../lib/types'
+import type { Booking, Settings, SlotChoice } from '../lib/types'
 import { Button } from './Button'
-import { HalfGlyph } from './HalfGlyph'
 import { MiniRoomMap } from './MiniRoomMap'
 import { PAIRS_PER_BLOCK } from './SeatGrid'
 import { Sheet } from './Sheet'
@@ -32,100 +30,44 @@ function SeatHead({ view, views, date, today }: { view: SeatView; views: SeatVie
   )
 }
 
+// What the booking covers: the whole day, or what is left of today once the afternoon has started.
+function Cover({ choice, settings }: { choice: SlotChoice; settings: Settings }) {
+  const t = useT()
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border-2 border-brand bg-brand/5 px-4 py-3 text-brand">
+      <span className="text-[15.5px] font-extrabold leading-5">{choice === 'FULL' ? t.slots.FULL : t.seats.restOfDay}</span>
+      <span className="text-[13px] font-semibold tabular-nums text-brand/70">{slotRange(choice, settings)}</span>
+    </div>
+  )
+}
+
 interface BookSheetProps {
-  // The seat's view computed for the full day, so both halves are known whatever the toggle says.
   view: SeatView | null
   views: SeatView[]
   date: string
   today: string
   settings: Settings
-  myHeldSlots: ReadonlySet<Slot>
-  // Halves of the selected day that are already over, and those that have started (no cancelling).
-  endedSlots: ReadonlySet<Slot>
-  startedSlots: ReadonlySet<Slot>
-  myHeldCode: string | null
+  choice: SlotChoice
+  // The day has started: a booking made now cannot be cancelled.
+  started: boolean
   busy: boolean
-  onBook: (seatId: string, slot: SlotChoice) => void
+  onBook: (seatId: string) => void
   onClose: () => void
 }
 
-export function BookSheet({
-  view,
-  views,
-  date,
-  today,
-  settings,
-  myHeldSlots,
-  endedSlots,
-  startedSlots,
-  myHeldCode,
-  busy,
-  onBook,
-  onClose,
-}: BookSheetProps) {
+export function BookSheet({ view, views, date, today, settings, choice, started, busy, onBook, onClose }: BookSheetProps) {
   const t = useT()
-  const [slot, setSlot] = useState<SlotChoice>('FULL')
-
-  const seatFree = (s: Slot) => view?.halves[s]?.state === 'free' && !endedSlots.has(s)
-  const allowed = (choice: SlotChoice) => slotsFor(choice).every((s) => seatFree(s) && !myHeldSlots.has(s))
-
-  useEffect(() => {
-    if (!view) return
-    const first = (['FULL', 'AM', 'PM'] as SlotChoice[]).find(allowed) ?? 'FULL'
-    setSlot(first)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view?.seat.id, date])
-
   if (!view) return null
-  const blockedByMine = SLOTS.find((s) => seatFree(s) && myHeldSlots.has(s))
-  const onlyHalf = SLOTS.filter(seatFree)
-  const note = blockedByMine && myHeldCode ? t.seats.alreadyHave(myHeldCode) : onlyHalf.length === 1 ? t.seats.onlyFree(t.slots[onlyHalf[0]]) : null
-  const rule = slotsFor(slot).some((s) => startedSlots.has(s))
-    ? t.seats.startedRule
-    : t.seats.cancelRule(formatTime(slot === 'PM' ? settings.pm_start : settings.am_start))
-
+  const rule = started ? t.seats.startedRule : t.seats.cancelRule(formatTime(settings.am_start))
   return (
     <Sheet open title={t.seats.bookTitle(view.seat.code)} onClose={onClose}>
       <SeatHead view={view} views={views} date={date} today={today} />
       <div className="flex flex-col gap-3.5">
-        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Half day">
-          {(['AM', 'PM', 'FULL'] as SlotChoice[]).map((choice) => {
-            const ok = allowed(choice)
-            const active = slot === choice
-            const ended = slotsFor(choice).filter((s) => endedSlots.has(s))
-            const why = ok
-              ? slotRange(choice, settings)
-              : ended.length > 0
-                ? choice === 'FULL' && ended.length === 1
-                  ? t.seats.halfOver(t.slots[ended[0]])
-                  : t.seats.over
-                : slotsFor(choice).some((s) => !seatFree(s))
-                  ? t.seats.taken
-                  : t.seats.youHave
-            return (
-              <button
-                key={choice}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                disabled={!ok}
-                onClick={() => setSlot(choice)}
-                className={`flex flex-col items-start gap-1.5 rounded-2xl border-2 p-3 text-left transition ${
-                  active ? 'border-brand bg-brand/5 text-brand' : 'border-line text-ink'
-                } ${ok ? '' : 'opacity-45'}`}
-              >
-                <HalfGlyph slot={choice} size={16} />
-                <span className="text-sm font-extrabold leading-[18px]">{t.slots[choice]}</span>
-                <span className="text-[11.5px] font-semibold leading-[14px] tabular-nums text-muted">{why}</span>
-              </button>
-            )
-          })}
-        </div>
-        {note && <p className="rounded-xl bg-brand/6 px-3 py-2.5 text-[13.5px] font-semibold leading-[19px] text-brand">{note}</p>}
+        <Cover choice={choice} settings={settings} />
         <p className="text-[13.5px] leading-[19px] text-muted">{rule}</p>
         <div className="mt-0.5 flex flex-col gap-1">
-          <Button className="font-extrabold" onClick={() => onBook(view.seat.id, slot)} disabled={busy || !allowed(slot)}>
-            {busy ? t.seats.booking : t.seats.bookBtn(t.slots[slot])}
+          <Button className="font-extrabold" onClick={() => onBook(view.seat.id)} disabled={busy}>
+            {busy ? t.seats.booking : t.seats.book}
           </Button>
           <Button variant="ghost" className="min-h-12 rounded-[14px] text-base" onClick={onClose} disabled={busy}>
             {t.close}
@@ -144,45 +86,39 @@ interface MineSheetProps {
   now: Date
   settings: Settings
   busy: boolean
-  onCancel: (booking: Booking) => void
+  onCancel: (bookings: Booking[]) => void
   onClose: () => void
 }
 
+// My booking on this seat for the day: one row, cancellable until the day starts.
 export function MineSheet({ view, views, date, today, now, settings, busy, onCancel, onClose }: MineSheetProps) {
   const t = useT()
-  if (!view) return null
+  if (!view || view.mineBookings.length === 0) return null
+  const mine = [...view.mineBookings].sort((a, b) => (a.slot === 'AM' ? -1 : 1) - (b.slot === 'AM' ? -1 : 1))
+  const cover: SlotChoice = mine.length > 1 ? 'FULL' : mine[0].slot
+  const cancellable = canCancelAll(mine, settings, now)
   return (
     <Sheet open title={`${view.seat.code} · ${formatDayLong(date, today)}`} onClose={onClose}>
       <SeatHead view={view} views={views} date={date} today={today} />
       <div className="flex flex-col gap-2">
-        {[...view.mineBookings]
-          .sort((a, b) => (a.slot === 'AM' ? -1 : 1) - (b.slot === 'AM' ? -1 : 1))
-          .map((b) => {
-            const cancellable = canCancel(b, settings, now)
-            return (
-              <div key={b.id} className="flex min-h-[60px] items-center justify-between gap-2.5 rounded-2xl bg-surface py-2 pl-3.5 pr-2.5">
-                <div className="flex min-w-0 items-center gap-2.5 text-brand">
-                  <HalfGlyph slot={b.slot} size={14} />
-                  <div className="flex min-w-0 flex-col gap-px text-ink">
-                    <span className="text-[15.5px] font-extrabold">{t.slots[b.slot]}</span>
-                    <span className="text-[12.5px] text-muted">
-                      {slotRange(b.slot, settings)} · {cancellable ? t.myBookings.cancelUntilStart : t.myBookings.underway}
-                    </span>
-                  </div>
-                </div>
-                {cancellable && (
-                  <button
-                    type="button"
-                    onClick={() => onCancel(b)}
-                    disabled={busy}
-                    className="min-h-10 shrink-0 rounded-xl border-[1.5px] border-accent bg-white px-3.5 text-sm font-extrabold text-accent"
-                  >
-                    {t.myBookings.cancel}
-                  </button>
-                )}
-              </div>
-            )
-          })}
+        <div className="flex min-h-[60px] items-center justify-between gap-2.5 rounded-2xl bg-surface py-2 pl-3.5 pr-2.5">
+          <div className="flex min-w-0 flex-col gap-px text-ink">
+            <span className="text-[15.5px] font-extrabold">{t.slots[cover]}</span>
+            <span className="text-[12.5px] text-muted">
+              {slotRange(cover, settings)} · {cancellable ? t.myBookings.cancelUntilStart : t.myBookings.underway}
+            </span>
+          </div>
+          {cancellable && (
+            <button
+              type="button"
+              onClick={() => onCancel(mine)}
+              disabled={busy}
+              className="min-h-10 shrink-0 rounded-xl border-[1.5px] border-accent bg-white px-3.5 text-sm font-extrabold text-accent"
+            >
+              {t.myBookings.cancel}
+            </button>
+          )}
+        </div>
         <Button variant="ghost" className="mt-1.5 min-h-12 rounded-[14px] text-base" onClick={onClose}>
           {t.close}
         </Button>
@@ -191,23 +127,28 @@ export function MineSheet({ view, views, date, today, now, settings, busy, onCan
   )
 }
 
-interface CancelSheetProps {
-  booking: Booking | null
+export interface CancelTarget {
+  bookings: Booking[]
+  date: string
   seatCode: string
+}
+
+interface CancelSheetProps {
+  target: CancelTarget | null
   today: string
   busy: boolean
   onConfirm: () => void
   onClose: () => void
 }
 
-export function CancelSheet({ booking, seatCode, today, busy, onConfirm, onClose }: CancelSheetProps) {
+export function CancelSheet({ target, today, busy, onConfirm, onClose }: CancelSheetProps) {
   const t = useT()
-  if (!booking) return null
+  if (!target) return null
   return (
     <Sheet open title={t.myBookings.confirmCancel} heading onClose={onClose}>
       <div className="flex flex-col gap-2">
         <p className="mb-2.5 text-[15px] leading-[22px] text-ink-soft">
-          {seatCode} · {formatDayLong(booking.date, today)}, {t.slots[booking.slot].toLowerCase()}
+          {target.seatCode} · {formatDayLong(target.date, today)}
         </p>
         <Button variant="danger" className="font-extrabold" onClick={onConfirm} disabled={busy}>
           {busy ? t.myBookings.cancelling : t.myBookings.yesCancel}

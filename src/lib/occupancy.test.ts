@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { occupiedCount, presenceFor, seatOccupancy } from './occupancy'
+import { dayOccupancy, occupiedCount, presenceFor, presenceForDay, seatOccupancy } from './occupancy'
 import type { Booking, Release, Seat } from './types'
 
 const DATE = '2026-11-04'
@@ -124,5 +124,79 @@ describe('presenceFor', () => {
       'held:ownerElsewhere',
       'held:heldButBooked',
     ])
+  })
+})
+
+describe('dayOccupancy', () => {
+  const seats = [
+    seat({ id: 'free' }),
+    seat({ id: 'pmOnly' }),
+    seat({ id: 'held', owner_id: 'owner' }),
+    seat({ id: 'halfReleased', owner_id: 'owner2' }),
+    seat({ id: 'released', owner_id: 'owner3' }),
+    seat({ id: 'heldThenBooked', owner_id: 'owner4' }),
+  ]
+  const bookings = [
+    booking({ id: 'b1', seat_id: 'pmOnly', user_id: 'ann', slot: 'PM' }),
+    booking({ id: 'b2', seat_id: 'heldThenBooked', user_id: 'bob', slot: 'PM' }),
+  ]
+  const releases: Release[] = [
+    { ...release('halfReleased'), id: 'r1', slot: 'AM' },
+    { ...release('released'), id: 'r2', slot: 'AM' },
+    { ...release('released'), id: 'r3', slot: 'PM' },
+    { ...release('heldThenBooked'), id: 'r4', slot: 'PM' },
+  ]
+  const occ = dayOccupancy(seats, bookings, releases, DATE)
+
+  it('is taken when any half is booked', () => {
+    expect(occ.get('pmOnly')).toEqual({ state: 'taken', userId: 'ann' })
+    expect(occ.get('heldThenBooked')).toEqual({ state: 'taken', userId: 'bob' })
+  })
+
+  it('is held while any half is still held', () => {
+    expect(occ.get('held')).toEqual({ state: 'held' })
+    expect(occ.get('halfReleased')).toEqual({ state: 'held' })
+  })
+
+  it('is free when nothing is booked and nothing is held', () => {
+    expect(occ.get('free')).toEqual({ state: 'free' })
+    expect(occ.get('released')).toEqual({ state: 'free' })
+    expect(occupiedCount(occ)).toBe(4)
+  })
+})
+
+describe('presenceForDay', () => {
+  const seats = [
+    seat({ id: 'a', code: 'B21105' }),
+    seat({ id: 'b', code: 'B21106' }),
+    seat({ id: 'held', code: 'B21102', owner_id: 'martin' }),
+    seat({ id: 'ownerBooked', code: 'B21101', owner_id: 'jiri' }),
+    seat({ id: 'ownerElsewhere', code: 'B21104', owner_id: 'bob' }),
+  ]
+  const bookings = [
+    booking({ id: 'b1', seat_id: 'a', user_id: 'ann', slot: 'AM' }),
+    booking({ id: 'b2', seat_id: 'a', user_id: 'ann', slot: 'PM' }),
+    booking({ id: 'b3', seat_id: 'b', user_id: 'bob', slot: 'PM' }),
+    booking({ id: 'b4', seat_id: 'ownerBooked', user_id: 'jiri', slot: 'AM' }),
+  ]
+  const rows = presenceForDay(seats, bookings, [], DATE)
+
+  it('lists each person once, with their seat', () => {
+    expect(rows.filter((r) => r.kind === 'booked').map((r) => r.kind === 'booked' && [r.booking.user_id, r.seat.code])).toEqual([
+      ['ann', 'B21105'],
+      ['bob', 'B21106'],
+      ['jiri', 'B21101'],
+    ])
+  })
+
+  it('lists an owner as held only when they have no booking that day', () => {
+    expect(rows.filter((r) => r.kind === 'held').map((r) => r.seat.id)).toEqual(['held'])
+  })
+
+  it('keeps a held seat while any half is still held', () => {
+    const half = presenceForDay(seats, [], [{ ...release('held'), slot: 'AM' }], DATE)
+    expect(half.filter((r) => r.kind === 'held').map((r) => r.seat.id)).toEqual(['held', 'ownerBooked', 'ownerElsewhere'])
+    const both = presenceForDay(seats, [], [{ ...release('held'), id: 'r1', slot: 'AM' }, { ...release('held'), id: 'r2', slot: 'PM' }], DATE)
+    expect(both.filter((r) => r.kind === 'held').map((r) => r.seat.id)).toEqual(['ownerBooked', 'ownerElsewhere'])
   })
 })

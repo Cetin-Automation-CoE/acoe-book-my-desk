@@ -2,7 +2,7 @@
 // The database is the authority on "today" and deadlines; these helpers only mirror it for the UI.
 
 import { getLang, getStrings } from '../strings'
-import type { Booking, Settings } from './types'
+import type { Booking, Settings, SlotChoice } from './types'
 
 function partsIn(tz: string, at: Date): { year: number; month: number; day: number; hour: number; minute: number } {
   const parts = new Intl.DateTimeFormat('en-GB', {
@@ -148,6 +148,17 @@ export function canCancel(b: Booking, s: Settings, now: Date = new Date()): bool
   if (b.date < today) return false
   const start = parseTime(b.slot === 'AM' ? s.am_start : s.pm_start)
   return minutesSinceMidnightIn(s.timezone, now) < start
+}
+
+// Every booking of a day must still be cancellable for the day to be cancellable.
+export function canCancelAll(bookings: readonly Booking[], s: Settings, now: Date = new Date()): boolean {
+  return bookings.length > 0 && bookings.every((b) => canCancel(b, s, now))
+}
+
+// The app books whole days: both halves, or what is left of today once the afternoon has started.
+// (The database still stores halves and refuses a half that is already over.)
+export function dayChoice(date: string, today: string, nowMinutes: number, s: Settings): SlotChoice {
+  return date === today && nowMinutes >= parseTime(s.pm_start) ? 'PM' : 'FULL'
 }
 
 export function slotStart(slot: Booking['slot'], s: Settings): number {

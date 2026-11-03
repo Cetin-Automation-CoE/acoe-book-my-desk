@@ -3,7 +3,7 @@
 
 import { roomBlocks } from './layout'
 import type { SeatView } from './seatState'
-import type { Booking, Slot, SlotChoice } from './types'
+import type { Booking, SlotChoice } from './types'
 
 // The seat booked most often in the recent window; ties go to the most recent booking.
 // Seat owners' usual seat is their own.
@@ -59,7 +59,7 @@ export function alternativeSeat(
 }
 
 export type CardVariant =
-  | { kind: 'booked'; bookings: Booking[]; slotLabel: SlotChoice }
+  | { kind: 'booked'; bookings: Booking[] }
   | { kind: 'usual'; seatId: string; slot: SlotChoice }
   | { kind: 'alternative'; seatId: string; nearness: Nearness; slot: SlotChoice; usualId: string }
 
@@ -68,23 +68,17 @@ interface CardArgs {
   mine: Booking[]
   usualId: string | null
   views: SeatView[]
+  // What a booking covers: the whole day, or what is left of today.
   choice: SlotChoice
 }
 
-const slotLabelOf = (slots: Slot[]): SlotChoice => (slots.includes('AM') && slots.includes('PM') ? 'FULL' : slots[0])
-
 // Which card the Book tab shows for the selected day: my booking, my usual seat, or the nearest free seat.
 export function cardVariant({ mine, usualId, views, choice }: CardArgs): CardVariant | null {
-  if (mine.length > 0) return { kind: 'booked', bookings: mine, slotLabel: slotLabelOf(mine.map((b) => b.slot)) }
+  if (mine.length > 0) return { kind: 'booked', bookings: mine }
   if (!usualId) return null
   const usual = views.find((v) => v.seat.id === usualId)
-  if (usual && usual.bookableSlots.length > 0) {
-    const slot: SlotChoice = usual.bookableSlots.length === usual.wantedSlots.length ? choice : usual.bookableSlots[0]
-    return { kind: 'usual', seatId: usualId, slot }
-  }
-  const candidates = views
-    .filter((v) => v.wantedSlots.length > 0 && v.bookableSlots.length === v.wantedSlots.length)
-    .map((v) => v.seat.id)
+  if (usual && usual.kind === 'free') return { kind: 'usual', seatId: usualId, slot: choice }
+  const candidates = views.filter((v) => v.kind === 'free').map((v) => v.seat.id)
   const alt = alternativeSeat(usualId, candidates, views.map((v) => v.seat))
   return alt ? { kind: 'alternative', seatId: alt.seatId, nearness: alt.nearness, slot: choice, usualId } : null
 }

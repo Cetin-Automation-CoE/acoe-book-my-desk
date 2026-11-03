@@ -1,6 +1,6 @@
 import { ACTIVE_STATUSES, slotsFor, type Booking, type Release, type Seat, type Slot, type SlotChoice } from './types'
 
-export type SeatKind = 'free' | 'partly' | 'mine' | 'taken' | 'held' | 'inactive'
+export type SeatKind = 'free' | 'mine' | 'taken' | 'held' | 'inactive'
 export type HalfState = 'free' | 'mine' | 'taken' | 'held'
 export interface Half {
   state: HalfState
@@ -29,8 +29,9 @@ interface SeatViewArgs {
   userId: string
 }
 
-// Pure projection of one seat for the selected date and half-day choice; the database is still
-// the authority when the user taps, this only decides what the tile shows and whether it is tappable.
+// Pure projection of one seat for the selected date and the wanted halves (the whole day, or what is
+// left of today); the database is still the authority when the user taps, this only decides what
+// the tile shows and whether it is tappable. A seat is free only when every wanted half is free.
 export function seatView({ seat, date, bookings, releases, choice, userId }: SeatViewArgs): SeatView {
   const wantedSlots = slotsFor(choice)
   const view: SeatView = {
@@ -75,10 +76,8 @@ export function seatView({ seat, date, bookings, releases, choice, userId }: Sea
     }
   }
 
-  if (view.mineSlots.length === wantedSlots.length) view.kind = 'mine'
+  if (view.mineSlots.length > 0) view.kind = 'mine'
   else if (view.bookableSlots.length === wantedSlots.length) view.kind = 'free'
-  else if (view.bookableSlots.length > 0) view.kind = 'partly'
-  else if (view.mineSlots.length > 0) view.kind = 'mine'
   else if (view.takenBy.length > 0) view.kind = 'taken'
   else view.kind = 'held'
 

@@ -27,14 +27,14 @@ export function MyBookings({ settings }: { settings: Settings }) {
   const toast = useToast()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const [toCancel, setToCancel] = useState<Booking | null>(null)
+  const [toCancel, setToCancel] = useState<Booking[] | null>(null)
 
   const refresh = () => {
     for (const key of ['my-bookings', 'bookings', 'progress']) queryClient.invalidateQueries({ queryKey: [key] })
   }
 
   const cancel = useMutation({
-    mutationFn: (id: string) => api.cancelBooking(id),
+    mutationFn: (list: Booking[]) => Promise.all(list.map((b) => api.cancelBooking(b.id))),
     onSuccess: () => {
       toast(t.myBookings.cancelled)
       setToCancel(null)
@@ -106,11 +106,14 @@ export function MyBookings({ settings }: { settings: Settings }) {
       </Panel>
 
       <CancelSheet
-        booking={toCancel}
-        seatCode={toCancel ? (seats.data?.find((s) => s.id === toCancel.seat_id)?.code ?? '') : ''}
+        target={
+          toCancel && toCancel.length > 0
+            ? { bookings: toCancel, date: toCancel[0].date, seatCode: seats.data?.find((s) => s.id === toCancel[0].seat_id)?.code ?? '' }
+            : null
+        }
         today={today}
         busy={cancel.isPending}
-        onConfirm={() => toCancel && cancel.mutate(toCancel.id)}
+        onConfirm={() => toCancel && cancel.mutate(toCancel)}
         onClose={() => setToCancel(null)}
       />
     </>

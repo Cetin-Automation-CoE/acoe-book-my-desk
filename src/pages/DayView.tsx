@@ -5,7 +5,6 @@ import { DayStrip } from '../components/DayStrip'
 import { PageBand, Panel } from '../components/PageBand'
 import { SeatGrid } from '../components/SeatGrid'
 import { BookSheet, CancelSheet, MineSheet } from '../components/SeatSheets'
-import { SlotToggle } from '../components/SlotToggle'
 import { ErrorCard, Skeleton } from '../components/States'
 import { TeamDayNudge } from '../components/TeamDayNudge'
 import { useToast } from '../components/Toast'
@@ -27,13 +26,12 @@ import { api } from '../lib/api'
 import {
   addDays,
   bookableDays,
-  canCancel,
+  canCancelAll,
+  dayChoice,
   dayLabel,
   dayTitle,
   formatBandDate,
   minutesSinceMidnightIn,
-  parseTime,
-  slotEnd,
   slotStart,
   todayIn,
 } from '../lib/dates'
@@ -41,7 +39,7 @@ import { errorMessage } from '../lib/errors'
 import { presenceByDay, teamDayNudge } from '../lib/progress'
 import { seatView, type SeatView } from '../lib/seatState'
 import { cardVariant, usualSeat } from '../lib/smart'
-import { ACTIVE_STATUSES, SLOTS, type Booking, type Settings, type Slot, type SlotChoice } from '../lib/types'
+import { ACTIVE_STATUSES, slotsFor, type Booking, type Settings } from '../lib/types'
 
 type Pending = { kind: 'book' | 'mine'; seatId: string }
 
@@ -61,9 +59,11 @@ export function DayView({ settings }: { settings: Settings }) {
   const [selectedDay, setSelected] = useState(today)
   // Fall back to the first bookable day when the selection is stale (day rolled over) or a weekend.
   const selected = days.includes(selectedDay) ? selectedDay : days[0]
-  const [choice, setChoice] = useState<SlotChoice>(() => (nowMinutes >= parseTime(settings.pm_start) ? 'PM' : 'AM'))
+  // A booking covers the whole day, or what is left of today once the afternoon has started.
+  const choice = dayChoice(selected, today, nowMinutes, settings)
+  const started = selected === today && nowMinutes >= slotStart(slotsFor(choice)[0], settings)
   const [pending, setPending] = useState<Pending | null>(null)
-  const [toCancel, setToCancel] = useState<Booking | null>(null)
+  const [toCancel, setToCancel] = useState<Booking[] | null>(null)
   const toast = useToast()
   const queryClient = useQueryClient()
 
@@ -82,9 +82,10 @@ export function DayView({ settings }: { settings: Settings }) {
       ),
     [seats.data, selected, bookings.data, releases.data, choice, userId],
   )
-  // The sheets need both halves of one seat, whatever the toggle says.
-  const sheetView = useMemo(() => {
-    const seat = pending && seats.data?.find((s) => s.id === pending.seatId)
+  const bookView = useMemo(() => (pending?.kind === 'book' ? (views.find((v) => v.seat.id === pending.seatId) ?? null) : null), [pending, views])
+  // The manage sheet lists everything I hold on that seat that day, whatever is left of today.
+  const mineView = useMemo(() => {
+    const seat = pending?.kind === 'mine' ? seats.data?.find((s) => s.id === pending.seatId) : null
     return seat
       ? seatView({ seat, date: selected, bookings: bookings.data ?? [], releases: releases.data ?? [], choice: 'FULL', userId })
       : null
@@ -94,15 +95,8 @@ export function DayView({ settings }: { settings: Settings }) {
     () => (bookings.data ?? []).filter((b) => b.user_id === userId && ACTIVE_STATUSES.includes(b.status)),
     [bookings.data, userId],
   )
-  const myHeldSlots = useMemo(() => new Set<Slot>(mineOnDay.map((b) => b.slot)), [mineOnDay])
-  const endedSlots = useMemo(
-    () => new Set<Slot>(selected === today ? SLOTS.filter((s) => nowMinutes >= slotEnd(s, settings)) : []),
-    [selected, today, nowMinutes, settings],
-  )
-  const startedSlots = useMemo(
-    () => new Set<Slot>(selected === today ? SLOTS.filter((s) => nowMinutes >= slotStart(s, settings)) : []),
-    [selected, today, nowMinutes, settings],
-  )
+  // One seat per person per day: with a booking, the other free seats are shown but not tappable.
+  const blocked = mineOnDay.length > 0
   const myDays = useMemo(
     () => new Set((myUpcoming.data ?? []).filter((b) => ACTIVE_STATUSES.includes(b.status)).map((b) => b.date)),
     [myUpcoming.data],
@@ -129,7 +123,7 @@ export function DayView({ settings }: { settings: Settings }) {
   }
 
   const book = useMutation({
-    mutationFn: (p: { seatId: string; slot: SlotChoice }) => api.bookSeat(p.seatId, selected, p.slot),
+    mutationFn: (seatId: string) => api.bookSeat(seatId, selected, choice),
     onSuccess: () => {
       toast(t.seats.booked)
       setPending(null)
@@ -140,9 +134,9 @@ export function DayView({ settings }: { settings: Settings }) {
 
   // One tap from the card: book now, offer Undo while cancelling is still possible.
   const quickBook = useMutation({
-    mutationFn: (p: { seatId: string; slot: SlotChoice }) => api.bookSeat(p.seatId, selected, p.slot),
+    mutationFn: (seatId: string) => api.bookSeat(seatId, selected, choice),
     onSuccess: (created) => {
-      const undoable = created.every((b) => canCancel(b, settings, now))
+      const undoable = canCancelAll(created, settings, now)
       toast(
         t.seats.booked,
         'info',
@@ -161,10 +155,11 @@ export function DayView({ settings }: { settings: Settings }) {
   })
 
   const cancel = useMutation({
-    mutationFn: (bookingId: string) => api.cancelBooking(bookingId),
+    mutationFn: (list: Booking[]) => Promise.all(list.map((b) => api.cancelBooking(b.id))),
     onSuccess: () => {
       toast(t.myBookings.cancelled)
       setToCancel(null)
+      setPending(null)
       refresh()
     },
     onError: fail,
@@ -173,10 +168,7 @@ export function DayView({ settings }: { settings: Settings }) {
   // Realtime: flash the tile that just changed; drop the book sheet if its seat was taken meanwhile.
   const change = useSeatChange()
   const flashId = change && change.date === selected ? change.seatId : null
-  const sheetStillBookable =
-    pending?.kind !== 'book' ||
-    !sheetView ||
-    SLOTS.some((s) => sheetView.halves[s]?.state === 'free' && !myHeldSlots.has(s) && !endedSlots.has(s))
+  const sheetStillBookable = pending?.kind !== 'book' || !bookView || (bookView.kind === 'free' && !blocked)
   useEffect(() => {
     if (sheetStillBookable) return
     const id = window.setTimeout(() => {
@@ -187,9 +179,8 @@ export function DayView({ settings }: { settings: Settings }) {
   }, [sheetStillBookable, toast, t])
 
   const onTap = (view: SeatView) => {
-    const bookable = view.bookableSlots.some((s) => !myHeldSlots.has(s) && !endedSlots.has(s))
-    if (bookable) setPending({ kind: 'book', seatId: view.seat.id })
-    else if (view.mineSlots.length > 0) setPending({ kind: 'mine', seatId: view.seat.id })
+    if (view.kind === 'free' && !blocked) setPending({ kind: 'book', seatId: view.seat.id })
+    else if (view.kind === 'mine') setPending({ kind: 'mine', seatId: view.seat.id })
   }
 
   const busy = book.isPending || quickBook.isPending || cancel.isPending
@@ -211,7 +202,6 @@ export function DayView({ settings }: { settings: Settings }) {
         figure={loading || failed ? undefined : { value: freeCount, label: t.seats.freeSeats(freeCount) }}
       >
         <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} mine={myDays} marks={teamDays} />
-        <SlotToggle value={choice} onChange={setChoice} />
       </PageBand>
 
       <Panel>
@@ -229,18 +219,17 @@ export function DayView({ settings }: { settings: Settings }) {
                 today={today}
                 busy={busy}
                 onManage={() => variant.kind === 'booked' && setPending({ kind: 'mine', seatId: variant.bookings[0].seat_id })}
-                onQuickBook={(seatId, slot) => quickBook.mutate({ seatId, slot })}
+                onQuickBook={(seatId) => quickBook.mutate(seatId)}
               />
             )}
             {nudge && <TeamDayNudge nudge={nudge} today={today} onShow={setSelected} />}
-            <div key={`${selected}-${choice}`}>
+            <div key={selected}>
               <SeatGrid
                 views={views}
                 people={profiles.data ?? new Map()}
                 userId={userId}
                 myName={myName}
-                myHeldSlots={myHeldSlots}
-                endedSlots={endedSlots}
+                blocked={blocked}
                 flashId={flashId}
                 selectedId={pending?.kind === 'book' ? pending.seatId : null}
                 onTap={onTap}
@@ -255,36 +244,33 @@ export function DayView({ settings }: { settings: Settings }) {
       </Panel>
 
       <BookSheet
-        view={pending?.kind === 'book' ? sheetView : null}
+        view={bookView}
         views={views}
         date={selected}
         today={today}
         settings={settings}
-        myHeldSlots={myHeldSlots}
-        endedSlots={endedSlots}
-        startedSlots={startedSlots}
-        myHeldCode={mineOnDay[0] ? codeOf(mineOnDay[0].seat_id) : null}
+        choice={choice}
+        started={started}
         busy={busy}
-        onBook={(seatId, slot) => book.mutate({ seatId, slot })}
+        onBook={(seatId) => book.mutate(seatId)}
         onClose={() => setPending(null)}
       />
       <MineSheet
-        view={pending?.kind === 'mine' ? sheetView : null}
+        view={mineView}
         views={views}
         date={selected}
         today={today}
         now={now}
         settings={settings}
         busy={busy}
-        onCancel={(b) => setToCancel(b)}
+        onCancel={(list) => setToCancel(list)}
         onClose={() => setPending(null)}
       />
       <CancelSheet
-        booking={toCancel}
-        seatCode={toCancel ? codeOf(toCancel.seat_id) : ''}
+        target={toCancel && toCancel.length > 0 ? { bookings: toCancel, date: selected, seatCode: codeOf(toCancel[0].seat_id) } : null}
         today={today}
         busy={cancel.isPending}
-        onConfirm={() => toCancel && cancel.mutate(toCancel.id)}
+        onConfirm={() => toCancel && cancel.mutate(toCancel)}
         onClose={() => setToCancel(null)}
       />
     </>
