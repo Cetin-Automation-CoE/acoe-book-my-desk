@@ -33,6 +33,7 @@ export function AppShell({ showMySeat }: { showMySeat: boolean }) {
   // Tab switch: start at the top.
   useEffect(() => {
     window.scrollTo({ top: 0 })
+    document.getElementById('root')?.scrollTo({ top: 0 }) // the phone frame scrolls on wide screens
   }, [location.pathname])
 
   const me = profiles.data?.get(userId)

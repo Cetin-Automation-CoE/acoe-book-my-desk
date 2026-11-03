@@ -51,19 +51,40 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* On a desktop or tablet the app sits in a phone-width frame in the middle of the window. The floating
-   tab bar, toasts and sheets are already capped at the same width, so they line up with it. */
+/* On a desktop or tablet the app sits in a phone-shaped frame in the middle of the window. The frame
+   is transformed, so position:fixed children (tab bar, toasts, sheets) stay inside the screen. */
 @media (min-width: 640px) {
-  html {
+  html,
+  body {
     background: #e4e5ee;
   }
-  #root {
-    max-width: 28rem;
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     min-height: 100dvh;
-    margin: 0 auto;
+    padding: 24px;
+  }
+  #root {
+    position: relative;
+    width: 390px;
+    height: min(844px, 100dvh - 48px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 44px;
+    background: var(--color-surface);
     box-shadow:
-      0 0 0 1px rgba(26, 0, 96, 0.08),
-      0 24px 70px rgba(26, 0, 96, 0.14);
+      0 0 0 12px #121218,
+      0 0 0 13px rgba(255, 255, 255, 0.35),
+      0 30px 80px rgba(26, 0, 96, 0.22);
+    transform: translateZ(0);
+    scrollbar-width: none;
+  }
+  #root::-webkit-scrollbar {
+    display: none;
+  }
+  #root .min-h-dvh {
+    min-height: 100%;
   }
 }
 
