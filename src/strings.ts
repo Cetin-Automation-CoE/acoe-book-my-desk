@@ -302,8 +302,8 @@ export const cs: Strings = {
   },
 
   card: {
-    usual: 'Vaše obvyklé místo',
-    booked: 'Máte rezervaci',
+    usual: 'Vaše místo',
+    booked: 'Rezervováno',
     manage: 'Spravovat',
     nextTo: 'Hned vedle',
     sameTable: 'Stejný stůl',

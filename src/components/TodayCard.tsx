@@ -23,16 +23,16 @@ export function TodayCard({ variant, seats, selected, today, busy, onManage, onQ
   if (variant.kind === 'booked') {
     const codes = [...new Set(variant.bookings.map((b) => codeOf(seats, b.seat_id)))]
     return (
-      <section className="mb-[22px] flex items-center gap-3.5 rounded-3xl bg-white p-3.5 shadow-card-raised">
-        <div className="bg-mine flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-brand">
-          <span className="text-[12.5px] font-extrabold tracking-[-0.01em] tabular-nums">{codes[0]}</span>
+      <section className="mb-[22px] flex items-center gap-3 rounded-3xl bg-white p-3.5 shadow-card-raised">
+        <div className="bg-mine flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] text-white shadow-brand">
+          <span className="text-[11px] font-extrabold tracking-[-0.01em] tabular-nums">{codes[0]}</span>
         </div>
         <div className="flex min-w-0 flex-1 flex-col gap-px">
-          <span className="truncate text-xs font-bold uppercase leading-4 tracking-[0.04em] text-muted">{t.card.booked}</span>
+          <span className="text-[11px] font-bold uppercase leading-4 tracking-[0.02em] text-muted">{t.card.booked}</span>
           <span className="truncate text-base font-extrabold leading-[22px] tabular-nums text-ink">{codes.join(' · ')}</span>
           <span className="text-[13.5px] leading-[18px] text-muted">{formatDayLong(selected, today)}</span>
         </div>
-        <Button variant="secondary" className="min-h-11 rounded-[14px] px-3.5 text-[15px] font-extrabold" onClick={onManage}>
+        <Button variant="secondary" className="min-h-11 rounded-[14px] px-3 text-[14px] font-extrabold" onClick={onManage}>
           {t.card.manage}
         </Button>
       </section>
@@ -50,20 +50,20 @@ export function TodayCard({ variant, seats, selected, today, busy, onManage, onQ
         : t.card.closest
     : formatDayLong(selected, today)
   return (
-    <section className="mb-[22px] flex items-center gap-3.5 rounded-3xl bg-white p-3.5 shadow-card-raised">
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand/6 text-brand shadow-[inset_0_0_0_1.5px_rgba(48,0,145,.14)]">
-        <span className="text-[12.5px] font-extrabold tracking-[-0.01em] tabular-nums">{code}</span>
+    <section className="mb-[22px] flex items-center gap-3 rounded-3xl bg-white p-3.5 shadow-card-raised">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[14px] bg-brand/6 text-brand shadow-[inset_0_0_0_1.5px_rgba(48,0,145,.14)]">
+        <span className="text-[11px] font-extrabold tracking-[-0.01em] tabular-nums">{code}</span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col gap-px">
-        <span className={`flex min-w-0 items-center gap-1.5 text-xs font-bold uppercase leading-4 tracking-[0.04em] ${isAlt ? 'text-accent' : 'text-muted'}`}>
-          {isAlt && <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />}
-          <span className="truncate">{eyebrow}</span>
+        <span className={`flex min-w-0 items-start gap-1.5 text-[11px] font-bold uppercase leading-4 tracking-[0.02em] ${isAlt ? 'text-accent' : 'text-muted'}`}>
+          {isAlt && <span aria-hidden className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />}
+          <span>{eyebrow}</span>
         </span>
         <span className="truncate text-base font-extrabold leading-[22px] tabular-nums text-ink">{code}</span>
         <span className="text-[13.5px] leading-[18px] text-muted">{sub}</span>
       </div>
       <Button
-        className="min-h-11 rounded-[14px] px-3.5 text-[15px] font-extrabold"
+        className="min-h-11 rounded-[14px] px-3 text-[14px] font-extrabold"
         onClick={() => onQuickBook(variant.seatId)}
         disabled={busy}
       >
