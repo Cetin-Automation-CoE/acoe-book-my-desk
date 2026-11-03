@@ -51,8 +51,12 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* On a desktop or tablet the app sits in a phone-shaped frame in the middle of the window. The frame
-   is transformed, so position:fixed children (tab bar, toasts, sheets) stay inside the screen. */
+/* On a desktop or tablet the app sits inside a phone mock-up in the middle of the window. The frame
+   image (src/assets/phone-frame.png, screen cut out) lies over the app; the app fills the cut-out.
+   The screen is transformed, so position:fixed children (tab bar, toasts, sheets) stay inside it. */
+.phone {
+  display: contents;
+}
 @media (min-width: 640px) {
   html,
   body {
@@ -65,18 +69,30 @@ html {
     min-height: 100dvh;
     padding: 24px;
   }
-  #root {
+  .phone {
+    display: block;
     position: relative;
-    width: 390px;
-    height: min(844px, 100dvh - 48px);
+    height: min(100dvh - 48px, 980px);
+    aspect-ratio: 654 / 1302;
+    filter: drop-shadow(0 30px 60px rgba(26, 0, 96, 0.28));
+  }
+  .phone::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('./assets/phone-frame.png') center / 100% 100% no-repeat;
+    pointer-events: none;
+  }
+  #root {
+    position: absolute;
+    left: 8.716%;
+    top: 3.994%;
+    width: 82.569%;
+    height: 92.012%;
     overflow-y: auto;
     overscroll-behavior: contain;
-    border-radius: 44px;
+    border-radius: 12.593% / 5.676%;
     background: var(--color-surface);
-    box-shadow:
-      0 0 0 12px #121218,
-      0 0 0 13px rgba(255, 255, 255, 0.35),
-      0 30px 80px rgba(26, 0, 96, 0.22);
     transform: translateZ(0);
     scrollbar-width: none;
   }
