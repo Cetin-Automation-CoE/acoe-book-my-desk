@@ -353,7 +353,7 @@ export const cs: Strings = {
     mine: 'Váš oběd',
     hint: 'Dejte kolegům vědět, jestli máte krabičku, nebo jdete na oběd ven.',
     hasBox: 'Má krabičku',
-    goesOut: 'Jde na oběd ven',
+    goesOut: 'Jde ven',
     counts: (out: number, box: number) => `${out} ${czPlural(out, 'jde', 'jdou', 'jde')} ven, ${box} s krabičkou`,
   },
 

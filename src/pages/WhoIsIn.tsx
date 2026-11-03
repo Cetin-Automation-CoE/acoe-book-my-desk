@@ -184,8 +184,8 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
                         )}
                       </span>
                       {(row.sub || row.lunch) && (
-                        <span className="flex min-w-0 items-center gap-1.5 text-[12.5px] leading-[17px] text-muted">
-                          {row.sub && <span className="truncate">{row.sub}</span>}
+                        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-[12.5px] leading-[17px] text-muted">
+                          {row.sub && <span>{row.sub}</span>}
                           {row.sub && row.lunch && <span aria-hidden>·</span>}
                           {row.lunch && (
                             <span className="flex shrink-0 items-center gap-1 font-semibold text-brand">
