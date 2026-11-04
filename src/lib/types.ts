@@ -10,6 +10,12 @@ export interface Person {
   avatar: string | null
 }
 export type PeopleMap = Map<string, Person>
+// One person on the team (from team_roster): every account they own, so a booking from either address counts.
+export interface TeamMember {
+  userIds: string[]
+  name: string
+  avatar: string | null
+}
 export type NotifyPrefs = Pick<Tables<'profiles'>, 'notify_tomorrow' | 'notify_monday'>
 export type UserStats = Tables<'user_stats'>
 export type Achievement = Tables<'achievements'>

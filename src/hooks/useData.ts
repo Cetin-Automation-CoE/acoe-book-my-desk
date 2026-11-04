@@ -8,6 +8,8 @@ export const keys = {
   settings: ['settings'] as const,
   seats: ['seats'] as const,
   profiles: ['profiles'] as const,
+  // Under 'profiles' so a rename or a new photo (which invalidate profiles) refreshes it too.
+  roster: ['profiles', 'roster'] as const,
   bookings: (date: string) => ['bookings', date] as const,
   releases: (date: string) => ['releases', date] as const,
   lunch: (date: string) => ['lunch', date] as const,
@@ -35,6 +37,10 @@ export function useProfiles() {
     staleTime: 60_000,
     select: (rows): PeopleMap => new Map(rows.map((p) => [p.user_id, { name: p.display_name, avatar: p.avatar_url }])),
   })
+}
+
+export function useTeamRoster() {
+  return useQuery({ queryKey: keys.roster, queryFn: api.teamRoster, staleTime: 5 * 60_000 })
 }
 
 export function useDayBookings(date: string) {

@@ -39,6 +39,7 @@ Odkaz: https://cetin-automation-coe.github.io/acoe-book-my-desk/
 
 6) Kdo je tu
 – Přehled, kdo má na daný den rezervaci a kolik míst je obsazených. Držená místa se počítají jako obsazená.
+– Pod tím je „Mimo kancelář“: kdo na ten den nemá rezervaci (ani držené místo), je automaticky mimo kancelář. Nic se nenastavuje – stačí si zarezervovat místo a přesuneš se nahoru.
 – Oběd: pod svou rezervací (nebo tady v Kdo je tu) můžeš zvolit „Krabička“ nebo „Jdu ven“, ať se domluvíte na oběd. Ostatní uvidí značku u tvého jména a počty.
 
 7) Moje místo – jen pro majitele držených míst

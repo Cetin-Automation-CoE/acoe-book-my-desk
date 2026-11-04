@@ -337,6 +337,11 @@ isOneToOne: false
 "release_my_seat":
 { Args: { "p_date": string,"p_seat_id": string,"p_slot": string }; Returns: undefined
                            },
+"team_roster":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "avatar_url": string,"display_name": string,"user_ids": (string)[]
+            }[]
+                           },
 "unrelease_my_seat":
 { Args: { "p_date": string,"p_seat_id": string,"p_slot": string }; Returns: undefined
                            }

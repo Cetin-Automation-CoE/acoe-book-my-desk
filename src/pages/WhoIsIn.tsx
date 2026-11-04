@@ -7,12 +7,13 @@ import { LunchPicker } from '../components/LunchPicker'
 import { PageBand, Panel } from '../components/PageBand'
 import { ErrorCard, Skeleton } from '../components/States'
 import { useAuth } from '../hooks/useAuth'
-import { useDayBookings, useDayLunch, useDayReleases, useMyBookings, useProfiles, useSeats, useToday } from '../hooks/useData'
+import { useDayBookings, useDayLunch, useDayReleases, useMyBookings, useProfiles, useSeats, useTeamRoster, useToday } from '../hooks/useData'
 import { useT } from '../hooks/useLang'
 import { useSetLunch } from '../hooks/useLunch'
 import { bookableDays, formatBandDate } from '../lib/dates'
 import { lunchCounts, lunchOf } from '../lib/lunch'
 import { dayOccupancy, occupiedCount, presenceForDay } from '../lib/occupancy'
+import { outOfOffice } from '../lib/team'
 import { ACTIVE_STATUSES, type LunchChoice, type Settings } from '../lib/types'
 
 interface Row {
@@ -29,7 +30,7 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   const t = useT()
   const { user } = useAuth()
   const userId = user!.id
-  const { name: myName } = useShell()
+  const { name: myName, avatar: myAvatar } = useShell()
   const today = useToday(settings.timezone)
   const days = useMemo(
     () => bookableDays(today, settings.working_days),
@@ -44,6 +45,7 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   const setLunch = useSetLunch(userId, selected)
   const seats = useSeats()
   const profiles = useProfiles()
+  const roster = useTeamRoster()
   const myUpcoming = useMyBookings(userId, today)
   const myDays = useMemo(
     () => new Set((myUpcoming.data ?? []).filter((b) => ACTIVE_STATUSES.includes(b.status)).map((b) => b.date)),
@@ -79,6 +81,9 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
     .sort((a, b) => a.name.localeCompare(b.name))
   // Held seats count as taken: nobody else can sit there even if the owner has not booked.
   const occupancy = dayOccupancy(activeSeats, bookings.data ?? [], releases.data ?? [], selected)
+  // Everyone else on the team is out of office that day. The roster fails soft: without it the
+  // section is just missing, and the rest of the screen works as before.
+  const away = outOfOffice(roster.data ?? [], rows.map((r) => r.userId), rows.map((r) => r.name))
 
   const failed = bookings.error ?? seats.error ?? profiles.error ?? releases.error
   const loading = bookings.isPending || seats.isPending || profiles.isPending || releases.isPending
@@ -106,94 +111,135 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
           />
         ) : loading ? (
           <Skeleton cards={2} />
-        ) : rows.length === 0 ? (
-          <p className="rounded-3xl bg-white p-5 text-base leading-6 text-ink-soft shadow-card">{t.whoIsIn.empty}</p>
         ) : (
           <>
-            <div className="mb-[22px] flex items-center justify-between gap-4 rounded-3xl bg-white p-4 shadow-card-raised">
-              <span className="flex items-baseline gap-1.5">
-                <span className="text-[38px] font-extrabold leading-[42px] tracking-[-0.03em] tabular-nums text-brand">
-                  {occupiedCount(occupancy)}
-                </span>
-                <span className="text-[13px] text-muted">{t.whoIsIn.ofSeats(activeSeats.length)}</span>
-              </span>
-              <span aria-hidden className="grid grid-cols-[repeat(6,10px)] gap-1.5">
-                {activeSeats.map((s) => {
-                  const o = occupancy.get(s.id)
-                  const color =
-                    o?.state === 'taken' ? (o.userId === userId ? 'bg-sky' : 'bg-brand') : o?.state === 'held' ? 'bg-lilac-soft' : 'bg-divider'
-                  return <span key={s.id} className={`h-2.5 w-2.5 rounded-[3px] ${color}`} />
-                })}
-              </span>
-            </div>
-
-            {iAmIn && (
-              <div className="mb-[22px] rounded-3xl bg-white p-4 shadow-card">
-                <LunchPicker label={t.lunch.mine} value={myLunch} busy={setLunch.isPending} onChange={(next) => setLunch.mutate(next)} />
-                <p className="mt-2.5 text-[12.5px] leading-[17px] text-muted">{t.lunch.hint}</p>
-              </div>
-            )}
-
-            <section>
-              <div className="mx-1 mb-2 flex items-baseline justify-between gap-3">
-                <h2 className="text-lg font-extrabold text-ink">{t.whoIsIn.people(rows.length)}</h2>
-                {lunch.out + lunch.box > 0 && (
-                  <span className="flex items-center gap-3 text-[13px] font-bold tabular-nums text-muted">
-                    <span className="sr-only">{t.lunch.counts(lunch.out, lunch.box)}</span>
-                    <span aria-hidden className="flex items-center gap-1">
-                      {lunchIcon('out', 14)}
-                      {lunch.out}
+            {rows.length === 0 ? (
+              <p className="rounded-3xl bg-white p-5 text-base leading-6 text-ink-soft shadow-card">{t.whoIsIn.empty}</p>
+            ) : (
+              <>
+                <div className="mb-[22px] flex items-center justify-between gap-4 rounded-3xl bg-white p-4 shadow-card-raised">
+                  <span className="flex items-baseline gap-1.5">
+                    <span className="text-[38px] font-extrabold leading-[42px] tracking-[-0.03em] tabular-nums text-brand">
+                      {occupiedCount(occupancy)}
                     </span>
-                    <span aria-hidden className="flex items-center gap-1">
-                      {lunchIcon('box', 14)}
-                      {lunch.box}
-                    </span>
+                    <span className="text-[13px] text-muted">{t.whoIsIn.ofSeats(activeSeats.length)}</span>
                   </span>
+                  <span aria-hidden className="grid grid-cols-[repeat(6,10px)] gap-1.5">
+                    {activeSeats.map((s) => {
+                      const o = occupancy.get(s.id)
+                      const color =
+                        o?.state === 'taken' ? (o.userId === userId ? 'bg-sky' : 'bg-brand') : o?.state === 'held' ? 'bg-lilac-soft' : 'bg-divider'
+                      return <span key={s.id} className={`h-2.5 w-2.5 rounded-[3px] ${color}`} />
+                    })}
+                  </span>
+                </div>
+
+                {iAmIn && (
+                  <div className="mb-[22px] rounded-3xl bg-white p-4 shadow-card">
+                    <LunchPicker label={t.lunch.mine} value={myLunch} busy={setLunch.isPending} onChange={(next) => setLunch.mutate(next)} />
+                    <p className="mt-2.5 text-[12.5px] leading-[17px] text-muted">{t.lunch.hint}</p>
+                  </div>
                 )}
-              </div>
-              <ul className="overflow-hidden rounded-[22px] bg-white shadow-card">
-                {rows.map((row, i) => (
-                  <li
-                    key={row.id}
-                    className={`enter flex items-center gap-3 py-[11px] pl-3 pr-4 ${i > 0 ? 'border-t border-rule' : ''}`}
-                    style={{ '--i': i } as React.CSSProperties}
-                  >
-                    <Avatar
-                      userId={row.userId}
-                      name={row.name}
-                      src={profiles.data?.get(row.userId)?.avatar}
-                      me={row.userId === userId}
-                      size={40}
-                    />
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="flex items-center gap-1.5 text-[15.5px] font-bold leading-5">
-                        <span className="truncate">{row.name}</span>
-                        {row.userId === userId && (
-                          <span className="shrink-0 rounded-full bg-brand/8 px-[7px] py-px text-[11px] font-extrabold text-brand">{t.you}</span>
-                        )}
+
+                <section>
+                  <div className="mx-1 mb-2 flex items-baseline justify-between gap-3">
+                    <h2 className="text-lg font-extrabold text-ink">{t.whoIsIn.people(rows.length)}</h2>
+                    {lunch.out + lunch.box > 0 && (
+                      <span className="flex items-center gap-3 text-[13px] font-bold tabular-nums text-muted">
+                        <span className="sr-only">{t.lunch.counts(lunch.out, lunch.box)}</span>
+                        <span aria-hidden className="flex items-center gap-1">
+                          {lunchIcon('out', 14)}
+                          {lunch.out}
+                        </span>
+                        <span aria-hidden className="flex items-center gap-1">
+                          {lunchIcon('box', 14)}
+                          {lunch.box}
+                        </span>
                       </span>
-                      {(row.sub || row.lunch) && (
-                        <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-[12.5px] leading-[17px] text-muted">
-                          {row.sub && <span>{row.sub}</span>}
-                          {row.sub && row.lunch && <span aria-hidden>·</span>}
-                          {row.lunch && (
-                            <span className="flex shrink-0 items-center gap-1 font-semibold text-brand">
-                              {lunchIcon(row.lunch, 13)}
-                              {row.lunch === 'box' ? t.lunch.hasBox : t.lunch.goesOut}
+                    )}
+                  </div>
+                  <ul className="overflow-hidden rounded-[22px] bg-white shadow-card">
+                    {rows.map((row, i) => (
+                      <li
+                        key={row.id}
+                        className={`enter flex items-center gap-3 py-[11px] pl-3 pr-4 ${i > 0 ? 'border-t border-rule' : ''}`}
+                        style={{ '--i': i } as React.CSSProperties}
+                      >
+                        <Avatar
+                          userId={row.userId}
+                          name={row.name}
+                          src={profiles.data?.get(row.userId)?.avatar}
+                          me={row.userId === userId}
+                          size={40}
+                        />
+                        <span className="flex min-w-0 flex-1 flex-col">
+                          <span className="flex items-center gap-1.5 text-[15.5px] font-bold leading-5">
+                            <span className="truncate">{row.name}</span>
+                            {row.userId === userId && (
+                              <span className="shrink-0 rounded-full bg-brand/8 px-[7px] py-px text-[11px] font-extrabold text-brand">{t.you}</span>
+                            )}
+                          </span>
+                          {(row.sub || row.lunch) && (
+                            <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 text-[12.5px] leading-[17px] text-muted">
+                              {row.sub && <span>{row.sub}</span>}
+                              {row.sub && row.lunch && <span aria-hidden>·</span>}
+                              {row.lunch && (
+                                <span className="flex shrink-0 items-center gap-1 font-semibold text-brand">
+                                  {lunchIcon(row.lunch, 13)}
+                                  {row.lunch === 'box' ? t.lunch.hasBox : t.lunch.goesOut}
+                                </span>
+                              )}
                             </span>
                           )}
                         </span>
-                      )}
-                    </span>
-                    <span
-                      className={`shrink-0 rounded-[9px] px-[9px] py-1 text-[13px] font-extrabold tabular-nums text-brand ${row.held ? 'bg-lilac-soft/35' : 'bg-surface'}`}
-                    >
-                      {row.seat}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+                        <span
+                          className={`shrink-0 rounded-[9px] px-[9px] py-1 text-[13px] font-extrabold tabular-nums text-brand ${row.held ? 'bg-lilac-soft/35' : 'bg-surface'}`}
+                        >
+                          {row.seat}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </>
+            )}
+
+            {away.length > 0 && (
+              <section className="mt-[22px]" aria-labelledby="who-away">
+                <div className="mx-1 mb-2 flex items-baseline justify-between gap-3">
+                  <h2 id="who-away" className="text-lg font-extrabold text-ink">
+                    {t.whoIsIn.out}
+                  </h2>
+                  <span className="text-[13px] font-bold tabular-nums text-muted">{away.length}</span>
+                </div>
+                <ul className="overflow-hidden rounded-[22px] bg-white shadow-card">
+                  {away.map((m, i) => {
+                    const me = m.userIds.includes(userId)
+                    const name = me ? myName : m.name
+                    return (
+                      <li
+                        key={m.userIds[0] ?? `name:${m.name}`}
+                        className={`enter flex items-center gap-3 py-2 pl-3 pr-4 ${i > 0 ? 'border-t border-rule' : ''}`}
+                        style={{ '--i': rows.length + i } as React.CSSProperties}
+                      >
+                        <Avatar
+                          userId={m.userIds[0] ?? m.name}
+                          name={name}
+                          src={me ? myAvatar : m.avatar}
+                          me={me}
+                          size={32}
+                          className="opacity-55 grayscale"
+                        />
+                        <span className="flex min-w-0 flex-1 items-center gap-1.5 text-[14.5px] font-semibold leading-5 text-ink-soft">
+                          <span className="truncate">{name}</span>
+                          {me && <span className="shrink-0 rounded-full bg-brand/8 px-[7px] py-px text-[11px] font-extrabold text-brand">{t.you}</span>}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
+            )}
           </>
         )}
       </Panel>

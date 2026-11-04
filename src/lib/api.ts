@@ -13,6 +13,7 @@ import {
   type Seat,
   type Settings,
   type SlotChoice,
+  type TeamMember,
   type UserStats,
 } from './types'
 
@@ -32,6 +33,12 @@ export const api = {
 
   async profiles(): Promise<Profile[]> {
     return unwrap(await supabase.from('profiles').select('user_id, display_name, avatar_url'))
+  },
+
+  // The team, one row per person (directory people merged across addresses, plus anyone else who signed in).
+  async teamRoster(): Promise<TeamMember[]> {
+    const rows = unwrap(await supabase.rpc('team_roster'))
+    return rows.map((r) => ({ userIds: r.user_ids, name: r.display_name, avatar: r.avatar_url ?? null }))
   },
 
   // Profile photo: one JPEG per person in the public avatars bucket, replaced in place.

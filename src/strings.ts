@@ -119,6 +119,7 @@ export const en = {
     ofSeats: (n: number) => `of ${n} seats`,
     held: 'Held',
     ownSeat: 'Semi-fixed seat',
+    out: 'Out of office',
   },
 
   lunch: {
@@ -335,6 +336,7 @@ export const cs: Strings = {
     ofSeats: (n: number) => `z ${n} míst`,
     held: 'Drženo',
     ownSeat: 'Polofixní místo',
+    out: 'Mimo kancelář',
   },
 
   lunch: {

@@ -206,6 +206,7 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | No check-in | A reservation is the commitment: there is no "I'm here", no deadline and no auto-release (removed 2026-11-02; the `checked_in` / `released` statuses only remain for rows written before). |
 | Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
 | Lunch | Anyone in on a day (booked, or a seat owner on a held day) can say whether they bring a lunchbox or go out, from the Book tab card or Who's in. Colleagues see a mark on each row and the counts; `lunch_plans` rows are the person's own (RLS) and are purged with old bookings. |
+| Out of office | Who's in lists everyone on the team who is neither booked nor holding their seat that day under "Out of office". Nothing is stored or set by hand: `team_roster()` returns one row per person (directory people merged across both addresses, plus anyone else who has signed in; accounts nobody signed in to are left out), and the app subtracts whoever is in. |
 
 ### Progress and badges (private to each person)
 
