@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useShell } from '../components/AppShell'
 import { Avatar } from '../components/Avatar'
 import { DayStrip } from '../components/DayStrip'
@@ -7,10 +7,11 @@ import { LunchPicker } from '../components/LunchPicker'
 import { PageBand, Panel } from '../components/PageBand'
 import { ErrorCard, Skeleton } from '../components/States'
 import { useAuth } from '../hooks/useAuth'
+import { useDayPicker } from '../hooks/useDayPicker'
 import { useDayBookings, useDayLunch, useDayReleases, useMyBookings, useProfiles, useSeats, useTeamRoster, useToday } from '../hooks/useData'
 import { useT } from '../hooks/useLang'
 import { useSetLunch } from '../hooks/useLunch'
-import { bookableDays, formatBandDate } from '../lib/dates'
+import { formatBandDate } from '../lib/dates'
 import { lunchCounts, lunchOf } from '../lib/lunch'
 import { dayOccupancy, occupiedCount, presenceForDay } from '../lib/occupancy'
 import { outOfOffice } from '../lib/team'
@@ -32,12 +33,8 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   const userId = user!.id
   const { name: myName, avatar: myAvatar } = useShell()
   const today = useToday(settings.timezone)
-  const days = useMemo(
-    () => bookableDays(today, settings.working_days),
-    [today, settings.working_days],
-  )
-  const [selectedDay, setSelected] = useState(today)
-  const selected = days.includes(selectedDay) ? selectedDay : days[0]
+  const picker = useDayPicker(today, settings)
+  const { selected } = picker
 
   const bookings = useDayBookings(selected)
   const releases = useDayReleases(selected)
@@ -96,7 +93,7 @@ export function WhoIsIn({ settings }: { settings: Settings }) {
   return (
     <>
       <PageBand title={t.whoIsIn.title} sub={formatBandDate(selected, true)}>
-        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} mine={myDays} />
+        <DayStrip picker={picker} today={today} mine={myDays} />
       </PageBand>
 
       <Panel>

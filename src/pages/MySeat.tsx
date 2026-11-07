@@ -9,7 +9,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useNow, useProfiles, useSeatSchedule, useSeats } from '../hooks/useData'
 import { useT } from '../hooks/useLang'
 import { api } from '../lib/api'
-import { bookableDays, dayChoice, dayLabel, formatDayShort, minutesSinceMidnightIn, todayIn } from '../lib/dates'
+import { bookingWeeks, dayChoice, dayLabel, formatDayShort, formatRange, minutesSinceMidnightIn, todayIn, weekRelative, windowWeeks } from '../lib/dates'
 import { errorMessage } from '../lib/errors'
 import { shortName } from '../lib/people'
 import { ACTIVE_STATUSES, slotsFor, type Settings } from '../lib/types'
@@ -36,9 +36,13 @@ export function MySeat({ settings }: { settings: Settings }) {
   const now = useNow()
   const today = todayIn(settings.timezone, now)
   const nowMinutes = minutesSinceMidnightIn(settings.timezone, now)
-  const days = useMemo(
-    () => bookableDays(today, settings.working_days),
-    [today, settings.working_days],
+  // The window's weeks from today on; owners can release days ahead as far as colleagues can book.
+  const weeks = useMemo(
+    () =>
+      bookingWeeks(today, settings.working_days, windowWeeks(settings))
+        .map((w) => ({ ...w, days: w.days.filter((d) => d >= today) }))
+        .filter((w) => w.days.length > 0),
+    [today, settings],
   )
   const seats = useSeats()
   const seat = seats.data?.find((s) => s.owner_id === userId && s.active) ?? null
@@ -105,38 +109,54 @@ export function MySeat({ settings }: { settings: Settings }) {
         ) : (
           <>
             <p className="mx-1 mb-4 text-[14.5px] leading-[21px] text-ink-soft">{t.mySeat.intro(seat.code)}</p>
-            <ul className="flex flex-col gap-2">
-              {days.map((date, i) => {
-                const label = dayLabel(date, today)
-                const c = cell(date)
-                const actionable = c.kind !== 'booked'
-                return (
-                  <li
-                    key={date}
-                    className="enter grid grid-cols-[4.75rem_minmax(0,1fr)] items-center gap-2"
-                    style={{ '--i': i } as React.CSSProperties}
-                  >
-                    <div className="pl-1 leading-tight">
-                      <div className="text-[15px] font-extrabold">{label.relative ?? label.weekdayLong.charAt(0).toUpperCase() + label.weekdayLong.slice(1)}</div>
-                      <div className="text-xs text-muted">{formatDayShort(date)}</div>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={!actionable || toggle.isPending}
-                      onClick={() => toggle.mutate({ date, kind: c.kind })}
-                      aria-label={`${label.weekday} ${label.day} ${label.month}: ${c.label}`}
-                      className={`flex min-h-[54px] items-center gap-[7px] rounded-2xl px-3.5 text-left text-sm font-bold transition active:scale-[0.97] disabled:active:scale-100 ${cellStyles[c.kind]}`}
-                    >
-                      {c.kind === 'held' && <StarIcon width={14} height={14} className="shrink-0" strokeWidth={2.2} />}
-                      {c.kind === 'booked' && c.userId && (
-                        <Avatar userId={c.userId} name={c.label} src={profiles.data?.get(c.userId)?.avatar} size={22} className="!bg-white" />
-                      )}
-                      <span className="truncate">{c.label}</span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
+            {weeks.map((week, w) => {
+              const relative = weekRelative(week.monday, today)
+              // Running index across weeks, so the staggered enter carries on from one list to the next.
+              const offset = weeks.slice(0, w).reduce((n, prev) => n + prev.days.length, 0)
+              return (
+                <section key={week.monday} className={w > 0 ? 'mt-5' : ''}>
+                  {weeks.length > 1 && (
+                    <h2 className="mx-1 mb-2 text-[12.5px] leading-[18px] text-muted">
+                      {relative && <span className="font-bold uppercase tracking-[0.06em] text-ink-soft">{relative} · </span>}
+                      {formatRange(week.days[0], week.days[week.days.length - 1])}
+                    </h2>
+                  )}
+                  <ul className="flex flex-col gap-2">
+                    {week.days.map((date, d) => {
+                      const i = offset + d
+                      const label = dayLabel(date, today)
+                      const c = cell(date)
+                      const actionable = c.kind !== 'booked'
+                      return (
+                        <li
+                          key={date}
+                          className="enter grid grid-cols-[6rem_minmax(0,1fr)] items-center gap-2"
+                          style={{ '--i': i } as React.CSSProperties}
+                        >
+                          <div className="pl-1 leading-tight">
+                            <div className="text-[15px] font-extrabold">{label.relative ?? label.weekdayLong.charAt(0).toUpperCase() + label.weekdayLong.slice(1)}</div>
+                            <div className="text-xs text-muted">{formatDayShort(date)}</div>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={!actionable || toggle.isPending}
+                            onClick={() => toggle.mutate({ date, kind: c.kind })}
+                            aria-label={`${label.weekday} ${label.day} ${label.month}: ${c.label}`}
+                            className={`flex min-h-[54px] items-center gap-[7px] rounded-2xl px-3.5 text-left text-sm font-bold transition active:scale-[0.97] disabled:active:scale-100 ${cellStyles[c.kind]}`}
+                          >
+                            {c.kind === 'held' && <StarIcon width={14} height={14} className="shrink-0" strokeWidth={2.2} />}
+                            {c.kind === 'booked' && c.userId && (
+                              <Avatar userId={c.userId} name={c.label} src={profiles.data?.get(c.userId)?.avatar} size={22} className="!bg-white" />
+                            )}
+                            <span className="truncate">{c.label}</span>
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </section>
+              )
+            })}
             <p className="mx-1 mt-4 text-[13px] leading-[18px] text-muted">{t.mySeat.hint}</p>
           </>
         )}

@@ -28,7 +28,7 @@ Odkaz: https://cetin-automation-coe.github.io/acoe-book-my-desk/
 – Oznámení: zapni „Na tomto zařízení“ a vyber, co chceš dostávat (večerní připomínka, pondělní pošťouchnutí). Na iPhonu fungují jen z appky přidané na plochu.
 
 4) Rezervace (záložka Rezervace)
-– Rezervovat jde jen aktuální pracovní týden, pondělí až pátek. O víkendu se už zobrazí příští týden.
+– Rezervovat jde aktuální a příští pracovní týden, pondělí až pátek. Mezi týdny přepínáš šipkami nad dny, nebo přejetím prstem po dnech do strany. O víkendu začíná nabídka příštím týdnem.
 – Vyber den v liště nahoře a klepni na volné místo. Rezervace platí na celý den.
 – Místa jsou v párech, dva páry u stolu. Karta nahoře ti nabídne tvé obvyklé místo nebo nejbližší volné.
 – Na jeden den můžeš mít jen jedno místo.

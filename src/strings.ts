@@ -62,6 +62,10 @@ export const en = {
     today: 'Today',
     tomorrow: 'Tomorrow',
     pick: 'Day',
+    thisWeek: 'This week',
+    nextWeek: 'Next week',
+    weekPrev: 'Previous week',
+    weekNext: 'Next week',
   },
 
   seats: {
@@ -279,6 +283,10 @@ export const cs: Strings = {
     today: 'Dnes',
     tomorrow: 'Zítra',
     pick: 'Den',
+    thisWeek: 'Tento týden',
+    nextWeek: 'Příští týden',
+    weekPrev: 'Předchozí týden',
+    weekNext: 'Další týden',
   },
 
   seats: {

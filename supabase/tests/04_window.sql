@@ -1,5 +1,5 @@
 begin;
-select plan(21);
+select plan(26);
 
 create schema tests_tmp;
 create function tests_tmp.create_user(p_email text, p_id uuid default gen_random_uuid()) returns uuid
@@ -30,7 +30,7 @@ select tests_tmp.create_user('bob@cetin.cz',   'a1000000-0000-4000-8000-00000000
 select tests_tmp.create_user('carol@cetin.cz', 'a1000000-0000-4000-8000-000000000003');
 select tests_tmp.create_user('dave@cetin.cz',  'a1000000-0000-4000-8000-000000000004');
 
--- Wednesday 2026-11-04 09:00 Prague: the window runs to Friday 2026-11-06
+-- Wednesday 2026-11-04 09:00 Prague: the window (booking_weeks = 2) runs to Friday 2026-11-13
 select tests_tmp.freeze('2026-11-04 09:00:00+01');
 select tests_tmp.login('a1000000-0000-4000-8000-000000000001');
 set local role authenticated;
@@ -38,9 +38,13 @@ set local role authenticated;
 select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-03', 'AM')$$,
   'P0001', 'outside_window', 'yesterday cannot be booked');
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-06', 'AM')$$,
-  'Friday of this week is the last bookable day');
-select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-09', 'AM')$$,
-  'P0001', 'outside_window', 'next Monday is outside the current week');
+  'Friday of this week is bookable');
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-09', 'AM')$$,
+  'next Monday is bookable: the window is this week and next');
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-13', 'AM')$$,
+  'Friday of next week is the last bookable day');
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-16', 'AM')$$,
+  'P0001', 'outside_window', 'the Monday after next is outside the window');
 select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-07', 'AM')$$,
   'P0001', 'not_working_day', 'Saturday of this week is not a working day');
 select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000002', '2026-11-08', 'PM')$$,
@@ -81,8 +85,10 @@ select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003'
   'from the weekend, next Monday is bookable');
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-13', 'AM')$$,
   'and next Friday');
-select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-16', 'AM')$$,
-  'P0001', 'outside_window', 'but not the Monday after');
+select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-16', 'AM')$$,
+  'and the week after it');
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000003', '2026-11-23', 'AM')$$,
+  'P0001', 'outside_window', 'but not a third week');
 
 -- Weekly limit (off by default): max 2 distinct days per ISO week
 reset role;
@@ -102,6 +108,16 @@ select tests_tmp.login('a1000000-0000-4000-8000-000000000004');
 set local role authenticated;
 select lives_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-09', 'AM')$$,
   'weekly limit: next ISO week starts fresh');
+
+-- booking_weeks = 1 is the current week only; it cannot be zero
+reset role;
+select throws_ok($$update public.settings set booking_weeks = 0$$, '23514', null, 'booking_weeks is at least 1');
+update public.settings set booking_weeks = 1;
+select tests_tmp.freeze('2026-11-04 09:00:00+01');
+select tests_tmp.login('a1000000-0000-4000-8000-000000000001');
+set local role authenticated;
+select throws_ok($$select public.book_seat('51000000-0000-4000-8000-000000000001', '2026-11-10', 'AM')$$,
+  'P0001', 'outside_window', 'with booking_weeks = 1 next week is outside the window');
 
 -- Saturday becomes bookable once it is a working day
 reset role;

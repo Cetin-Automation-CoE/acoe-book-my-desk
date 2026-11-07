@@ -199,6 +199,28 @@ body {
   animation-delay: calc(var(--i, 0) * 32ms);
 }
 
+/* The day strip slides in from the side it was moved to when the week changes. */
+@keyframes week-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--week-from));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.week-in-next,
+.week-in-prev {
+  animation: week-in 280ms var(--ease-out-soft) both;
+}
+.week-in-next {
+  --week-from: 28px;
+}
+.week-in-prev {
+  --week-from: -28px;
+}
+
 /* Realtime flash on a tile that was just taken. */
 .flash {
   box-shadow: var(--shadow-flash);
@@ -209,7 +231,9 @@ body {
   .sheet-panel,
   .sheet-overlay,
   .toast-panel,
-  .enter {
+  .enter,
+  .week-in-next,
+  .week-in-prev {
     animation: none;
   }
   .flash {

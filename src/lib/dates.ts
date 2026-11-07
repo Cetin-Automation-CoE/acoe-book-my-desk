@@ -50,19 +50,39 @@ export function isoWeekday(isoDate: string): number {
   return dow === 0 ? 7 : dow
 }
 
-// The bookable days: today through the last working day of the current week. Past the last working
-// day (the weekend) it is the coming week. Mirrors bmd_assert_window() in the database.
-export function bookableDays(today: string, workingDays: readonly number[]): string[] {
-  const dow = isoWeekday(today)
-  const lastWorking = Math.max(...workingDays)
-  let monday = addDays(today, 1 - dow)
-  if (dow > lastWorking) monday = addDays(monday, 7)
-  const days: string[] = []
-  for (let i = 0; i < 7; i++) {
-    const d = addDays(monday, i)
-    if (d >= today && workingDays.includes(isoWeekday(d))) days.push(d)
-  }
-  return days
+// Monday of the week a date falls in.
+export function mondayOf(isoDate: string): string {
+  return addDays(isoDate, 1 - isoWeekday(isoDate))
+}
+
+// How many weeks the booking window spans. Before the booking_weeks migration the column is missing,
+// and the database still allows the current week only, so the app falls back to that.
+export function windowWeeks(s: Pick<Settings, 'booking_weeks'>): number {
+  return s.booking_weeks ?? 1
+}
+
+export interface Week {
+  monday: string
+  // Every working day of the week, the ones already gone included, so a strip keeps its shape.
+  days: string[]
+}
+
+// The weeks of the booking window: the planning week (this week, or the coming one once its last
+// working day is over, i.e. on the weekend) and the weeks after it, `weeks` in all.
+// Mirrors bmd_assert_window() in the database.
+export function bookingWeeks(today: string, workingDays: readonly number[], weeks: number): Week[] {
+  let monday = mondayOf(today)
+  if (isoWeekday(today) > Math.max(...workingDays)) monday = addDays(monday, 7)
+  return Array.from({ length: weeks }, (_, w) => {
+    const start = addDays(monday, 7 * w)
+    const days = Array.from({ length: 7 }, (_, i) => addDays(start, i)).filter((d) => workingDays.includes(isoWeekday(d)))
+    return { monday: start, days }
+  })
+}
+
+// The bookable days: every working day of the window from today on.
+export function bookableDays(today: string, workingDays: readonly number[], weeks = 1): string[] {
+  return bookingWeeks(today, workingDays, weeks).flatMap((w) => w.days.filter((d) => d >= today))
 }
 
 // Dates in the strip that do not directly follow the previous one (Friday → Monday) get a gap before them.
@@ -124,6 +144,28 @@ export function formatBandDate(isoDate: string, withWeekday: boolean): string {
   }
   const dm = `${date.getUTCDate()} ${fmt(date, { month: 'long' })}`
   return withWeekday ? `${fmt(date, { weekday: 'long' })}, ${dm}` : dm
+}
+
+// "9–13 Nov" / "9.–13. 11."; across a month end "30 Nov – 4 Dec" / "30. 11. – 4. 12.".
+export function formatRange(first: string, last: string): string {
+  const a = utcDate(first)
+  const b = utcDate(last)
+  const sameMonth = a.getUTCMonth() === b.getUTCMonth()
+  if (getLang() === 'cs') {
+    return sameMonth
+      ? `${a.getUTCDate()}.–${b.getUTCDate()}. ${b.getUTCMonth() + 1}.`
+      : `${a.getUTCDate()}. ${a.getUTCMonth() + 1}. – ${b.getUTCDate()}. ${b.getUTCMonth() + 1}.`
+  }
+  const month = (d: Date) => fmt(d, { month: 'short' })
+  return sameMonth ? `${a.getUTCDate()}–${b.getUTCDate()} ${month(b)}` : `${a.getUTCDate()} ${month(a)} – ${b.getUTCDate()} ${month(b)}`
+}
+
+// "This week" / "Next week" for the calendar week of today and the one after; nothing for later weeks.
+export function weekRelative(monday: string, today: string): string | undefined {
+  const days = getStrings().days
+  if (monday === mondayOf(today)) return days.thisWeek
+  if (monday === addDays(mondayOf(today), 7)) return days.nextWeek
+  return undefined
 }
 
 // Band title: "Today" / "Tomorrow" / "Thursday".

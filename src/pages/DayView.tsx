@@ -9,6 +9,7 @@ import { ErrorCard, Skeleton } from '../components/States'
 import { useToast } from '../components/Toast'
 import { TodayCard } from '../components/TodayCard'
 import { useAuth } from '../hooks/useAuth'
+import { useDayPicker } from '../hooks/useDayPicker'
 import {
   useDayBookings,
   useDayLunch,
@@ -26,7 +27,6 @@ import { useSeatChange } from '../hooks/useRealtime'
 import { api } from '../lib/api'
 import {
   addDays,
-  bookableDays,
   canCancelAll,
   dayChoice,
   dayLabel,
@@ -54,13 +54,8 @@ export function DayView({ settings }: { settings: Settings }) {
   const now = useNow()
   const today = todayIn(tz, now)
   const nowMinutes = minutesSinceMidnightIn(tz, now)
-  const days = useMemo(
-    () => bookableDays(today, settings.working_days),
-    [today, settings.working_days],
-  )
-  const [selectedDay, setSelected] = useState(today)
-  // Fall back to the first bookable day when the selection is stale (day rolled over) or a weekend.
-  const selected = days.includes(selectedDay) ? selectedDay : days[0]
+  const picker = useDayPicker(today, settings)
+  const { selected, bookable } = picker
   // A booking covers the whole day, or what is left of today once the afternoon has started.
   const choice = dayChoice(selected, today, nowMinutes, settings)
   const started = selected === today && nowMinutes >= slotStart(slotsFor(choice)[0], settings)
@@ -74,7 +69,7 @@ export function DayView({ settings }: { settings: Settings }) {
   const releases = useDayReleases(selected)
   const lunchPlans = useDayLunch(selected)
   const profiles = useProfiles()
-  const presenceRows = usePresence(days[0], days[days.length - 1])
+  const presenceRows = usePresence(bookable[0], bookable[bookable.length - 1])
   const myUpcoming = useMyBookings(userId, today)
   const recent = useMyRecentBookings(userId, addDays(today, -28), today)
 
@@ -211,7 +206,7 @@ export function DayView({ settings }: { settings: Settings }) {
         sub={formatBandDate(selected, isRelative)}
         figure={loading || failed ? undefined : { value: freeCount, label: t.seats.freeSeats(freeCount) }}
       >
-        <DayStrip days={days} selected={selected} today={today} onSelect={setSelected} mine={myDays} />
+        <DayStrip picker={picker} today={today} mine={myDays} />
       </PageBand>
 
       <Panel>

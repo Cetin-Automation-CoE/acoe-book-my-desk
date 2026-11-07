@@ -203,14 +203,14 @@ isOneToOne: false
                   ]
                 },"settings": {
                   Row: {
-                    "allowed_email_domains": (string)[],"am_start": string,"booking_retention_days": number,"id": boolean,"max_days_per_week": number | null,"pm_start": string,"push_evening_hour": number,"push_function_url": string | null,"push_monday_hour": number,"timezone": string,"updated_at": string,"working_days": (number)[]
+                    "allowed_email_domains": (string)[],"am_start": string,"booking_retention_days": number,"booking_weeks": number,"id": boolean,"max_days_per_week": number | null,"pm_start": string,"push_evening_hour": number,"push_function_url": string | null,"push_monday_hour": number,"timezone": string,"updated_at": string,"working_days": (number)[]
                   }
                   ComputedFields: never
                   Insert: {
-                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
+                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"booking_weeks"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Update: {
-                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
+                    "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"booking_weeks"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Relationships: [
                     

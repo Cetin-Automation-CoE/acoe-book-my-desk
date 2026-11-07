@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { addDays, bookableDays, canCancel, canCancelAll, dayChoice, dayLabel, isoWeekday, minutesSinceMidnightIn, todayIn } from './dates'
+import { setLang } from '../strings'
+import {
+  addDays,
+  bookableDays,
+  bookingWeeks,
+  canCancel,
+  canCancelAll,
+  dayChoice,
+  dayLabel,
+  formatRange,
+  isoWeekday,
+  minutesSinceMidnightIn,
+  mondayOf,
+  todayIn,
+  weekRelative,
+  windowWeeks,
+} from './dates'
 import type { Booking, Settings } from './types'
 
 const TZ = 'Europe/Prague'
@@ -11,6 +27,7 @@ const settings: Settings = {
   am_start: '06:00:00',
   pm_start: '13:00:00',
   max_days_per_week: null,
+  booking_weeks: 2,
   booking_retention_days: 90,
   working_days: [1, 2, 3, 4, 5],
   push_function_url: null,
@@ -110,6 +127,87 @@ describe('bookableDays', () => {
 
   it('includes Saturday when it is a working day', () => {
     expect(bookableDays('2026-11-06', [1, 2, 3, 4, 5, 6])).toEqual(['2026-11-06', '2026-11-07'])
+  })
+})
+
+describe('bookingWeeks', () => {
+  const WEEKDAYS = [1, 2, 3, 4, 5]
+
+  it('is this week and next by default, each with every working day', () => {
+    // Wednesday 4 Nov
+    expect(bookingWeeks('2026-11-04', WEEKDAYS, 2)).toEqual([
+      { monday: '2026-11-02', days: ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06'] },
+      { monday: '2026-11-09', days: ['2026-11-09', '2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13'] },
+    ])
+  })
+
+  it('starts with the coming week on a weekend', () => {
+    expect(bookingWeeks('2026-11-07', WEEKDAYS, 2).map((w) => w.monday)).toEqual(['2026-11-09', '2026-11-16'])
+  })
+
+  it('runs across a month and a year end', () => {
+    expect(bookingWeeks('2026-12-30', WEEKDAYS, 2)[1].days).toEqual(['2027-01-04', '2027-01-05', '2027-01-06', '2027-01-07', '2027-01-08'])
+  })
+})
+
+describe('bookableDays over several weeks', () => {
+  it('runs from today to Friday of next week', () => {
+    // Thursday 5 Nov
+    expect(bookableDays('2026-11-05', [1, 2, 3, 4, 5], 2)).toEqual([
+      '2026-11-05',
+      '2026-11-06',
+      '2026-11-09',
+      '2026-11-10',
+      '2026-11-11',
+      '2026-11-12',
+      '2026-11-13',
+    ])
+  })
+
+  it('opens two whole weeks from the weekend', () => {
+    const days = bookableDays('2026-11-08', [1, 2, 3, 4, 5], 2)
+    expect(days[0]).toBe('2026-11-09')
+    expect(days[days.length - 1]).toBe('2026-11-20')
+    expect(days).toHaveLength(10)
+  })
+})
+
+describe('windowWeeks', () => {
+  it('reads booking_weeks, and falls back to the current week before the column exists', () => {
+    expect(windowWeeks({ booking_weeks: 3 })).toBe(3)
+    expect(windowWeeks({} as Pick<Settings, 'booking_weeks'>)).toBe(1)
+  })
+})
+
+describe('mondayOf', () => {
+  it('finds the Monday of the ISO week', () => {
+    expect(mondayOf('2026-11-02')).toBe('2026-11-02')
+    expect(mondayOf('2026-11-08')).toBe('2026-11-02')
+    expect(mondayOf('2027-01-01')).toBe('2026-12-28')
+  })
+})
+
+describe('weekRelative', () => {
+  it('names this week and next, relative to the calendar week of today', () => {
+    expect(weekRelative('2026-11-02', '2026-11-05')).toBe('This week')
+    expect(weekRelative('2026-11-09', '2026-11-05')).toBe('Next week')
+    expect(weekRelative('2026-11-16', '2026-11-05')).toBeUndefined()
+    // On Saturday the coming week is next week, not this one.
+    expect(weekRelative('2026-11-09', '2026-11-07')).toBe('Next week')
+  })
+})
+
+describe('formatRange', () => {
+  it('writes a week as one range, in English and Czech', () => {
+    expect(formatRange('2026-11-09', '2026-11-13')).toBe('9–13 Nov')
+    expect(formatRange('2026-11-30', '2026-12-04')).toBe('30 Nov – 4 Dec')
+    setLang('cs')
+    try {
+      expect(formatRange('2026-11-09', '2026-11-13')).toBe('9.–13. 11.')
+      expect(formatRange('2026-11-30', '2026-12-04')).toBe('30. 11. – 4. 12.')
+    } finally {
+      setLang('en')
+    }
   })
 })
 

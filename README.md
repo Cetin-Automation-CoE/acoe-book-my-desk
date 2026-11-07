@@ -198,7 +198,7 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | Rule | Behaviour |
 |------|-----------|
 | Whole days | The app books whole days: both halves (`AM` 06:00–13:00, `PM` 13:00–24:00, from `am_start` / `pm_start`) in one atomic call, or only the afternoon once today's afternoon has started. The database still stores and validates halves (decision 61). |
-| Window | The current working week: today through the week's last working day (`working_days`, default Mon–Fri). On a weekend the coming week opens. Other dates are rejected (`outside_window`, `not_working_day`). |
+| Window | Whole working weeks, `booking_weeks` of them (default 2: this week and next), from today on. The first is the current week, or the coming one from the weekend on (after the last day in `working_days`, default Mon–Fri). Other dates are rejected (`outside_window`, `not_working_day`). The app moves between weeks with arrows or a swipe on the day strip. |
 | Same day | Today can be booked until the afternoon ends; after 13:00 a booking covers the rest of the day. |
 | Limits | One active booking per seat per half day; one per person per half day (partial unique indexes), which in the app means one seat per person per day. Optional `max_days_per_week`. |
 | Cancel | In the app, until the day starts at 06:00; the database itself still allows a half that has not started to be cancelled on its own. |
@@ -246,6 +246,7 @@ check constraint, a rule in that function and a name in `src/strings.ts`. To res
 | `timezone` | `Europe/Prague` | Office time zone for every rule |
 | `working_days` | `{1,2,3,4,5}` | ISO weekdays that can be booked (1 = Mon … 7 = Sun); the week ends on the last one listed |
 | `am_start`, `pm_start` | `06:00`, `13:00` | When each half day starts (PM start is also the AM/PM split) |
+| `booking_weeks` | `2` | How many working weeks can be booked: 1 = the current week only, 2 = this week and next (1–8) |
 | `max_days_per_week` | `null` | Optional limit of distinct booked days per ISO week |
 | `booking_retention_days` | `90` | Nightly purge threshold |
 
