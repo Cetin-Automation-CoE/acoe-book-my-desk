@@ -4,7 +4,7 @@ import { roomBlocks } from '../lib/layout'
 import type { SeatView } from '../lib/seatState'
 import type { Booking, Settings, SlotChoice } from '../lib/types'
 import { Button } from './Button'
-import { HeartIcon } from './icons'
+import { DiceIcon, HeartIcon } from './icons'
 import { MiniRoomMap } from './MiniRoomMap'
 import { PAIRS_PER_BLOCK } from './SeatGrid'
 import { Sheet } from './Sheet'
@@ -13,7 +13,7 @@ function tableOf(views: SeatView[], seatId: string): number {
   return roomBlocks(views, PAIRS_PER_BLOCK).findIndex((block) => block.flat().some((v) => v.seat.id === seatId)) + 1
 }
 
-function SeatHead({ view, views, date, today }: { view: SeatView; views: SeatView[]; date: string; today: string }) {
+function SeatHead({ view, views, date, today, title }: { view: SeatView; views: SeatView[]; date: string; today: string; title?: string }) {
   const t = useT()
   return (
     <div className="mb-4 flex items-center gap-3.5">
@@ -21,7 +21,7 @@ function SeatHead({ view, views, date, today }: { view: SeatView; views: SeatVie
         <span className="text-[13.5px] font-extrabold tracking-[-0.01em] tabular-nums">{view.seat.code}</span>
       </div>
       <div className="min-w-0 flex-1">
-        <h2 className="text-[21px] font-extrabold leading-[26px] tracking-[-0.01em]">{t.seats.bookTitle(view.seat.code)}</h2>
+        <h2 className="text-[21px] font-extrabold leading-[26px] tracking-[-0.01em]">{title ?? t.seats.bookTitle(view.seat.code)}</h2>
         <p className="mt-0.5 text-sm leading-[19px] text-muted">
           {formatDayLong(date, today)} · {t.seats.table(tableOf(views, view.seat.id))}
         </p>
@@ -80,28 +80,38 @@ interface BookSheetProps {
   started: boolean
   busy: boolean
   favourite?: FavouriteControl
+  // The seat came from "Surprise me": say so and offer another spin instead of Close.
+  surprise?: { onSpinAgain: () => void }
   onBook: (seatId: string) => void
   onClose: () => void
 }
 
-export function BookSheet({ view, views, date, today, settings, choice, started, busy, favourite, onBook, onClose }: BookSheetProps) {
+export function BookSheet({ view, views, date, today, settings, choice, started, busy, favourite, surprise, onBook, onClose }: BookSheetProps) {
   const t = useT()
   if (!view) return null
   const rule = started ? t.seats.startedRule : t.seats.cancelRule(formatTime(settings.am_start))
+  const title = surprise ? t.surprise.title(view.seat.code) : t.seats.bookTitle(view.seat.code)
   return (
-    <Sheet open title={t.seats.bookTitle(view.seat.code)} onClose={onClose}>
-      <SeatHead view={view} views={views} date={date} today={today} />
+    <Sheet open title={title} onClose={onClose}>
+      <SeatHead view={view} views={views} date={date} today={today} title={title} />
       <div className="flex flex-col gap-3.5">
         <Cover choice={choice} settings={settings} />
         <p className="text-[13.5px] leading-[19px] text-muted">{rule}</p>
         {favourite && <FavouriteToggle control={favourite} />}
         <div className="mt-0.5 flex flex-col gap-1">
           <Button className="font-extrabold" onClick={() => onBook(view.seat.id)} disabled={busy}>
-            {busy ? t.seats.booking : t.seats.book}
+            {busy ? t.seats.booking : surprise ? t.surprise.bookIt : t.seats.book}
           </Button>
-          <Button variant="ghost" className="min-h-12 rounded-[14px] text-base" onClick={onClose} disabled={busy}>
-            {t.close}
-          </Button>
+          {surprise ? (
+            <Button variant="ghost" className="min-h-12 gap-2 rounded-[14px] text-base" onClick={surprise.onSpinAgain} disabled={busy}>
+              <DiceIcon width={20} height={20} />
+              {t.surprise.again}
+            </Button>
+          ) : (
+            <Button variant="ghost" className="min-h-12 rounded-[14px] text-base" onClick={onClose} disabled={busy}>
+              {t.close}
+            </Button>
+          )}
         </div>
       </div>
     </Sheet>

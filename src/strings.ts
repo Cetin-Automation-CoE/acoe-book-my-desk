@@ -110,6 +110,15 @@ export const en = {
     removed: 'Favourite removed.',
   },
 
+  surprise: {
+    button: 'Surprise me',
+    picking: 'Picking…',
+    title: (code: string) => `You got ${code}!`,
+    bookIt: 'Book it',
+    again: 'Spin again',
+    retaken: 'Someone was quicker – spinning again.',
+  },
+
   myBookings: {
     title: 'My bookings',
     upcoming: (n: number) => `${n} upcoming`,
@@ -338,6 +347,15 @@ export const cs: Strings = {
     remove: 'Odebrat',
     saved: (code: string) => `${code} je teď vaše oblíbené místo.`,
     removed: 'Oblíbené místo odebráno.',
+  },
+
+  surprise: {
+    button: 'Překvap mě',
+    picking: 'Losuji…',
+    title: (code: string) => `Padlo místo ${code}!`,
+    bookIt: 'Rezervovat',
+    again: 'Losovat znovu',
+    retaken: 'Někdo byl rychlejší – losuji znovu.',
   },
 
   myBookings: {

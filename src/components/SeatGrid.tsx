@@ -14,6 +14,8 @@ interface SeatGridProps {
   flashId: string | null
   selectedId: string | null
   favouriteId: string | null
+  // The seat "Surprise me" is passing over, if it is shuffling.
+  spotlightId?: string | null
   onTap: (view: SeatView) => void
 }
 
@@ -21,7 +23,7 @@ interface SeatGridProps {
 // Seats arrive in room order (seats.sort_order), so the grid mirrors the floor without a map.
 export const PAIRS_PER_BLOCK = 2
 
-export function SeatGrid({ views, people, userId, myName, isBlocked, flashId, selectedId, favouriteId, onTap }: SeatGridProps) {
+export function SeatGrid({ views, people, userId, myName, isBlocked, flashId, selectedId, favouriteId, spotlightId = null, onTap }: SeatGridProps) {
   const t = useT()
   if (views.length === 0) return <p className="text-muted">{t.seats.noSeats}</p>
 
@@ -73,6 +75,7 @@ export function SeatGrid({ views, people, userId, myName, isBlocked, flashId, se
                         flash={flashId === view.seat.id}
                         selected={selectedId === view.seat.id}
                         favourite={favouriteId === view.seat.id}
+                        spotlight={spotlightId === view.seat.id}
                         index={index++}
                         onTap={onTap}
                       />

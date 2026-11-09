@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShell } from '../components/AppShell'
 import { DayStrip } from '../components/DayStrip'
+import { DiceIcon } from '../components/icons'
 import { PageBand, Panel } from '../components/PageBand'
 import { SeatGrid } from '../components/SeatGrid'
 import { BookSheet, CancelSheet, MineSheet, type FavouriteControl } from '../components/SeatSheets'
@@ -38,14 +39,24 @@ import {
   slotStart,
   todayIn,
 } from '../lib/dates'
-import { errorMessage } from '../lib/errors'
+import { errorCode, errorMessage } from '../lib/errors'
 import { lunchOf } from '../lib/lunch'
 import { presenceByDay } from '../lib/progress'
 import { seatView, type SeatView } from '../lib/seatState'
 import { cardVariant, usualSeat } from '../lib/smart'
+import { hopTimes, pickRandomSeat, shuffleHops, surpriseCandidates } from '../lib/surprise'
 import { ACTIVE_STATUSES, slotsFor, type Booking, type Settings } from '../lib/types'
 
-type Pending = { kind: 'book' | 'mine'; seatId: string }
+// surprise: the seat came from "Surprise me".
+type Pending = { kind: 'book' | 'mine'; seatId: string; surprise?: boolean }
+
+const SHUFFLE_HOPS = 12
+const SHUFFLE_MS = 1200
+const LANDING_PAUSE_MS = 350
+// How many times a surprise spins again by itself when someone books its seat first.
+const SURPRISE_RETRIES = 3
+
+const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
 
 export function DayView({ settings }: { settings: Settings }) {
   const t = useT()
@@ -63,6 +74,12 @@ export function DayView({ settings }: { settings: Settings }) {
   const started = selected === today && nowMinutes >= slotStart(slotsFor(choice)[0], settings)
   const [pending, setPending] = useState<Pending | null>(null)
   const [toCancel, setToCancel] = useState<Booking[] | null>(null)
+  // "Surprise me": the seat the shuffle is passing over, its timers, and the retry bookkeeping.
+  const [spotlight, setSpotlight] = useState<string | null>(null)
+  const [spinning, setSpinning] = useState(false)
+  const spinTimers = useRef<number[]>([])
+  const surpriseTries = useRef(0)
+  const surpriseTaken = useRef<Set<string>>(new Set())
   const toast = useToast()
   const queryClient = useQueryClient()
 
@@ -139,14 +156,69 @@ export function DayView({ settings }: { settings: Settings }) {
     refresh()
   }
 
+  const stopSpin = useCallback(() => {
+    for (const id of spinTimers.current) window.clearTimeout(id)
+    spinTimers.current = []
+    setSpotlight(null)
+    setSpinning(false)
+  }, [])
+  // A new day (or leaving the tab) ends any shuffle in progress.
+  useEffect(() => stopSpin, [selected, stopSpin])
+
+  // Shuffle across the free seats and land on a random one; `avoid` steers it away from seats just
+  // shown or just taken, unless nothing else is left.
+  const spin = (avoid: ReadonlySet<string>) => {
+    stopSpin()
+    setPending(null)
+    let pool = surpriseCandidates(views, blockedFor, avoid)
+    if (pool.length === 0) pool = surpriseCandidates(views, blockedFor, surpriseTaken.current)
+    const pick = pickRandomSeat(pool)
+    if (!pick) {
+      toast(t.errors.seat_taken, 'error')
+      return
+    }
+    const land = () => {
+      spinTimers.current = []
+      setSpotlight(null)
+      setSpinning(false)
+      setPending({ kind: 'book', seatId: pick, surprise: true })
+    }
+    if (pool.length === 1 || reducedMotion()) {
+      land()
+      return
+    }
+    const hops = shuffleHops(pool, pick, SHUFFLE_HOPS)
+    const times = hopTimes(hops.length, SHUFFLE_MS)
+    setSpinning(true)
+    hops.forEach((id, i) => spinTimers.current.push(window.setTimeout(() => setSpotlight(id), times[i])))
+    spinTimers.current.push(window.setTimeout(land, times[times.length - 1] + LANDING_PAUSE_MS))
+  }
+
+  const surpriseMe = () => {
+    surpriseTries.current = 0
+    surpriseTaken.current = new Set()
+    spin(new Set())
+  }
+
   const book = useMutation({
-    mutationFn: (seatId: string) => api.bookSeat(seatId, selected, choice),
+    mutationFn: ({ seatId }: { seatId: string; surprise?: boolean }) => api.bookSeat(seatId, selected, choice),
     onSuccess: () => {
       toast(t.seats.booked)
       setPending(null)
       refresh()
     },
-    onError: fail,
+    onError: (err, { seatId, surprise }) => {
+      // Someone took the surprise seat first: spin again by itself, a few times.
+      if (surprise && errorCode(err) === 'seat_taken' && surpriseTries.current < SURPRISE_RETRIES) {
+        surpriseTries.current += 1
+        surpriseTaken.current.add(seatId)
+        toast(t.surprise.retaken)
+        refresh()
+        spin(surpriseTaken.current)
+        return
+      }
+      fail(err)
+    },
   })
 
   // One tap from the card: book now, offer Undo while cancelling is still possible.
@@ -199,11 +271,14 @@ export function DayView({ settings }: { settings: Settings }) {
   }, [sheetStillBookable, toast, t])
 
   const onTap = (view: SeatView) => {
+    if (spinning) return
     if (view.kind === 'free' && !blockedFor(view)) setPending({ kind: 'book', seatId: view.seat.id })
     else if (view.kind === 'mine') setPending({ kind: 'mine', seatId: view.seat.id })
   }
 
   const busy = book.isPending || quickBook.isPending || cancel.isPending
+  // Surprise me is for someone without a seat that day; seat owners sit at their own seat.
+  const canSurprise = mineOnDay.length === 0 && !ownerSeat && surpriseCandidates(views, blockedFor).length > 0
   const loading = seats.isPending || bookings.isPending || profiles.isPending
   const failed = seats.error ?? bookings.error ?? profiles.error
   const retry = () => {
@@ -246,7 +321,22 @@ export function DayView({ settings }: { settings: Settings }) {
                 lunch={{ value: myLunch, busy: setLunch.isPending, onChange: (next) => setLunch.mutate(next) }}
               />
             )}
-            {othersIn > 0 && <p className="mb-3.5 px-1 text-[13px] text-muted">{t.seats.colleaguesIn(othersIn, when)}</p>}
+            {(othersIn > 0 || canSurprise) && (
+              <div className="mb-3.5 flex min-h-9 items-center justify-between gap-3 pl-1">
+                <p className="min-w-0 text-[13px] text-muted">{othersIn > 0 ? t.seats.colleaguesIn(othersIn, when) : null}</p>
+                {canSurprise && (
+                  <button
+                    type="button"
+                    onClick={surpriseMe}
+                    disabled={spinning || busy}
+                    className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full bg-white pl-2.5 pr-3.5 text-[13.5px] font-extrabold text-brand shadow-card transition active:scale-95 disabled:opacity-70"
+                  >
+                    <DiceIcon width={18} height={18} strokeWidth={2} className={spinning ? 'motion-safe:animate-spin' : ''} />
+                    {spinning ? t.surprise.picking : t.surprise.button}
+                  </button>
+                )}
+              </div>
+            )}
             <div key={selected}>
               <SeatGrid
                 views={views}
@@ -257,6 +347,7 @@ export function DayView({ settings }: { settings: Settings }) {
                 flashId={flashId}
                 selectedId={pending?.kind === 'book' ? pending.seatId : null}
                 favouriteId={favouriteId}
+                spotlightId={spotlight}
                 onTap={onTap}
               />
             </div>
@@ -277,7 +368,8 @@ export function DayView({ settings }: { settings: Settings }) {
         started={started}
         busy={busy}
         favourite={favouriteFor(bookView?.seat.id)}
-        onBook={(seatId) => book.mutate(seatId)}
+        surprise={pending?.kind === 'book' && pending.surprise ? { onSpinAgain: () => spin(new Set([pending.seatId])) } : undefined}
+        onBook={(seatId) => book.mutate({ seatId, surprise: pending?.surprise })}
         onClose={() => setPending(null)}
       />
       <MineSheet

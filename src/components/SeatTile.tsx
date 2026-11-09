@@ -16,6 +16,8 @@ export interface SeatTileProps {
   selected: boolean
   // My favourite seat: a small heart in the corner.
   favourite: boolean
+  // "Surprise me" is passing over this seat.
+  spotlight: boolean
   index: number
   onTap: (view: SeatView) => void
 }
@@ -30,7 +32,7 @@ const tile: Record<SeatKind, string> = {
 
 // One seat in the grid: big desk number and who has it for the day.
 export function SeatTile(props: SeatTileProps) {
-  const { view, people, userId, myName, blocked, flash, selected, favourite, index, onTap } = props
+  const { view, people, userId, myName, blocked, flash, selected, favourite, spotlight, index, onTap } = props
   const t = useT()
   const nameOf = (id: string) => (id === userId ? myName : (people.get(id)?.name ?? '…'))
 
@@ -87,7 +89,7 @@ export function SeatTile(props: SeatTileProps) {
         aria-label={`${view.seat.code}: ${caption}${sub ? `, ${sub}` : ''}${favourite ? `, ${t.favourite.is}` : ''}`}
         className={`relative flex h-[76px] w-full flex-col justify-center gap-[3px] rounded-2xl border-[1.5px] py-0 pl-[11px] pr-2 text-left transition-[transform,box-shadow] duration-150 active:scale-[0.96] disabled:active:scale-100 ${tile[look]} ${
           flash ? 'flash' : ''
-        } ${selected ? 'shadow-selected' : ''} ${dimmed ? 'opacity-50' : ''}`}
+        } ${selected ? 'shadow-selected' : ''} ${spotlight ? 'z-10 scale-[1.06] ring-[3px] ring-sky' : ''} ${dimmed ? 'opacity-50' : ''}`}
       >
         {favourite && (
           <HeartIcon
