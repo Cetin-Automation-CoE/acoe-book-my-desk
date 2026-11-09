@@ -46,6 +46,12 @@ describe('delight', () => {
     })
     expect(celebrationsOn()).toBe(true)
     expect(() => setCelebrations(false)).not.toThrow()
+    // The switch still holds until the page reloads.
+    expect(celebrationsOn()).toBe(false)
+    celebrateBooking()
+    expect(vibrate).not.toHaveBeenCalled()
+    setCelebrations(true)
+    expect(celebrationsOn()).toBe(true)
   })
 
   it('buzzes on a booking, a badge and a shuffle tick while on', () => {

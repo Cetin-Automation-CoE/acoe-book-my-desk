@@ -39,7 +39,7 @@ import {
   slotStart,
   todayIn,
 } from '../lib/dates'
-import { celebrateBooking, reducedMotion, tick } from '../lib/delight'
+import { celebrateBooking, DELIGHT, reducedMotion, tick } from '../lib/delight'
 import { errorCode, errorMessage } from '../lib/errors'
 import { lunchOf } from '../lib/lunch'
 import { presenceByDay } from '../lib/progress'
@@ -50,12 +50,6 @@ import { ACTIVE_STATUSES, slotsFor, type Booking, type Settings } from '../lib/t
 
 // surprise: the seat came from "Surprise me".
 type Pending = { kind: 'book' | 'mine'; seatId: string; surprise?: boolean }
-
-const SHUFFLE_HOPS = 12
-const SHUFFLE_MS = 1200
-const LANDING_PAUSE_MS = 350
-// How many times a surprise spins again by itself when someone books its seat first.
-const SURPRISE_RETRIES = 3
 
 
 export function DayView({ settings }: { settings: Settings }) {
@@ -124,8 +118,9 @@ export function DayView({ settings }: { settings: Settings }) {
     () => new Set((myUpcoming.data ?? []).filter((b) => ACTIVE_STATUSES.includes(b.status)).map((b) => b.date)),
     [myUpcoming.data],
   )
-  // A seat owner sits at their own seat, so they have no favourite to pick.
-  const favouriteId = ownerSeat ? null : (favourite.data ?? null)
+  // A seat owner sits at their own seat, so they have no favourite to pick. A favourite that has
+  // since been taken out of service is ignored, and the most-booked seat is offered instead.
+  const favouriteId = ownerSeat ? null : (seats.data?.find((s) => s.id === favourite.data && s.active)?.id ?? null)
   const usualId = useMemo(
     () => usualSeat(recent.data ?? [], ownerSeat?.id ?? null, favouriteId),
     [recent.data, ownerSeat?.id, favouriteId],
@@ -188,8 +183,8 @@ export function DayView({ settings }: { settings: Settings }) {
       land()
       return
     }
-    const hops = shuffleHops(pool, pick, SHUFFLE_HOPS)
-    const times = hopTimes(hops.length, SHUFFLE_MS)
+    const hops = shuffleHops(pool, pick, DELIGHT.shuffle.hops)
+    const times = hopTimes(hops.length, DELIGHT.shuffle.ms)
     setSpinning(true)
     // The seats sit below the card: bring them up so the shuffle is seen, and the landing seat too.
     seatsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -202,7 +197,7 @@ export function DayView({ settings }: { settings: Settings }) {
         }, times[i]),
       ),
     )
-    spinTimers.current.push(window.setTimeout(land, times[times.length - 1] + LANDING_PAUSE_MS))
+    spinTimers.current.push(window.setTimeout(land, times[times.length - 1] + DELIGHT.shuffle.landingPauseMs))
   }
 
   const surpriseMe = () => {
@@ -210,6 +205,22 @@ export function DayView({ settings }: { settings: Settings }) {
     surpriseTaken.current = new Set()
     spin(new Set())
   }
+
+  // A colleague took the surprise seat first (Book it failed, or the seat went while its sheet was
+  // open): spin again by itself, skipping the seats just taken. False once the tries are used up.
+  const respin = (seatId: string): boolean => {
+    if (surpriseTries.current >= DELIGHT.surpriseRetries) return false
+    surpriseTries.current += 1
+    surpriseTaken.current.add(seatId)
+    toast(t.surprise.retaken)
+    spin(surpriseTaken.current)
+    return true
+  }
+  // The realtime effect below runs after a timeout, so it reaches the latest render's respin here.
+  const respinRef = useRef(respin)
+  useEffect(() => {
+    respinRef.current = respin
+  })
 
   const book = useMutation({
     mutationFn: ({ seatId }: { seatId: string; surprise?: boolean }) => api.bookSeat(seatId, selected, choice),
@@ -220,14 +231,9 @@ export function DayView({ settings }: { settings: Settings }) {
       refresh()
     },
     onError: (err, { seatId, surprise }) => {
-      // Someone took the surprise seat first: spin again by itself, a few times.
-      if (surprise && errorCode(err) === 'seat_taken' && surpriseTries.current < SURPRISE_RETRIES) {
-        surpriseTries.current += 1
-        surpriseTaken.current.add(seatId)
-        toast(t.surprise.retaken)
+      if (surprise && errorCode(err) === 'seat_taken') {
         refresh()
-        spin(surpriseTaken.current)
-        return
+        if (respin(seatId)) return
       }
       fail(err)
     },
@@ -270,18 +276,22 @@ export function DayView({ settings }: { settings: Settings }) {
     onError: fail,
   })
 
-  // Realtime: flash the tile that just changed; drop the book sheet if its seat was taken meanwhile.
+  // Realtime: flash the tile that just changed; drop the book sheet if its seat was taken meanwhile
+  // (a surprise spins again instead). Not while my own booking of it is on its way.
   const change = useSeatChange()
   const flashId = change && change.date === selected ? change.seatId : null
   const sheetStillBookable = pending?.kind !== 'book' || !bookView || (bookView.kind === 'free' && !blockedFor(bookView))
+  const surpriseSeat = pending?.kind === 'book' && pending.surprise ? pending.seatId : null
+  const booking = book.isPending
   useEffect(() => {
-    if (sheetStillBookable) return
+    if (sheetStillBookable || booking) return
     const id = window.setTimeout(() => {
+      if (surpriseSeat && respinRef.current(surpriseSeat)) return
       setPending(null)
       toast(t.errors.seat_taken, 'error')
     }, 0)
     return () => window.clearTimeout(id)
-  }, [sheetStillBookable, toast, t])
+  }, [sheetStillBookable, booking, surpriseSeat, toast, t])
 
   const onTap = (view: SeatView) => {
     if (spinning) return

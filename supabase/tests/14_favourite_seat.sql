@@ -1,5 +1,5 @@
 begin;
-select plan(10);
+select plan(15);
 
 create schema tests_tmp;
 create function tests_tmp.create_user(p_email text, p_id uuid default gen_random_uuid()) returns uuid
@@ -44,11 +44,20 @@ select throws_ok($$select public.set_favourite_seat('51000000-0000-4000-8000-000
 
 -- Writes go through the function only
 select throws_ok($$insert into public.user_prefs (user_id, favourite_seat_id) values ('a1000000-0000-4000-8000-000000000002', '51000000-0000-4000-8000-000000000002')$$,
-  '42501', null, 'nobody writes user_prefs directly');
+  '42501', null, 'nobody inserts into user_prefs directly');
+select throws_ok($$update public.user_prefs set favourite_seat_id = null$$,
+  '42501', null, 'nobody updates user_prefs directly');
+select throws_ok($$delete from public.user_prefs$$,
+  '42501', null, 'nobody deletes from user_prefs directly');
 
--- Bob cannot see Alice's favourite
+-- Bob cannot see Alice's favourite, and his own pick leaves hers alone
 select tests_tmp.login('a1000000-0000-4000-8000-000000000002');
 select is((select count(*) from public.user_prefs), 0::bigint, 'a person sees only their own preferences');
+select lives_ok($$select public.set_favourite_seat('51000000-0000-4000-8000-000000000002')$$,
+  'a second person picks their own favourite');
+select results_eq($$select user_id, favourite_seat_id from public.user_prefs$$,
+  $$values ('a1000000-0000-4000-8000-000000000002'::uuid, '51000000-0000-4000-8000-000000000002'::uuid)$$,
+  'they see their own row only');
 
 -- A seat owner's favourite can only be their own seat
 select tests_tmp.login('a1000000-0000-4000-8000-00000000000a');
@@ -60,6 +69,11 @@ select tests_tmp.login('a1000000-0000-4000-8000-000000000001');
 select lives_ok($$select public.set_favourite_seat(null)$$, 'null clears the favourite');
 select is((select favourite_seat_id from public.user_prefs where user_id = 'a1000000-0000-4000-8000-000000000001'),
   null::uuid, 'the favourite is cleared');
+
+-- Clearing touched the caller's row only
+reset role;
+select is((select favourite_seat_id from public.user_prefs where user_id = 'a1000000-0000-4000-8000-000000000002'),
+  '51000000-0000-4000-8000-000000000002'::uuid, 'clearing leaves other people''s favourites alone');
 
 select * from finish();
 rollback;

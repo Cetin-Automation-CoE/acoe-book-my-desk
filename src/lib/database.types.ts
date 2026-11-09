@@ -213,7 +213,7 @@ isOneToOne: false
                     "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"booking_weeks"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Relationships: [
-
+                    
                   ]
                 },"user_prefs": {
                   Row: {
@@ -363,7 +363,12 @@ isOneToOne: false
 "updated_at": string,
 "user_id": string
             }
-                           },
+                          SetofOptions: {
+        from: "*"
+        to: "user_prefs"
+        isOneToOne: true
+        isSetofReturn: false
+      } },
 "team_roster":
 { Args: Record<PropertyKey, never>; Returns: {
               "avatar_url": string,"display_name": string,"user_ids": (string)[]
