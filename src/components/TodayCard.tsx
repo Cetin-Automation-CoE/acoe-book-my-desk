@@ -3,6 +3,7 @@ import { formatDayLong } from '../lib/dates'
 import type { CardVariant } from '../lib/smart'
 import type { LunchChoice, Seat } from '../lib/types'
 import { Button } from './Button'
+import { HeartIcon } from './icons'
 import { LunchPicker } from './LunchPicker'
 
 interface TodayCardProps {
@@ -11,6 +12,8 @@ interface TodayCardProps {
   selected: string
   today: string
   busy: boolean
+  // My favourite seat, so the card can say so.
+  favouriteId: string | null
   onManage: () => void
   onQuickBook: (seatId: string) => void
   // My lunch plan for the day, shown under a booking.
@@ -20,7 +23,7 @@ interface TodayCardProps {
 const codeOf = (seats: Seat[], id: string) => seats.find((s) => s.id === id)?.code ?? ''
 
 // The card above the seat grid: my booking for the day, or a one-tap suggestion.
-export function TodayCard({ variant, seats, selected, today, busy, onManage, onQuickBook, lunch }: TodayCardProps) {
+export function TodayCard({ variant, seats, selected, today, busy, favouriteId, onManage, onQuickBook, lunch }: TodayCardProps) {
   const t = useT()
 
   if (variant.kind === 'booked') {
@@ -49,7 +52,8 @@ export function TodayCard({ variant, seats, selected, today, busy, onManage, onQ
 
   const code = codeOf(seats, variant.seatId)
   const isAlt = variant.kind === 'alternative'
-  const eyebrow = isAlt ? t.card.isTaken(codeOf(seats, variant.usualId)) : t.card.usual
+  const isFavourite = !isAlt && variant.seatId === favouriteId
+  const eyebrow = isAlt ? t.card.isTaken(codeOf(seats, variant.usualId)) : isFavourite ? t.card.favourite : t.card.usual
   const sub = isAlt
     ? variant.nearness === 'pair'
       ? t.card.nextTo
@@ -65,6 +69,7 @@ export function TodayCard({ variant, seats, selected, today, busy, onManage, onQ
       <div className="flex min-w-0 flex-1 flex-col gap-px">
         <span className={`flex min-w-0 items-start gap-1.5 text-[11px] font-bold uppercase leading-4 tracking-[0.02em] ${isAlt ? 'text-accent' : 'text-muted'}`}>
           {isAlt && <span aria-hidden className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />}
+          {isFavourite && <HeartIcon filled width={12} height={12} className="mt-0.5 shrink-0 text-accent" />}
           <span>{eyebrow}</span>
         </span>
         <span className="truncate text-base font-extrabold leading-[22px] tabular-nums text-ink">{code}</span>

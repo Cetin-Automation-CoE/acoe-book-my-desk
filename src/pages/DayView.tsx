@@ -4,7 +4,7 @@ import { useShell } from '../components/AppShell'
 import { DayStrip } from '../components/DayStrip'
 import { PageBand, Panel } from '../components/PageBand'
 import { SeatGrid } from '../components/SeatGrid'
-import { BookSheet, CancelSheet, MineSheet } from '../components/SeatSheets'
+import { BookSheet, CancelSheet, MineSheet, type FavouriteControl } from '../components/SeatSheets'
 import { ErrorCard, Skeleton } from '../components/States'
 import { useToast } from '../components/Toast'
 import { TodayCard } from '../components/TodayCard'
@@ -14,6 +14,7 @@ import {
   useDayBookings,
   useDayLunch,
   useDayReleases,
+  useFavouriteSeat,
   useMyBookings,
   useMyRecentBookings,
   useNow,
@@ -22,6 +23,7 @@ import {
   useSeats,
 } from '../hooks/useData'
 import { useT } from '../hooks/useLang'
+import { useSetFavourite } from '../hooks/useFavourite'
 import { useSetLunch } from '../hooks/useLunch'
 import { useSeatChange } from '../hooks/useRealtime'
 import { api } from '../lib/api'
@@ -72,6 +74,8 @@ export function DayView({ settings }: { settings: Settings }) {
   const presenceRows = usePresence(bookable[0], bookable[bookable.length - 1])
   const myUpcoming = useMyBookings(userId, today)
   const recent = useMyRecentBookings(userId, addDays(today, -28), today)
+  const favourite = useFavouriteSeat(userId)
+  const setFavourite = useSetFavourite(userId)
 
   const views = useMemo(
     () =>
@@ -102,7 +106,12 @@ export function DayView({ settings }: { settings: Settings }) {
     () => new Set((myUpcoming.data ?? []).filter((b) => ACTIVE_STATUSES.includes(b.status)).map((b) => b.date)),
     [myUpcoming.data],
   )
-  const usualId = useMemo(() => usualSeat(recent.data ?? [], ownerSeat?.id ?? null), [recent.data, ownerSeat?.id])
+  // A seat owner sits at their own seat, so they have no favourite to pick.
+  const favouriteId = ownerSeat ? null : (favourite.data ?? null)
+  const usualId = useMemo(
+    () => usualSeat(recent.data ?? [], ownerSeat?.id ?? null, favouriteId),
+    [recent.data, ownerSeat?.id, favouriteId],
+  )
   const variant = useMemo(
     () => cardVariant({ mine: mineOnDay, usualId, views, choice, lockedToUsual: ownerSeat !== null }),
     [mineOnDay, usualId, views, choice, ownerSeat],
@@ -113,6 +122,14 @@ export function DayView({ settings }: { settings: Settings }) {
   const othersIn = presence.get(selected)?.others ?? 0
   const freeCount = views.filter((v) => v.kind === 'free').length
   const codeOf = (id: string) => seats.data?.find((s) => s.id === id)?.code ?? ''
+  const favouriteFor = (seatId: string | undefined): FavouriteControl | undefined =>
+    seatId && !ownerSeat
+      ? {
+          isFavourite: favouriteId === seatId,
+          busy: setFavourite.isPending,
+          onToggle: () => setFavourite.mutate({ seatId: favouriteId === seatId ? null : seatId, code: codeOf(seatId) }),
+        }
+      : undefined
 
   const refresh = () => {
     for (const key of ['bookings', 'my-bookings', 'progress']) queryClient.invalidateQueries({ queryKey: [key] })
@@ -223,6 +240,7 @@ export function DayView({ settings }: { settings: Settings }) {
                 selected={selected}
                 today={today}
                 busy={busy}
+                favouriteId={favouriteId}
                 onManage={() => variant.kind === 'booked' && setPending({ kind: 'mine', seatId: variant.bookings[0].seat_id })}
                 onQuickBook={(seatId) => quickBook.mutate(seatId)}
                 lunch={{ value: myLunch, busy: setLunch.isPending, onChange: (next) => setLunch.mutate(next) }}
@@ -238,6 +256,7 @@ export function DayView({ settings }: { settings: Settings }) {
                 isBlocked={blockedFor}
                 flashId={flashId}
                 selectedId={pending?.kind === 'book' ? pending.seatId : null}
+                favouriteId={favouriteId}
                 onTap={onTap}
               />
             </div>
@@ -257,6 +276,7 @@ export function DayView({ settings }: { settings: Settings }) {
         choice={choice}
         started={started}
         busy={busy}
+        favourite={favouriteFor(bookView?.seat.id)}
         onBook={(seatId) => book.mutate(seatId)}
         onClose={() => setPending(null)}
       />
@@ -268,6 +288,7 @@ export function DayView({ settings }: { settings: Settings }) {
         now={now}
         settings={settings}
         busy={busy}
+        favourite={favouriteFor(mineView?.seat.id)}
         onCancel={(list) => setToCancel(list)}
         onClose={() => setPending(null)}
       />

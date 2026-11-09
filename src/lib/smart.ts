@@ -5,10 +5,15 @@ import { roomBlocks } from './layout'
 import type { SeatView } from './seatState'
 import type { Booking, SlotChoice } from './types'
 
-// The seat booked most often in the recent window; ties go to the most recent booking.
-// Seat owners' usual seat is their own.
-export function usualSeat(recent: readonly { seat_id: string; date: string }[], ownerSeatId: string | null): string | null {
+// The seat the card offers: a seat owner's own seat, else the favourite the person picked, else the
+// seat booked most often in the recent window (ties go to the most recent booking).
+export function usualSeat(
+  recent: readonly { seat_id: string; date: string }[],
+  ownerSeatId: string | null,
+  favouriteId: string | null = null,
+): string | null {
   if (ownerSeatId) return ownerSeatId
+  if (favouriteId) return favouriteId
   const count = new Map<string, { n: number; last: string }>()
   for (const b of recent) {
     const c = count.get(b.seat_id) ?? { n: 0, last: '' }

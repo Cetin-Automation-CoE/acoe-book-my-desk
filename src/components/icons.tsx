@@ -88,3 +88,28 @@ export function ChevronRightIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
+
+// Favourite seat. `filled` paints the heart in the current colour.
+export function HeartIcon({ filled = false, ...props }: SVGProps<SVGSVGElement> & { filled?: boolean }) {
+  return (
+    <svg {...base} {...props} fill={filled ? 'currentColor' : 'none'}>
+      <path d="M12 19.5s-7.25-4.4-7.25-10A4.1 4.1 0 0 1 12 7.1a4.1 4.1 0 0 1 7.25 2.4c0 5.6-7.25 10-7.25 10z" />
+    </svg>
+  )
+}
+
+// "Surprise me": a die showing five.
+export function DiceIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="4" y="4" width="16" height="16" rx="3.5" />
+      <g fill="currentColor" stroke="none">
+        <circle cx="8.75" cy="8.75" r="1.3" />
+        <circle cx="15.25" cy="8.75" r="1.3" />
+        <circle cx="12" cy="12" r="1.3" />
+        <circle cx="8.75" cy="15.25" r="1.3" />
+        <circle cx="15.25" cy="15.25" r="1.3" />
+      </g>
+    </svg>
+  )
+}

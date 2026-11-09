@@ -36,6 +36,19 @@ describe('usualSeat', () => {
   it('is null without history', () => {
     expect(usualSeat([], null)).toBeNull()
   })
+
+  it('is the favourite when one is picked, whatever the history', () => {
+    const recent = [
+      { seat_id: 's5', date: '2026-10-20' },
+      { seat_id: 's5', date: '2026-10-22' },
+    ]
+    expect(usualSeat(recent, null, 's9')).toBe('s9')
+    expect(usualSeat([], null, 's9')).toBe('s9')
+  })
+
+  it('is the owned seat for a seat owner, even with a favourite', () => {
+    expect(usualSeat([], 's1', 's9')).toBe('s1')
+  })
 })
 
 describe('alternativeSeat', () => {

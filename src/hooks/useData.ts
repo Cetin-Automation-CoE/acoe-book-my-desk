@@ -20,6 +20,7 @@ export const keys = {
   badges: (userId: string) => ['progress', 'badges', userId] as const,
   myRecent: (userId: string, from: string, to: string) => ['my-bookings', 'recent', userId, from, to] as const,
   notifyPrefs: (userId: string) => ['notify-prefs', userId] as const,
+  favourite: (userId: string) => ['favourite', userId] as const,
 }
 
 export function useSettings() {
@@ -78,6 +79,12 @@ export function useMyRecentBookings(userId: string, fromDate: string, toDate: st
     queryFn: () => api.myRecentBookings(userId, fromDate, toDate),
     staleTime: 5 * 60_000,
   })
+}
+
+// My favourite seat. If the table is missing (app deployed before the migration) the query fails
+// quietly and the Book tab falls back to the most-booked seat.
+export function useFavouriteSeat(userId: string) {
+  return useQuery({ queryKey: keys.favourite(userId), queryFn: () => api.myFavouriteSeat(userId), staleTime: 5 * 60_000, retry: 1 })
 }
 
 export function useNotifyPrefs(userId: string, enabled: boolean) {

@@ -93,12 +93,21 @@ export const en = {
 
   card: {
     usual: 'Your usual seat',
+    favourite: 'Your favourite seat',
     booked: "You're booked",
     manage: 'Manage',
     nextTo: 'Right next to it',
     sameTable: 'Same table',
     closest: 'Closest free seat',
     isTaken: (code: string) => `${code} is taken`,
+  },
+
+  favourite: {
+    make: 'Make it my favourite',
+    is: 'Your favourite seat',
+    remove: 'Remove',
+    saved: (code: string) => `${code} is your favourite now.`,
+    removed: 'Favourite removed.',
   },
 
   myBookings: {
@@ -314,12 +323,21 @@ export const cs: Strings = {
 
   card: {
     usual: 'Vaše místo',
+    favourite: 'Vaše oblíbené místo',
     booked: 'Rezervováno',
     manage: 'Spravovat',
     nextTo: 'Hned vedle',
     sameTable: 'Stejný stůl',
     closest: 'Nejbližší volné místo',
     isTaken: (code: string) => `${code} je obsazené`,
+  },
+
+  favourite: {
+    make: 'Nastavit jako oblíbené',
+    is: 'Vaše oblíbené místo',
+    remove: 'Odebrat',
+    saved: (code: string) => `${code} je teď vaše oblíbené místo.`,
+    removed: 'Oblíbené místo odebráno.',
   },
 
   myBookings: {

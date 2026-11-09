@@ -213,7 +213,27 @@ isOneToOne: false
                     "allowed_email_domains"?: (string)[],"am_start"?: string,"booking_retention_days"?: number,"booking_weeks"?: number,"id"?: boolean,"max_days_per_week"?: number | null,"pm_start"?: string,"push_evening_hour"?: number,"push_function_url"?: string | null,"push_monday_hour"?: number,"timezone"?: string,"updated_at"?: string,"working_days"?: (number)[]
                   }
                   Relationships: [
-                    
+
+                  ]
+                },"user_prefs": {
+                  Row: {
+                    "favourite_seat_id": string | null,"updated_at": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "favourite_seat_id"?: string | null,"updated_at"?: string,"user_id": string
+                  }
+                  Update: {
+                    "favourite_seat_id"?: string | null,"updated_at"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "user_prefs_favourite_seat_id_fkey"
+      columns: ["favourite_seat_id"]
+isOneToOne: false
+      referencedRelation: "seats"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"user_stats": {
                   Row: {
@@ -336,6 +356,13 @@ isOneToOne: false
                            },
 "release_my_seat":
 { Args: { "p_date": string,"p_seat_id": string,"p_slot": string }; Returns: undefined
+                           },
+"set_favourite_seat":
+{ Args: { "p_seat_id"?: string }; Returns: {
+              "favourite_seat_id": string | null,
+"updated_at": string,
+"user_id": string
+            }
                            },
 "team_roster":
 { Args: Record<PropertyKey, never>; Returns: {

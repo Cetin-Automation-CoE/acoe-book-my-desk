@@ -3,7 +3,7 @@ import { shortName } from '../lib/people'
 import type { SeatKind, SeatView } from '../lib/seatState'
 import type { PeopleMap } from '../lib/types'
 import { Avatar } from './Avatar'
-import { StarIcon } from './icons'
+import { HeartIcon, StarIcon } from './icons'
 
 export interface SeatTileProps {
   view: SeatView
@@ -14,6 +14,8 @@ export interface SeatTileProps {
   blocked: boolean
   flash: boolean
   selected: boolean
+  // My favourite seat: a small heart in the corner.
+  favourite: boolean
   index: number
   onTap: (view: SeatView) => void
 }
@@ -28,7 +30,7 @@ const tile: Record<SeatKind, string> = {
 
 // One seat in the grid: big desk number and who has it for the day.
 export function SeatTile(props: SeatTileProps) {
-  const { view, people, userId, myName, blocked, flash, selected, index, onTap } = props
+  const { view, people, userId, myName, blocked, flash, selected, favourite, index, onTap } = props
   const t = useT()
   const nameOf = (id: string) => (id === userId ? myName : (people.get(id)?.name ?? '…'))
 
@@ -82,11 +84,19 @@ export function SeatTile(props: SeatTileProps) {
         type="button"
         disabled={!tappable}
         onClick={() => onTap(view)}
-        aria-label={`${view.seat.code}: ${caption}${sub ? `, ${sub}` : ''}`}
+        aria-label={`${view.seat.code}: ${caption}${sub ? `, ${sub}` : ''}${favourite ? `, ${t.favourite.is}` : ''}`}
         className={`relative flex h-[76px] w-full flex-col justify-center gap-[3px] rounded-2xl border-[1.5px] py-0 pl-[11px] pr-2 text-left transition-[transform,box-shadow] duration-150 active:scale-[0.96] disabled:active:scale-100 ${tile[look]} ${
           flash ? 'flash' : ''
         } ${selected ? 'shadow-selected' : ''} ${dimmed ? 'opacity-50' : ''}`}
       >
+        {favourite && (
+          <HeartIcon
+            filled
+            width={13}
+            height={13}
+            className={`absolute right-2 top-2 ${look === 'mine' ? 'text-white/85' : look === 'free' ? 'text-accent' : 'text-taken-ink'}`}
+          />
+        )}
         <span className="shrink-0 text-[17px] font-extrabold leading-5 tracking-[-0.02em] tabular-nums">{view.seat.code}</span>
         <span className="flex min-w-0 flex-col gap-px pr-3">
           <span className="flex min-w-0 items-center gap-1.5">

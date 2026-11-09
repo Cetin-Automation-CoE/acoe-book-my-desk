@@ -161,6 +161,19 @@ export const api = {
     )
   },
 
+  // My favourite seat, or null when none is picked.
+  async myFavouriteSeat(userId: string): Promise<string | null> {
+    const { data, error } = await supabase.from('user_prefs').select('favourite_seat_id').eq('user_id', userId).maybeSingle()
+    if (error) throw error
+    return data?.favourite_seat_id ?? null
+  },
+
+  // Picks my favourite seat; null clears it. The database refuses inactive seats, and other seats for a seat owner.
+  async setFavouriteSeat(seatId: string | null): Promise<void> {
+    const { error } = await supabase.rpc('set_favourite_seat', seatId ? { p_seat_id: seatId } : {})
+    if (error) throw error
+  },
+
   async bookSeat(seatId: string, date: string, slot: SlotChoice): Promise<Booking[]> {
     return unwrap(await supabase.rpc('book_seat', { p_seat_id: seatId, p_date: date, p_slot: slot }))
   },
