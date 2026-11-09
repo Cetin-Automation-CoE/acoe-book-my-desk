@@ -2,7 +2,7 @@
 
 Mobile-first web app for booking seats in the office. Colleagues sign in with their
 work email (6-digit code), pick a day and tap a free seat. Seat owners can
-release their semi-fixed seats. Everyone in can say whether they bring a lunchbox or go out for lunch. The UI is in English and Czech (switch in the profile sheet).
+release their semi-fixed seats. Everyone in can say whether they bring a lunchbox or go out for lunch. A favourite seat is one tap away, "Surprise me" picks a random free one, and a booking ends in a little confetti. The UI is in English and Czech (switch in the profile sheet).
 
 Plan and decisions: [Project plan](https://claude.ai/artifact/95CmY1gzyEdUJVkzhLnKLh) ·
 [docs/decisions.md](docs/decisions.md)
@@ -206,6 +206,9 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | No check-in | A reservation is the commitment: there is no "I'm here", no deadline and no auto-release (removed 2026-11-02; the `checked_in` / `released` statuses only remain for rows written before). |
 | Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
 | Lunch | Anyone in on a day (booked, or a seat owner on a held day) can say whether they bring a lunchbox or go out, from the Book tab card or Who's in. Colleagues see a mark on each row and the counts; `lunch_plans` rows are the person's own (RLS) and are purged with old bookings. |
+| Favourite seat | The heart on a seat sheet makes that seat your favourite (`user_prefs`, own row only, written by `set_favourite_seat()`). The Book tab card offers it ahead of the seat you booked most in the last 28 days; if it is taken, the nearest free seat. Seat owners have no favourite: their own seat is always offered. |
+| Surprise me | The dice on the Book tab shuffles across the seats free for that day and lands on a random one; nothing is booked until "Book it". If a colleague books it first, it spins again by itself (up to 3 times). Hidden for seat owners and once you have a seat that day. |
+| Celebrations | Confetti and a short buzz on a booking, a bigger burst for a new badge, a light tick per shuffle hop. Per-device switch in the profile sheet (`localStorage` `bmd.celebrations`), on by default; reduced motion turns off the confetti and the shuffle. Vibration works on Android only. |
 | Out of office | Who's in lists everyone on the team who is neither booked nor holding their seat that day under "Out of office". Nothing is stored or set by hand: `team_roster()` returns one row per person (directory people merged across both addresses, plus anyone else who has signed in; accounts nobody signed in to are left out), and the app subtracts whoever is in. |
 
 ### Progress and badges (private to each person)

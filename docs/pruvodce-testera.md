@@ -31,6 +31,8 @@ Odkaz: https://cetin-automation-coe.github.io/acoe-book-my-desk/
 – Rezervovat jde aktuální a příští pracovní týden, pondělí až pátek. Mezi týdny přepínáš šipkami nad dny, nebo přejetím prstem po dnech do strany. O víkendu začíná nabídka příštím týdnem.
 – Vyber den v liště nahoře a klepni na volné místo. Rezervace platí na celý den.
 – Místa jsou v párech, dva páry u stolu. Karta nahoře ti nabídne tvé obvyklé místo nebo nejbližší volné.
+– Oblíbené místo: klepni na místo a v okně dej srdíčko „Nastavit jako oblíbené“. Karta nahoře ti pak nabízí právě ho. Srdíčkem ho zase odebereš.
+– „Překvap mě“ (kostka vedle počtu kolegů): appka chvíli losuje mezi volnými místy a jedno ti nabídne. Zarezervuješ ho tlačítkem Rezervovat, nebo losuješ znovu.
 – Na jeden den můžeš mít jen jedno místo.
 
 5) Zrušení (záložka Moje)
@@ -48,6 +50,7 @@ Odkaz: https://cetin-automation-coe.github.io/acoe-book-my-desk/
 
 8) Dny v kanceláři a odznaky
 – V profilu se ti počítají dny v kanceláři (každý den s rezervací, jakmile začne), týdny v řadě a odznaky. Je to jen pro zábavu.
+– Po rezervaci a za nový odznak vystřelí konfety (na Androidu i krátce zavibruje). Kdo nechce, vypne si to v profilu v části Oslavy.
 
 Co prosím hlásit (ideálně mně do chatu):
 – Co nefunguje nebo vypadá divně + screenshot.
