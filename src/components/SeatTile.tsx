@@ -81,7 +81,7 @@ export function SeatTile(props: SeatTileProps) {
   const subColor = look === 'held' ? 'text-brand-deep/70' : look === 'mine' ? 'text-white/80' : look === 'taken' ? 'text-ink-soft/80' : 'text-muted'
 
   return (
-    <div className="enter" style={{ '--i': index } as React.CSSProperties}>
+    <div className="enter scroll-my-24" data-seat={view.seat.id} style={{ '--i': index } as React.CSSProperties}>
       <button
         type="button"
         disabled={!tappable}

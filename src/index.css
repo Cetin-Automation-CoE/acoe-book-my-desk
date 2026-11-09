@@ -227,6 +227,16 @@ body {
   transition: box-shadow 700ms ease;
 }
 
+/* Confetti (src/lib/delight.ts) draws on one canvas over the screen; taps go straight through. */
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 60;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sheet-panel,
   .sheet-overlay,

@@ -39,6 +39,7 @@ import {
   slotStart,
   todayIn,
 } from '../lib/dates'
+import { celebrateBooking, reducedMotion, tick } from '../lib/delight'
 import { errorCode, errorMessage } from '../lib/errors'
 import { lunchOf } from '../lib/lunch'
 import { presenceByDay } from '../lib/progress'
@@ -56,7 +57,6 @@ const LANDING_PAUSE_MS = 350
 // How many times a surprise spins again by itself when someone books its seat first.
 const SURPRISE_RETRIES = 3
 
-const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
 
 export function DayView({ settings }: { settings: Settings }) {
   const t = useT()
@@ -80,6 +80,7 @@ export function DayView({ settings }: { settings: Settings }) {
   const spinTimers = useRef<number[]>([])
   const surpriseTries = useRef(0)
   const surpriseTaken = useRef<Set<string>>(new Set())
+  const seatsRef = useRef<HTMLDivElement>(null)
   const toast = useToast()
   const queryClient = useQueryClient()
 
@@ -190,7 +191,17 @@ export function DayView({ settings }: { settings: Settings }) {
     const hops = shuffleHops(pool, pick, SHUFFLE_HOPS)
     const times = hopTimes(hops.length, SHUFFLE_MS)
     setSpinning(true)
-    hops.forEach((id, i) => spinTimers.current.push(window.setTimeout(() => setSpotlight(id), times[i])))
+    // The seats sit below the card: bring them up so the shuffle is seen, and the landing seat too.
+    seatsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    hops.forEach((id, i) =>
+      spinTimers.current.push(
+        window.setTimeout(() => {
+          setSpotlight(id)
+          tick()
+          if (i === hops.length - 1) document.querySelector(`[data-seat="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        }, times[i]),
+      ),
+    )
     spinTimers.current.push(window.setTimeout(land, times[times.length - 1] + LANDING_PAUSE_MS))
   }
 
@@ -203,6 +214,7 @@ export function DayView({ settings }: { settings: Settings }) {
   const book = useMutation({
     mutationFn: ({ seatId }: { seatId: string; surprise?: boolean }) => api.bookSeat(seatId, selected, choice),
     onSuccess: () => {
+      celebrateBooking()
       toast(t.seats.booked)
       setPending(null)
       refresh()
@@ -225,6 +237,7 @@ export function DayView({ settings }: { settings: Settings }) {
   const quickBook = useMutation({
     mutationFn: (seatId: string) => api.bookSeat(seatId, selected, choice),
     onSuccess: (created) => {
+      celebrateBooking()
       const undoable = canCancelAll(created, settings, now)
       toast(
         t.seats.booked,
@@ -337,7 +350,7 @@ export function DayView({ settings }: { settings: Settings }) {
                 )}
               </div>
             )}
-            <div key={selected}>
+            <div key={selected} ref={seatsRef} className="scroll-mt-4">
               <SeatGrid
                 views={views}
                 people={profiles.data ?? new Map()}

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useToast } from '../components/Toast'
+import { celebrateBadge } from '../lib/delight'
 import type { BadgeKey } from '../lib/progress'
 import { useData } from './useData'
 import { useT } from './useLang'
@@ -24,11 +25,16 @@ export function useBadgeToasts(userId: string) {
       seen = null
     }
     if (seen) {
+      let fresh = 0
       for (const key of keys) {
         if (seen.includes(key)) continue
         const badge = t.badges[key as BadgeKey]
-        if (badge) toast(t.progress.newBadge(badge.name))
+        if (badge) {
+          toast(t.progress.newBadge(badge.name))
+          fresh += 1
+        }
       }
+      if (fresh > 0) celebrateBadge()
     }
     try {
       window.localStorage.setItem(storageKey, JSON.stringify(keys))

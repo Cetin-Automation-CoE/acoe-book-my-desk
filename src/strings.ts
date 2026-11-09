@@ -119,6 +119,12 @@ export const en = {
     retaken: 'Someone was quicker – spinning again.',
   },
 
+  celebrations: {
+    title: 'Celebrations',
+    label: 'Confetti and buzz',
+    hint: 'When you book a seat or earn a badge.',
+  },
+
   myBookings: {
     title: 'My bookings',
     upcoming: (n: number) => `${n} upcoming`,
@@ -356,6 +362,12 @@ export const cs: Strings = {
     bookIt: 'Rezervovat',
     again: 'Losovat znovu',
     retaken: 'Někdo byl rychlejší – losuji znovu.',
+  },
+
+  celebrations: {
+    title: 'Oslavy',
+    label: 'Konfety a zavibrování',
+    hint: 'Když si zarezervujete místo nebo získáte odznak.',
   },
 
   myBookings: {

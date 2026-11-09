@@ -9,6 +9,7 @@ import { squareJpeg } from '../lib/image'
 import { initialsOf } from '../lib/people'
 import type { Lang } from '../strings'
 import { Button } from './Button'
+import { Celebrations } from './Celebrations'
 import { Notifications } from './Notifications'
 import { ProgressCard } from './ProgressCard'
 import { Sheet } from './Sheet'
@@ -127,6 +128,8 @@ export function ProfileSheet({ open, onClose, userId, name, avatar, email }: Pro
         <ProgressCard userId={userId} />
 
         <Notifications userId={userId} />
+
+        <Celebrations />
 
         <div className="flex flex-col gap-1.5">
           <span className="text-[13px] font-bold">{t.profile.language}</span>
