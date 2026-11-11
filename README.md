@@ -109,9 +109,10 @@ Useful scripts:
    `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`. (The anon key is public by design; the
    `service_role` key must never be added anywhere in GitHub or the repo.) Add `BASE_PATH=/`
    only if you serve the app from a custom domain.
-8. **Seat owners and names** — `seed.sql` assigns B21101 to Jiří Forman and B21102 to Martin
-   Minarovič, lists all twelve colleagues (both addresses each) in `directory`, and marks Kryštof as
-   admin. New colleagues go into `directory` the same way (see "Admin tasks").
+8. **Seat owners and names** — `seed.sql` holds no seat for anyone (every seat is shared; B21101 and
+   B21102 were held for Jiří Forman and Martin Minarovič until decision 72), lists all twelve
+   colleagues (both addresses each) in `directory`, and marks Kryštof as admin. New colleagues and
+   seat owners are added the same way (see "Admin tasks").
 9. **Push to `main`** — the deploy workflow builds and publishes the app. The keep-alive
    workflow pings the project twice a week so the free tier does not pause.
 
@@ -167,7 +168,10 @@ Use Table Editor or the SQL editor as the `postgres` role (bypasses RLS):
   List every address the person might sign in with. The seat is held from that moment; `owner_id`
   links itself when the person signs in (or immediately if they already have an account). The first
   account that matches keeps the seat, so ask owners to always use the same address.
-- **Remove an owner:** `update public.seats set owner_emails = '{}', owner_id = null where code = 'B21102';`
+- **Remove an owner:** `delete from public.seat_releases where seat_id = (select id from public.seats where code = 'B21102'); update public.seats set owner_emails = '{}', owner_id = null, owner_name = null where code = 'B21102';`
+  The seat becomes an ordinary shared seat and the former owner may book any seat. Deleting the
+  releases keeps their old released days from coming back if the seat is ever held again.
+  No seat is held at the moment (decision 72).
 - **Let someone sign in with a personal mailbox** (interim, while the company mail gateway quarantines
   the codes): list the address in the directory and it is allowed regardless of domain —
   `insert into public.directory (email, display_name) values ('name@gmail.com', 'Jane Doe') on conflict (email) do update set display_name = excluded.display_name;`

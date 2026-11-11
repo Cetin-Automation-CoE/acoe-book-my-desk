@@ -18,13 +18,8 @@ select 'f1000000-0000-4000-8000-000000000001', 'B211' || lpad(n::text, 2, '0'), 
 from generate_series(1, 12) as n
 on conflict (code) do nothing;
 
--- Semi-fixed seats: held for their owners from day one; owner_id links itself at their first sign-in.
-update public.seats
-set owner_emails = '{ma077535@cetin.cz,minarovic.martin@cetin.cz}', owner_name = 'Martin Minarovič'
-where code = 'B21102';
-update public.seats
-set owner_emails = '{ji076400@cetin.cz,forman.jiri@cetin.cz}', owner_name = 'Jiří Forman'
-where code = 'B21101';
+-- No semi-fixed seats: every seat is shared (B21101/B21102 were held for Jiří Forman and Martin
+-- Minarovič until 2026-11-11). To hold a seat for someone again, see "Admin tasks" in the README.
 
 -- Known colleagues: display name and role applied at first sign-in. Everyone has a name-style and an
 -- ID-style address; both are listed so it does not matter which one they type.
