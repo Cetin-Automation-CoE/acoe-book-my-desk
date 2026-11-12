@@ -205,7 +205,7 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 | Window | Whole working weeks, `booking_weeks` of them (default 2: this week and next), from today on. The first is the current week, or the coming one from the weekend on (after the last day in `working_days`, default Mon–Fri). Other dates are rejected (`outside_window`, `not_working_day`). The app moves between weeks with arrows or a swipe on the day strip. |
 | Same day | Today can be booked until the afternoon ends; after 13:00 a booking covers the rest of the day. |
 | Limits | One active booking per seat per half day; one per person per half day (partial unique indexes), which in the app means one seat per person per day. Optional `max_days_per_week`. |
-| Cancel | In the app, until the day starts at 06:00; the database itself still allows a half that has not started to be cancelled on its own. |
+| Cancel | Any time until the end of the booking's day, also once the day has started (decision 73); a day that is over cannot be cancelled. |
 | Semi-fixed seats | `seats.owner_id` holds the seat; others can book it only after the owner releases the day (My seat tab). Releasing cancels the owner's own booking for that day; a released day cannot be taken back once a colleague booked it. An owner books their own seat only (`owner_own_seat_only`), even on a day they released it; the app dims every other seat for them. |
 | No check-in | A reservation is the commitment: there is no "I'm here", no deadline and no auto-release (removed 2026-11-02; the `checked_in` / `released` statuses only remain for rows written before). |
 | Retention | Bookings and releases older than `booking_retention_days` (90) are deleted nightly. |
@@ -218,9 +218,9 @@ All times are in `settings.timezone` (Europe/Prague), never the server's UTC dat
 ### Progress and badges (private to each person)
 
 An **office day** is a day with a reservation. A booking is counted once its half day has started
-(06:00 / 13:00 — from then on it cannot be cancelled): the `bookmydesk-count-office-days` job runs
-every 15 minutes, and a booking made after the start is counted immediately. A cancelled booking
-never counts. Counters live in
+(06:00 / 13:00): the `bookmydesk-count-office-days` job runs every 15 minutes, and a booking made
+after the start is counted immediately. A booking cancelled before its day starts never counts; one
+cancelled later that day stays counted, because the day started with it (decision 73). Counters live in
 `user_stats` and badges in `achievements` (`bookings.counted_at` marks what has been counted); both
 survive the 90-day purge and are readable only by the person themselves — no leaderboard, colleagues
 never see each other's numbers.

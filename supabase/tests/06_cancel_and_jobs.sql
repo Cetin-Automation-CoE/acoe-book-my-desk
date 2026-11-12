@@ -1,5 +1,5 @@
 begin;
-select plan(11);
+select plan(13);
 
 create schema tests_tmp;
 create function tests_tmp.create_user(p_email text, p_id uuid default gen_random_uuid()) returns uuid
@@ -32,20 +32,25 @@ insert into public.bookings (id, seat_id, user_id, date, slot) values
   ('b0000000-0000-4000-8000-000000000001', '51000000-0000-4000-8000-000000000002', 'a1000000-0000-4000-8000-000000000001', '2026-11-04', 'AM'),
   ('b0000000-0000-4000-8000-000000000002', '51000000-0000-4000-8000-000000000003', 'a1000000-0000-4000-8000-000000000001', '2026-11-04', 'PM'),
   ('b0000000-0000-4000-8000-000000000003', '51000000-0000-4000-8000-000000000002', 'a1000000-0000-4000-8000-000000000001', '2026-11-05', 'AM'),
-  ('b0000000-0000-4000-8000-000000000004', '51000000-0000-4000-8000-000000000003', 'a1000000-0000-4000-8000-000000000002', '2026-11-04', 'AM');
+  ('b0000000-0000-4000-8000-000000000004', '51000000-0000-4000-8000-000000000003', 'a1000000-0000-4000-8000-000000000002', '2026-11-04', 'AM'),
+  ('b0000000-0000-4000-8000-000000000005', '51000000-0000-4000-8000-000000000002', 'a1000000-0000-4000-8000-000000000001', '2026-11-03', 'AM');
 
--- Cancel rule: before the half day starts only (AM starts 06:00, PM starts 13:00)
+-- Cancel rule: until the end of the booking's day, also once it has started (decision 73)
 select tests_tmp.freeze('2026-11-04 09:00:00+01');
 select tests_tmp.login('a1000000-0000-4000-8000-000000000001');
 set local role authenticated;
-select throws_ok($$select public.cancel_booking('b0000000-0000-4000-8000-000000000001')$$, 'P0001', 'cannot_cancel',
-  'an AM booking cannot be cancelled at 09:00 on the day');
+select lives_ok($$select public.cancel_booking('b0000000-0000-4000-8000-000000000001')$$,
+  'an AM booking can be cancelled at 09:00 on the day, after the day started');
+select is((select status::text from public.bookings where id = 'b0000000-0000-4000-8000-000000000001'), 'cancelled',
+  'the started booking is cancelled');
 select lives_ok($$select public.cancel_booking('b0000000-0000-4000-8000-000000000002')$$,
   'a PM booking can still be cancelled at 09:00 on the day');
 select is((select status::text from public.bookings where id = 'b0000000-0000-4000-8000-000000000002'), 'cancelled', 'the booking is cancelled');
 select throws_ok($$select public.cancel_booking('b0000000-0000-4000-8000-000000000002')$$, 'P0001', 'booking_not_active',
   'a cancelled booking cannot be cancelled again');
 select lives_ok($$select public.cancel_booking('b0000000-0000-4000-8000-000000000003')$$, 'a future booking can be cancelled');
+select throws_ok($$select public.cancel_booking('b0000000-0000-4000-8000-000000000005')$$, 'P0001', 'cannot_cancel',
+  'a booking from a day that is over cannot be cancelled');
 select throws_ok($$select public.cancel_booking('b0000000-0000-4000-8000-000000000004')$$, 'P0001', 'not_your_booking',
   'colleagues cannot cancel each other''s bookings');
 reset role;

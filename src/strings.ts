@@ -87,8 +87,7 @@ export const en = {
     table: (n: number) => `Table ${n}`,
     freeShort: (n: number) => `${n} free`,
     freeSeats: (n: number): string => (n === 1 ? 'free seat' : 'free seats'),
-    cancelRule: (t: string) => `You can cancel until the day starts at ${t}.`,
-    startedRule: 'The day is under way – a booking made now cannot be cancelled.',
+    cancelRule: 'You can cancel the booking any time, even on the day itself.',
   },
 
   card: {
@@ -135,7 +134,7 @@ export const en = {
     confirmCancel: 'Cancel this booking?',
     keep: 'Keep it',
     yesCancel: 'Yes, cancel',
-    cancelUntilStart: 'Cancel any time before it starts',
+    cancelAnyTime: 'Cancel any time, even on the day',
     underway: 'Under way',
     cancelled: 'Cancelled',
   },
@@ -332,8 +331,7 @@ export const cs: Strings = {
     table: (n: number) => `Stůl ${n}`,
     freeShort: (n: number) => `${n} volno`,
     freeSeats: (n: number) => czPlural(n, 'volné místo', 'volná místa', 'volných míst'),
-    cancelRule: (t: string) => `Zrušit lze až do začátku dne v ${t}.`,
-    startedRule: 'Den už probíhá – rezervaci teď už nepůjde zrušit.',
+    cancelRule: 'Rezervaci můžete zrušit kdykoli, i v ten den.',
   },
 
   card: {
@@ -380,7 +378,7 @@ export const cs: Strings = {
     confirmCancel: 'Zrušit tuto rezervaci?',
     keep: 'Ponechat',
     yesCancel: 'Ano, zrušit',
-    cancelUntilStart: 'Zrušit lze kdykoli před začátkem',
+    cancelAnyTime: 'Zrušit lze kdykoli, i v ten den',
     underway: 'Probíhá',
     cancelled: 'Zrušeno',
   },

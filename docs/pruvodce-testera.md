@@ -36,7 +36,7 @@ Odkaz: https://cetin-automation-coe.github.io/acoe-book-my-desk/
 – Na jeden den můžeš mít jen jedno místo.
 
 5) Zrušení (záložka Moje)
-– Rezervaci zrušíš kdykoli před začátkem dne, tedy do 6:00. Potom už zrušit nejde.
+– Rezervaci zrušíš kdykoli, i v den rezervace (třeba když ráno zjistíš, že nepřijdeš). Místo se hned uvolní pro ostatní.
 – Žádné potvrzování příchodu (check-in) není – rezervace prostě platí.
 
 6) Kdo je tu

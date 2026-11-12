@@ -60,13 +60,15 @@ describe('canCancel', () => {
     expect(canCancel(booking({ date: '2026-11-05' }), settings, at('23:00'))).toBe(true)
   })
 
-  it('refuses once the half day has started', () => {
-    expect(canCancel(booking(), settings, at('09:00'))).toBe(false)
-    expect(canCancel(booking({ slot: 'PM' }), settings, at('13:00'))).toBe(false)
+  it('allows cancelling on the day, also once it has started', () => {
+    expect(canCancel(booking(), settings, at('05:00'))).toBe(true)
+    expect(canCancel(booking(), settings, at('09:00'))).toBe(true)
+    expect(canCancel(booking({ slot: 'PM' }), settings, at('13:00'))).toBe(true)
+    expect(canCancel(booking({ slot: 'PM' }), settings, at('23:59'))).toBe(true)
   })
 
-  it('allows cancelling a later half day on the same day', () => {
-    expect(canCancel(booking({ slot: 'PM' }), settings, at('09:00'))).toBe(true)
+  it('refuses for a day that is over', () => {
+    expect(canCancel(booking({ date: '2026-11-03' }), settings, at('00:01'))).toBe(false)
   })
 
   it('refuses for anything that is not booked', () => {
@@ -258,8 +260,8 @@ describe('dayChoice', () => {
 
 describe('canCancelAll', () => {
   it('needs every booking of the day to be cancellable', () => {
-    expect(canCancelAll([booking(), booking({ id: 'b2', slot: 'PM' })], settings, at('05:00'))).toBe(true)
-    expect(canCancelAll([booking(), booking({ id: 'b2', slot: 'PM' })], settings, at('09:00'))).toBe(false)
+    expect(canCancelAll([booking(), booking({ id: 'b2', slot: 'PM' })], settings, at('09:00'))).toBe(true)
+    expect(canCancelAll([booking(), booking({ id: 'b2', slot: 'PM', status: 'cancelled' })], settings, at('09:00'))).toBe(false)
   })
   it('is false for no bookings', () => {
     expect(canCancelAll([], settings, at('05:00'))).toBe(false)

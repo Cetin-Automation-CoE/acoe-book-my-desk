@@ -183,13 +183,9 @@ export function formatTime(hhmm: string): string {
   return hhmm.slice(0, 5)
 }
 
+// A booking can be cancelled until the end of its day, also once the day has started (decision 73).
 export function canCancel(b: Booking, s: Settings, now: Date = new Date()): boolean {
-  if (b.status !== 'booked') return false
-  const today = todayIn(s.timezone, now)
-  if (b.date > today) return true
-  if (b.date < today) return false
-  const start = parseTime(b.slot === 'AM' ? s.am_start : s.pm_start)
-  return minutesSinceMidnightIn(s.timezone, now) < start
+  return b.status === 'booked' && b.date >= todayIn(s.timezone, now)
 }
 
 // Every booking of a day must still be cancellable for the day to be cancellable.

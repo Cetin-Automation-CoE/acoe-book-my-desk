@@ -36,7 +36,6 @@ import {
   dayTitle,
   formatBandDate,
   minutesSinceMidnightIn,
-  slotStart,
   todayIn,
 } from '../lib/dates'
 import { celebrateBooking, DELIGHT, reducedMotion, tick } from '../lib/delight'
@@ -46,7 +45,7 @@ import { presenceByDay } from '../lib/progress'
 import { seatView, type SeatView } from '../lib/seatState'
 import { cardVariant, usualSeat } from '../lib/smart'
 import { hopTimes, pickRandomSeat, shuffleHops, surpriseCandidates } from '../lib/surprise'
-import { ACTIVE_STATUSES, slotsFor, type Booking, type Settings } from '../lib/types'
+import { ACTIVE_STATUSES, type Booking, type Settings } from '../lib/types'
 
 // surprise: the seat came from "Surprise me".
 type Pending = { kind: 'book' | 'mine'; seatId: string; surprise?: boolean }
@@ -65,7 +64,6 @@ export function DayView({ settings }: { settings: Settings }) {
   const { selected, bookable } = picker
   // A booking covers the whole day, or what is left of today once the afternoon has started.
   const choice = dayChoice(selected, today, nowMinutes, settings)
-  const started = selected === today && nowMinutes >= slotStart(slotsFor(choice)[0], settings)
   const [pending, setPending] = useState<Pending | null>(null)
   const [toCancel, setToCancel] = useState<Booking[] | null>(null)
   // "Surprise me": the seat the shuffle is passing over, its timers, and the retry bookkeeping.
@@ -388,7 +386,6 @@ export function DayView({ settings }: { settings: Settings }) {
         today={today}
         settings={settings}
         choice={choice}
-        started={started}
         busy={busy}
         favourite={favouriteFor(bookView?.seat.id)}
         surprise={pending?.kind === 'book' && pending.surprise ? { onSpinAgain: () => spin(new Set([pending.seatId])) } : undefined}

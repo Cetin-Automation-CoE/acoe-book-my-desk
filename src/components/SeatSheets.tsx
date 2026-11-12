@@ -1,5 +1,5 @@
 import { useT } from '../hooks/useLang'
-import { canCancelAll, formatDayLong, formatTime, slotRange } from '../lib/dates'
+import { canCancelAll, formatDayLong, slotRange } from '../lib/dates'
 import { roomBlocks } from '../lib/layout'
 import type { SeatView } from '../lib/seatState'
 import type { Booking, Settings, SlotChoice } from '../lib/types'
@@ -76,8 +76,6 @@ interface BookSheetProps {
   today: string
   settings: Settings
   choice: SlotChoice
-  // The day has started: a booking made now cannot be cancelled.
-  started: boolean
   busy: boolean
   favourite?: FavouriteControl
   // The seat came from "Surprise me": say so and offer another spin instead of Close.
@@ -86,17 +84,16 @@ interface BookSheetProps {
   onClose: () => void
 }
 
-export function BookSheet({ view, views, date, today, settings, choice, started, busy, favourite, surprise, onBook, onClose }: BookSheetProps) {
+export function BookSheet({ view, views, date, today, settings, choice, busy, favourite, surprise, onBook, onClose }: BookSheetProps) {
   const t = useT()
   if (!view) return null
-  const rule = started ? t.seats.startedRule : t.seats.cancelRule(formatTime(settings.am_start))
   const title = surprise ? t.surprise.title(view.seat.code) : t.seats.bookTitle(view.seat.code)
   return (
     <Sheet open title={title} onClose={onClose}>
       <SeatHead view={view} views={views} date={date} today={today} title={title} />
       <div className="flex flex-col gap-3.5">
         <Cover choice={choice} settings={settings} />
-        <p className="text-[13.5px] leading-[19px] text-muted">{rule}</p>
+        <p className="text-[13.5px] leading-[19px] text-muted">{t.seats.cancelRule}</p>
         {favourite && <FavouriteToggle control={favourite} />}
         <div className="mt-0.5 flex flex-col gap-1">
           <Button className="font-extrabold" onClick={() => onBook(view.seat.id)} disabled={busy}>
@@ -146,7 +143,7 @@ export function MineSheet({ view, views, date, today, now, settings, busy, favou
           <div className="flex min-w-0 flex-col gap-px text-ink">
             <span className="text-[15.5px] font-extrabold">{t.slots[cover]}</span>
             <span className="text-[12.5px] text-muted">
-              {slotRange(cover, settings)} · {cancellable ? t.myBookings.cancelUntilStart : t.myBookings.underway}
+              {slotRange(cover, settings)} · {cancellable ? t.myBookings.cancelAnyTime : t.myBookings.underway}
             </span>
           </div>
           {cancellable && (

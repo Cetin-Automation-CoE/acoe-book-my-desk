@@ -51,7 +51,7 @@ export function Ticket({ date, bookings, seats, settings, today, now, index, bus
       <div className="flex min-w-0 flex-1 items-center justify-between gap-2.5 py-4 pl-4 pr-3.5">
         <div className="flex min-w-0 flex-col gap-1">
           <span className="text-xl font-extrabold leading-6 tracking-[-0.01em] tabular-nums">{codes.join(' · ')}</span>
-          <span className={`text-[12.5px] leading-4 ${muted}`}>{cancellable ? t.myBookings.cancelUntilStart : t.myBookings.underway}</span>
+          <span className={`text-[12.5px] leading-4 ${muted}`}>{cancellable ? t.myBookings.cancelAnyTime : t.myBookings.underway}</span>
         </div>
         {cancellable && (
           <button
